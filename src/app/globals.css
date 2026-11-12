@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+/* Sicko Central palette: Senators red, black and gold on a dark ground. */
+@theme inline {
+  --color-ground: #0d0d0e;
+  --color-surface: #17171a;
+  --color-surface-2: #202024;
+  --color-line: #26262b;
+  --color-line-strong: #3f3f46;
+  --color-ink: #f4f4f5;
+  --color-ink-2: #d4d4d8;
+  --color-muted: #a1a1aa;
+  --color-sens: #c52032;
+  --color-sens-bright: #e23a4c;
+  --color-sens-text: #f05a69;
+  --color-gold: #c2912c;
+  --color-gold-bright: #d9ae45;
+  --color-gold-text: #e2b64e;
+  --color-gold-ground: #1f1a0e;
+  --color-gold-line: #5c4513;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-display: var(--font-barlow), var(--font-inter), sans-serif;
+}
+
+html {
+  background: #0d0d0e;
+  color-scheme: dark;
+}
+
+body {
+  background: #0d0d0e;
+  color: #f4f4f5;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}

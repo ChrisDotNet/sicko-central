@@ -1,0 +1,342 @@
+// The only module that talks to the NHL. Every response is cached server-side,
+// so page views and live polling never multiply calls to the NHL.
+// Endpoints are public but undocumented: treat every field as optional.
+import { cacheLife } from "next/cache";
+
+const WEB = "https://api-web.nhle.com/v1";
+
+export class NhlError extends Error {}
+
+async function get<T>(path: string): Promise<T> {
+  const res = await fetch(`${WEB}${path}`, {
+    headers: { "User-Agent": "SickoCentral/0.1 (hobby fan site)" },
+    cache: "no-store",
+  });
+  if (!res.ok) throw new NhlError(`NHL ${res.status} for ${path}`);
+  return (await res.json()) as T;
+}
+
+type Text = { default: string; fr?: string };
+
+export type TeamRef = {
+  id: number;
+  abbrev: string;
+  score?: number;
+  sog?: number;
+  commonName?: Text;
+  placeName?: Text;
+};
+
+export type Broadcast = { network: string; countryCode: string; market: string };
+
+export type ScheduleGame = {
+  id: number;
+  season: number;
+  gameType: number;
+  gameDate: string;
+  startTimeUTC: string;
+  gameState: string;
+  venue?: Text;
+  tvBroadcasts?: Broadcast[];
+  awayTeam: TeamRef;
+  homeTeam: TeamRef;
+  periodDescriptor?: { number: number; periodType: string };
+  gameOutcome?: { lastPeriodType: string };
+  threeMinRecap?: string;
+  condensedGame?: string;
+};
+
+export type Schedule = { currentSeason: number; games: ScheduleGame[] };
+
+export type Play = {
+  eventId: number;
+  periodDescriptor: { number: number; periodType: string };
+  timeInPeriod: string;
+  timeRemaining: string;
+  situationCode?: string;
+  homeTeamDefendingSide?: "left" | "right";
+  typeDescKey: string;
+  sortOrder: number;
+  details?: {
+    xCoord?: number;
+    yCoord?: number;
+    zoneCode?: string;
+    shotType?: string;
+    eventOwnerTeamId?: number;
+    shootingPlayerId?: number;
+    scoringPlayerId?: number;
+    scoringPlayerTotal?: number;
+    assist1PlayerId?: number;
+    assist1PlayerTotal?: number;
+    assist2PlayerId?: number;
+    assist2PlayerTotal?: number;
+    awayScore?: number;
+    homeScore?: number;
+    awaySOG?: number;
+    homeSOG?: number;
+    highlightClip?: number;
+    highlightClipSharingUrl?: string;
+    committedByPlayerId?: number;
+    servedByPlayerId?: number;
+    descKey?: string;
+    duration?: number;
+    typeCode?: string;
+    winningPlayerId?: number;
+    losingPlayerId?: number;
+  };
+};
+
+export type RosterSpot = {
+  teamId: number;
+  playerId: number;
+  firstName: Text;
+  lastName: Text;
+  sweaterNumber?: number;
+  positionCode?: string;
+};
+
+export type PlayByPlay = {
+  id: number;
+  season: number;
+  gameType: number;
+  gameDate: string;
+  startTimeUTC: string;
+  gameState: string;
+  venue?: Text;
+  tvBroadcasts?: Broadcast[];
+  awayTeam: TeamRef;
+  homeTeam: TeamRef;
+  periodDescriptor?: { number: number; periodType: string };
+  clock?: { timeRemaining: string; secondsRemaining: number; running: boolean; inIntermission: boolean };
+  plays: Play[];
+  rosterSpots: RosterSpot[];
+};
+
+export type BoxSkater = {
+  playerId: number;
+  name: Text;
+  position: string;
+  goals: number;
+  assists: number;
+  points: number;
+  sog: number;
+  toi: string;
+  hits?: number;
+  faceoffWinningPctg?: number;
+};
+
+export type BoxGoalie = {
+  playerId: number;
+  name: Text;
+  saves?: number;
+  shotsAgainst?: number;
+  savePctg?: number;
+  toi?: string;
+};
+
+export type BoxScore = {
+  playerByGameStats?: {
+    awayTeam: { forwards: BoxSkater[]; defense: BoxSkater[]; goalies: BoxGoalie[] };
+    homeTeam: { forwards: BoxSkater[]; defense: BoxSkater[]; goalies: BoxGoalie[] };
+  };
+};
+
+export type Scores = { currentDate: string; games: ScheduleGame[] };
+
+export type StandingRow = {
+  teamAbbrev: Text;
+  teamName?: Text;
+  divisionAbbrev: string;
+  divisionName: string;
+  conferenceAbbrev: string;
+  divisionSequence: number;
+  conferenceSequence: number;
+  wildcardSequence: number;
+  leagueSequence: number;
+  gamesPlayed: number;
+  wins: number;
+  losses: number;
+  otLosses: number;
+  points: number;
+  pointPctg: number;
+  goalFor: number;
+  goalAgainst: number;
+  goalDifferential: number;
+  regulationWins: number;
+  streakCode?: string;
+  streakCount?: number;
+  l10Wins?: number;
+  l10Losses?: number;
+  l10OtLosses?: number;
+};
+
+export type RosterPlayer = {
+  id: number;
+  headshot?: string;
+  firstName: Text;
+  lastName: Text;
+  sweaterNumber?: number;
+  positionCode: string;
+  shootsCatches?: string;
+  heightInInches?: number;
+  weightInPounds?: number;
+  birthDate?: string;
+  birthCity?: Text;
+  birthCountry?: string;
+  birthStateProvince?: Text;
+};
+
+export type Roster = { forwards: RosterPlayer[]; defensemen: RosterPlayer[]; goalies: RosterPlayer[] };
+
+export type SeasonLine = {
+  season: number;
+  gameTypeId: number;
+  leagueAbbrev: string;
+  teamName?: Text;
+  teamCommonName?: Text;
+  sequence?: number;
+  gamesPlayed?: number;
+  goals?: number;
+  assists?: number;
+  points?: number;
+  plusMinus?: number;
+  avgToi?: string;
+  wins?: number;
+  losses?: number;
+  otLosses?: number;
+  savePctg?: number;
+  goalsAgainstAvg?: number;
+  shutouts?: number;
+};
+
+export type PlayerLanding = {
+  playerId: number;
+  isActive?: boolean;
+  firstName: Text;
+  lastName: Text;
+  sweaterNumber?: number;
+  position: string;
+  headshot?: string;
+  currentTeamAbbrev?: string;
+  heightInInches?: number;
+  weightInPounds?: number;
+  birthDate?: string;
+  birthCity?: Text;
+  birthCountry?: string;
+  birthStateProvince?: Text;
+  shootsCatches?: string;
+  draftDetails?: { year: number; teamAbbrev: string; round: number; pickInRound: number; overallPick: number };
+  featuredStats?: {
+    season: number;
+    regularSeason?: { subSeason?: Record<string, number>; career?: Record<string, number> };
+  };
+  careerTotals?: { regularSeason?: Record<string, number | string> };
+  seasonTotals?: SeasonLine[];
+  last5Games?: Array<{
+    gameId: number;
+    gameDate: string;
+    opponentAbbrev: string;
+    homeRoadFlag: string;
+    goals?: number;
+    assists?: number;
+    points?: number;
+    shots?: number;
+    toi?: string;
+    decision?: string;
+    savePctg?: number;
+    shotsAgainst?: number;
+    goalsAgainst?: number;
+  }>;
+};
+
+export type ClubSkater = {
+  playerId: number;
+  firstName: Text;
+  lastName: Text;
+  positionCode: string;
+  gamesPlayed: number;
+  goals: number;
+  assists: number;
+  points: number;
+  plusMinus: number;
+};
+
+export type ClubGoalie = {
+  playerId: number;
+  firstName: Text;
+  lastName: Text;
+  gamesPlayed: number;
+  wins: number;
+  savePercentage: number;
+  goalsAgainstAverage: number;
+};
+
+export type ClubStats = { skaters: ClubSkater[]; goalies: ClubGoalie[] };
+
+// ---------- cached fetchers ----------
+
+export async function getSchedule(): Promise<Schedule> {
+  "use cache";
+  cacheLife("frequent");
+  return get<Schedule>("/club-schedule-season/OTT/now");
+}
+
+export async function getScoresNow(): Promise<Scores> {
+  "use cache";
+  cacheLife("frequent");
+  return get<Scores>("/score/now");
+}
+
+export async function getScoresNowLive(): Promise<Scores> {
+  "use cache";
+  cacheLife("live");
+  return get<Scores>("/score/now");
+}
+
+export async function getStandings(): Promise<StandingRow[]> {
+  "use cache";
+  cacheLife("frequent");
+  const data = await get<{ standings: StandingRow[] }>("/standings/now");
+  return data.standings ?? [];
+}
+
+export async function getRoster(): Promise<Roster> {
+  "use cache";
+  cacheLife("daily");
+  return get<Roster>("/roster/OTT/current");
+}
+
+export async function getClubStats(): Promise<ClubStats> {
+  "use cache";
+  cacheLife("daily");
+  return get<ClubStats>("/club-stats/OTT/now");
+}
+
+export async function getPlayer(id: string): Promise<PlayerLanding | null> {
+  "use cache";
+  cacheLife("daily");
+  try {
+    return await get<PlayerLanding>(`/player/${encodeURIComponent(id)}/landing`);
+  } catch {
+    return null;
+  }
+}
+
+// Live game data: cached for about 10 s, so every viewer shares one NHL call.
+export async function getPlayByPlay(gameId: string): Promise<PlayByPlay> {
+  "use cache";
+  cacheLife("live");
+  return get<PlayByPlay>(`/gamecenter/${encodeURIComponent(gameId)}/play-by-play`);
+}
+
+export async function getBoxScore(gameId: string): Promise<BoxScore> {
+  "use cache";
+  cacheLife("live");
+  try {
+    return await get<BoxScore>(`/gamecenter/${encodeURIComponent(gameId)}/boxscore`);
+  } catch {
+    return {};
+  }
+}
+
+export { LIVE_STATES, FINAL_STATES, name } from "./nhl-shared";

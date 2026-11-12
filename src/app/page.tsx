@@ -1,0 +1,159 @@
+import Link from "next/link";
+import { Card, Chevron, ErrorNote, Kicker, ResultBadge, Section, TeamBar } from "@/components/ui";
+import { StandingsTable } from "@/components/StandingsTable";
+import { formatDay, formatTime, savePct } from "@/lib/format";
+import { getClubStats, getSchedule, getScoresNow, getStandings, name } from "@/lib/nhl";
+import { scoreLine, splitSchedule } from "@/lib/schedule";
+import { OTT } from "@/lib/teams";
+
+function ordinal(n: number) {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
+export default async function HomePage() {
+  const [schedule, standings, stats, scores] = await Promise.all([
+    getSchedule().catch(() => null),
+    getStandings().catch(() => []),
+    getClubStats().catch(() => null),
+    getScoresNow().catch(() => null),
+  ]);
+
+  if (!schedule) return <ErrorNote>NHL data isn&apos;t available right now. Try again in a minute.</ErrorNote>;
+
+  const { live, last, next } = splitSchedule(schedule.games);
+  const tonight = next != null && scores?.currentDate === next.gameDate;
+  const ottRow = standings.find((r) => name(r.teamAbbrev) === OTT);
+  const division = ottRow
+    ? standings.filter((r) => r.divisionAbbrev === ottRow.divisionAbbrev).sort((a, b) => a.divisionSequence - b.divisionSequence)
+    : [];
+
+  const skaters = stats?.skaters ?? [];
+  const top = (key: "points" | "goals" | "assists") => [...skaters].sort((a, b) => b[key] - a[key])[0];
+  const goalie = [...(stats?.goalies ?? [])].filter((g) => g.gamesPlayed >= 3).sort((a, b) => b.savePercentage - a.savePercentage)[0];
+  const leaders = [
+    top("points") && { cat: "Points", val: String(top("points").points), who: top("points") },
+    top("goals") && { cat: "Goals", val: String(top("goals").goals), who: top("goals") },
+    top("assists") && { cat: "Assists", val: String(top("assists").assists), who: top("assists") },
+    goalie && { cat: "Save %", val: savePct(goalie.savePercentage), who: goalie },
+  ].filter(Boolean) as Array<{ cat: string; val: string; who: { playerId: number; firstName: { default: string }; lastName: { default: string } } }>;
+
+  return (
+    <>
+      {live && (
+        <section className="px-4 pt-4">
+          <Link href="/live" className="flex min-h-11 items-center justify-between gap-3 rounded-2xl bg-sens px-4 py-3.5 text-white">
+            <div className="flex flex-col gap-1">
+              <span className="flex items-center gap-1.5 text-xs font-bold tracking-widest">
+                <span className="size-1.5 rounded-full bg-white" /> LIVE NOW
+              </span>
+              <span className="font-display text-2xl font-extrabold leading-none tracking-wide">
+                OTT {live.ottScore ?? 0} – {live.oppScore ?? 0} {live.opp}
+              </span>
+            </div>
+            <span className="flex items-center gap-1 text-sm font-bold">
+              Follow <Chevron />
+            </span>
+          </Link>
+        </section>
+      )}
+
+      {ottRow && (
+        <section className="px-4 pt-4">
+          <Card className="grid grid-cols-3">
+            <div className="flex flex-col items-center gap-0.5 border-r border-line px-3 py-3.5">
+              <span className="font-display text-3xl font-extrabold leading-none">
+                {ottRow.wins}-{ottRow.losses}-{ottRow.otLosses}
+              </span>
+              <span className="text-xs text-muted">Record</span>
+            </div>
+            <div className="flex flex-col items-center gap-0.5 border-r border-line px-3 py-3.5">
+              <span className="font-display text-3xl font-extrabold leading-none">{ottRow.points}</span>
+              <span className="text-xs text-muted">Points</span>
+            </div>
+            <div className="flex flex-col items-center gap-0.5 px-3 py-3.5">
+              <span className="font-display text-3xl font-extrabold leading-none text-gold-text">{ordinal(ottRow.divisionSequence)}</span>
+              <span className="text-xs text-muted">{ottRow.divisionName}</span>
+            </div>
+          </Card>
+        </section>
+      )}
+
+      <section className="flex flex-col gap-2.5 px-4 pt-4">
+        {next && tonight && (
+          <Link href="/live" className="flex min-h-11 items-center justify-between rounded-2xl border border-gold-line bg-gold-ground p-4">
+            <div className="flex flex-col gap-1">
+              <Kicker>Tonight</Kicker>
+              <span className="font-display text-2xl font-extrabold leading-none tracking-wide">
+                {next.home ? "vs" : "at"} {next.opp} · {formatTime(next.startTimeUTC)}
+              </span>
+              <span className="text-sm text-muted">{next.broadcasts.join(", ") || next.venue}</span>
+            </div>
+            <span className="flex items-center gap-1 text-sm font-semibold">
+              Game centre <Chevron />
+            </span>
+          </Link>
+        )}
+        {next && !tonight && (
+          <Card className="p-4">
+            <Kicker>Next game</Kicker>
+            <div className="mt-2 flex items-center justify-between">
+              <div className="flex flex-col gap-1">
+                <span className="font-display text-2xl font-extrabold leading-none tracking-wide">
+                  {next.home ? "vs" : "at"} {next.opp}
+                </span>
+                <span className="text-sm text-ink-2">
+                  {formatDay(next.startTimeUTC).long} · {formatTime(next.startTimeUTC)}
+                </span>
+                <span className="text-sm text-muted">
+                  {[next.venue, next.broadcasts.join(", ")].filter(Boolean).join(" · ")}
+                </span>
+              </div>
+              <TeamBar abbrev={next.opp} className="h-11 w-2.5" />
+            </div>
+          </Card>
+        )}
+        {last && last.result && (
+          <Link href={`/game/${last.id}`} className="flex min-h-11 items-center justify-between rounded-2xl border border-line bg-surface p-4">
+            <div className="flex flex-col gap-1">
+              <Kicker tone="muted">Last result</Kicker>
+              <span className="mt-1 flex items-center gap-2">
+                <ResultBadge result={last.result} />
+                <span className="font-display text-2xl font-extrabold leading-none tracking-wide">
+                  {scoreLine(last)} {last.home ? "vs" : "at"} {last.opp}
+                </span>
+              </span>
+              <span className="text-sm text-muted">{formatDay(last.startTimeUTC).long} · Final</span>
+            </div>
+            <span className="flex items-center gap-1 text-sm font-semibold">
+              Recap <Chevron />
+            </span>
+          </Link>
+        )}
+      </section>
+
+      {division.length > 0 && (
+        <Section title={ottRow?.divisionName ?? "Division"} aside={<Link href="/standings" className="text-sm font-semibold text-ink">Full standings</Link>}>
+          <StandingsTable rows={division} />
+        </Section>
+      )}
+
+      {leaders.length > 0 && (
+        <Section title="Team leaders">
+          <div className="grid grid-cols-2 gap-2.5">
+            {leaders.map((l) => (
+              <Link key={l.cat} href={`/player/${l.who.playerId}`} className="flex min-h-11 flex-col gap-0.5 rounded-xl border border-line bg-surface px-3.5 py-3">
+                <span className="text-xs text-muted">{l.cat}</span>
+                <span className="font-display text-3xl font-extrabold leading-tight text-sens-text">{l.val}</span>
+                <span className="text-sm font-semibold">
+                  {name(l.who.firstName)} {name(l.who.lastName)}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </Section>
+      )}
+    </>
+  );
+}
