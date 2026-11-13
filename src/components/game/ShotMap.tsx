@@ -3,8 +3,10 @@
 import { useState } from "react";
 import type { Shot } from "@/lib/game";
 
-export function ShotMap({ shots, oppAbbrev, periods }: { shots: Shot[]; oppAbbrev: string; periods: number }) {
-  const [period, setPeriod] = useState(0);
+// `initialPeriod`: 0 for all periods, or a period number (the intermission card opens it on
+// the period that just ended).
+export function ShotMap({ shots, oppAbbrev, periods, initialPeriod = 0 }: { shots: Shot[]; oppAbbrev: string; periods: number; initialPeriod?: number }) {
+  const [period, setPeriod] = useState(Math.min(initialPeriod, 4));
   const labels = ["All", "1st", "2nd", "3rd", ...(periods > 3 ? ["OT"] : [])];
   const shown = shots.filter((s) => period === 0 || (period === 4 ? s.period >= 4 : s.period === period));
   const ott = shown.filter((s) => s.team === "OTT");

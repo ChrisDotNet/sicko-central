@@ -7,6 +7,7 @@ import { unlockSfx } from "@/lib/sfx";
 import { preloadClipPlayer } from "./ClipPlayer";
 import { ClipDialog, nextReelSession } from "../video/ClipDialog";
 import { Thumb } from "../media/Thumb";
+import { useFavourites } from "@/lib/favourites";
 import type { Reel, ReelItem } from "../video/ClipDialog";
 
 export function strengthTag(g: Goal) {
@@ -26,6 +27,7 @@ export function goalToReelItem(g: Goal): ReelItem {
 export function GoalReplays({ goals, thumbs }: { goals: Goal[]; thumbs?: Record<string, string> }) {
   const ready = goals.filter((g) => g.clipId);
   const [reel, setReel] = useState<Reel | null>(null);
+  const favs = useFavourites();
 
   if (goals.length === 0) {
     return <p className="rounded-2xl border border-line bg-surface p-4 text-sm text-muted">No goals yet. Replays show up here a few minutes after each goal.</p>;
@@ -54,10 +56,13 @@ export function GoalReplays({ goals, thumbs }: { goals: Goal[]; thumbs?: Record<
         {[...goals].reverse().map((g) => {
           const idx = ready.indexOf(g);
           const thumb = thumbs && g.clipId ? thumbs[String(g.clipId)] : undefined;
+          // Goals involving a player you follow: starred names and a gold edge.
+          const favScorer = g.scorerId != null && favs.has(g.scorerId);
+          const favAssist = g.assistIds.some((id) => favs.has(id));
           return (
             <div
               key={g.id}
-              className={`grid items-center gap-3 border-b border-line px-3.5 py-2.5 last:border-0 ${
+              className={`grid items-center gap-3 border-b border-line px-3.5 py-2.5 last:border-0 ${favScorer || favAssist ? "bg-gold-ground shadow-[inset_3px_0_0_#c2912c]" : ""} ${
                 thumbs ? "grid-cols-[auto_minmax(0,1fr)_44px] pl-2.5" : "grid-cols-[minmax(0,1fr)_44px]"
               }`}
             >
@@ -68,6 +73,7 @@ export function GoalReplays({ goals, thumbs }: { goals: Goal[]; thumbs?: Record<
                     {g.teamAbbrev}
                   </span>
                   <span className="truncate text-sm font-semibold">
+                    {favScorer && <span className="text-gold-text">★ </span>}
                     {g.scorer}
                     {g.scorerTotal ? ` (${g.scorerTotal})` : ""}
                     {strengthTag(g)}
@@ -75,7 +81,7 @@ export function GoalReplays({ goals, thumbs }: { goals: Goal[]; thumbs?: Record<
                 </span>
                 <span className="truncate text-xs text-muted">
                   {periodLabel(g.period, g.periodType)} {g.time}
-                  {g.assists.length ? ` · ${g.assists.join(", ")}` : " · Unassisted"} · {g.scoreAfter}
+                  {g.assists.length ? ` · ${g.assists.map((n, i) => (favs.has(g.assistIds[i]) ? `★ ${n}` : n)).join(", ")}` : " · Unassisted"} · {g.scoreAfter}
                 </span>
               </div>
               {g.clipId ? (

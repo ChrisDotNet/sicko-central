@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { onOpenLiveRadio } from "@/lib/media-bus";
 
 // iHeartRadio's official embeddable player for TSN 1200, the same one TSN uses on its
 // own "Listen live" page. Loaded only when opened, so it costs nothing until someone listens.
@@ -13,6 +14,7 @@ const APP = "https://www.iheart.com/live/tsn-1200-7503/";
 
 export function LiveRadioBar({ label }: { label: string }) {
   const [open, setOpen] = useState(false);
+  useEffect(() => onOpenLiveRadio(() => setOpen(true)), []);
 
   return (
     <div className="fixed inset-x-0 bottom-[72px] z-10 mx-auto max-w-xl px-3 pb-[env(safe-area-inset-bottom)] md:max-w-4xl md:px-6 lg:inset-x-auto lg:bottom-6 lg:right-[max(2.5rem,calc((100vw-1360px)/2+2.5rem))] lg:mx-0 lg:w-[320px] lg:max-w-none lg:px-0 lg:pb-0">

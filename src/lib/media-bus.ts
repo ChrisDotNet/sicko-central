@@ -19,3 +19,15 @@ export function onReplay(start: () => void, end: () => void): () => void {
     window.removeEventListener(END, end);
   };
 }
+
+// Ask the live radio bar to open (e.g. the intermission card's "intermission show" button).
+const OPEN_RADIO = "sicko:open-radio";
+
+export function openLiveRadio() {
+  if (typeof window !== "undefined") window.dispatchEvent(new Event(OPEN_RADIO));
+}
+
+export function onOpenLiveRadio(cb: () => void): () => void {
+  window.addEventListener(OPEN_RADIO, cb);
+  return () => window.removeEventListener(OPEN_RADIO, cb);
+}

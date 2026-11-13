@@ -14,10 +14,10 @@ the next game better to watch?
 ## Suggested order
 
 **Tier 1: makes the live game better**
-1. Keep the screen awake during a game (new)
-2. Favourite players, with live alerts for their points and shots
-3. Game-day facts ("Did you know"), shown before puck drop and at intermissions
-4. Intermission card: the period in one screen (new)
+1. ~~Keep the screen awake during a game~~ Done 2026-11-13
+2. ~~Favourite players, with live alerts~~ Done 2026-11-13
+3. ~~Game-day facts ("Did you know")~~ Done 2026-11-13
+4. ~~Intermission card~~ Done 2026-11-13
 5. Install to home screen (new); true push alerts are blocked by hosting for now
 
 **Tier 2: around the game**
@@ -37,13 +37,13 @@ the next game better to watch?
 Tab renamed to Game. Gold dot on game day; during the game a red pulsing LIVE tab (phone),
 a red LIVE pill with the score (desktop) and a red score strip on other pages.
 
-### Keep the screen awake during a game (new) — Value: high · Effort: S
+### Keep the screen awake during a game — **Done** (2026-11-13)
 Phones dim and lock in a minute or two, which is exactly wrong for a second screen. The
 browser's Wake Lock API keeps the screen on while the Game page is open and a game is live
 (Chrome, Edge and Safari 16.4+ support it), released at the final or when you leave.
 With a visible on/off switch.
 
-### Intermission card (new) — Value: high · Effort: S–M
+### Intermission card — **Done** (2026-11-13)
 At each intermission, swap the "Right now" card for the period in one screen: score and shots
 for the period, goal replays from it, power plays, top Sens skaters, the out-of-town scores,
 and the TSN 1200 intermission show. That's the time fans actually pick the phone up.
@@ -54,12 +54,12 @@ full screen like an app. Push alerts while the app is closed ("Sens score!") nee
 that watches the game and sends them; Vercel Hobby can only run a scheduled job once a day,
 so that needs a paid plan or an outside service. Alerts while the page is open already work.
 
-### Player birthdays — Value: medium · Effort: S
+### Player birthdays — Partly done: in game-day facts. Home/player page greeting still open · Effort: S
 The roster feed has every player's birth date. Show "Happy birthday" on the home page and the
 player page, and include it in game-day facts when it falls on a game day (Pinto's OT winner
 on his birthday is the example). No new source needed.
 
-### 3 game-day facts per game ("Did you know") — Value: high · Effort: M
+### 3 game-day facts per game ("Did you know") — **Done** (2026-11-13; season series, streaks, milestones, birthdays)
 Do it from data, not free-form AI: an AI asked for "notable facts" will invent some, and a
 wrong stat on a fan site is worse than none. Candidates the NHL API can back up:
 - Birthdays on game day.
@@ -92,7 +92,7 @@ page for each Sens home game; add a "Tickets" link on upcoming games. Gametime h
 programme, but affiliate links are commercial use, which Vercel Hobby doesn't allow; plain
 links now, affiliate links when the site moves to a paid plan. These links do leave the app.
 
-### Favourite players — Value: medium–high · Effort: M
+### Favourite players — **Done** (2026-11-13; live on-ice view still open)
 Let you star players (saved in the browser, no accounts). Starred players get highlighted in
 the skaters table, goals and roster, and an alert fires when one scores or gets a point.
 "Highlight when they're on the ice" is the hard part: the NHL publishes shift data (checked:

@@ -85,6 +85,9 @@ export type Play = {
     typeCode?: string;
     winningPlayerId?: number;
     losingPlayerId?: number;
+    hittingPlayerId?: number;
+    blockingPlayerId?: number;
+    goalieInNetId?: number;
   };
 };
 

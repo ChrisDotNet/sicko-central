@@ -32,6 +32,13 @@ Phones get one column. Tablets (768 px and up) get two columns on the home, live
 
 The menu's **Game** tab (the `/live` page) reflects today's game through `/api/status`, polled by `src/lib/game-status.ts`: a gold dot on game day, and a red LIVE treatment with the score while the game is on (plus a red strip under the header on phones and tablets, on other pages). Page widths live in `Page` (`src/components/ui.tsx`); the game layout is in `GameSections`.
 
+## Game-night features
+
+- **Screen on**: during a live game the Game page keeps the phone's screen awake (Screen Wake Lock), with a switch beside the broadcast links. On by default; saved per device; hidden where the browser can't do it (`ScreenAwake`).
+- **Intermission card**: at each intermission "Right now" becomes the period in one screen: countdown to puck drop (the NHL's intermission clock), the period's shots, attempts, high-danger chances, power plays and faceoffs, its goals with replays, a catch-up reel of every goal so far, the Sens who stood out (points, shots, hits, blocks, goalie saves) and a shortcut to the TSN 1200 intermission show. The shot map opens on that period (`IntermissionCard`; per-period numbers come from `buildGame`).
+- **Favourite players**: star a player anywhere (skaters table, roster, player page); saved in the browser. Followed players get a "Your players tonight" strip, gold rows and goal highlights, and their own alert when they score or assist (`src/lib/favourites.ts`).
+- **Did you know**: three game-day facts before puck drop and at intermissions, from NHL data only: birthdays, career milestones within reach (adjusted live, so a milestone reached tonight says so), point streaks, the team's streak and the season series (`src/lib/facts.ts`, `facts-shared.ts`).
+
 ## Media tab
 
 Each game's Media tab has three parts:

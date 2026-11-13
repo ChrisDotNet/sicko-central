@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { PlayerStats } from "@/components/PlayerStats";
+import { StarButton } from "@/components/StarButton";
 import { Card, ErrorNote, Section } from "@/components/ui";
 import { formatGameDate, heightLabel, pct, savePct, seasonLabel } from "@/lib/format";
 import type { SeasonLine } from "@/lib/nhl";
@@ -153,6 +154,9 @@ async function PlayerDetail({ params }: { params: Promise<{ id: string }> }) {
                     {p.currentTeamAbbrev && p.currentTeamAbbrev !== "OTT" ? ` · ${p.currentTeamAbbrev}` : ""}
                   </span>
                   <h1 className="font-display text-[34px] font-extrabold leading-none tracking-wide">{full}</h1>
+                  <div className="mt-1">
+                    <StarButton id={p.playerId} name={full} size="lg" />
+                  </div>
                 </div>
               </div>
               <dl className="relative mt-[18px] grid grid-cols-3 gap-x-2 gap-y-3">

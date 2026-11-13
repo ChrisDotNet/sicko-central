@@ -10,6 +10,7 @@ import { formatDay, formatTime } from "@/lib/format";
 import { getBoxScore, getPlayByPlay, getSchedule, getScoresNowLive } from "@/lib/nhl";
 import { atlanticGames } from "@/lib/rivals";
 import { getRadioForGame } from "@/lib/radio";
+import { getGameFacts } from "@/lib/facts";
 import { scoreLine, splitSchedule } from "@/lib/schedule";
 import { OTT } from "@/lib/teams";
 
@@ -21,7 +22,10 @@ async function LiveContent({ searchParams }: { searchParams: Promise<Record<stri
   const segment = parseSegment(sp.show, sp.tab);
   const replayId = typeof sp.replay === "string" && /^\d{10}$/.test(sp.replay) ? Number(sp.replay) : null;
   if (replayId) {
-    return <LiveCompanion key={`replay-${replayId}`} gameId={replayId} initial={null} replay initialTab={tab} initialSegment={segment} />;
+    // Replays use today's facts data for that game's date (fine for testing the layout).
+    const pbp = await getPlayByPlay(String(replayId)).catch(() => null);
+    const replayFacts = pbp ? await getGameFacts(pbp.gameDate, pbp.homeTeam.abbrev === OTT ? pbp.awayTeam.abbrev : pbp.homeTeam.abbrev) : [];
+    return <LiveCompanion key={`replay-${replayId}`} gameId={replayId} initial={null} replay initialTab={tab} initialSegment={segment} facts={replayFacts} />;
   }
 
   const [scores, schedule] = await Promise.all([getScoresNowLive().catch(() => null), getSchedule().catch(() => null)]);
@@ -31,9 +35,11 @@ async function LiveContent({ searchParams }: { searchParams: Promise<Record<stri
     const id = String(today.id);
     const [pbp, box] = await Promise.all([getPlayByPlay(id).catch(() => null), getBoxScore(id)]);
     const game = pbp ? buildGame(pbp, box) : null;
-    const radio = game ? await getRadioForGame(game.startTimeUTC) : [];
+    const [radio, facts] = game
+      ? await Promise.all([getRadioForGame(game.startTimeUTC), getGameFacts(game.gameDate, game.opp.abbrev)])
+      : [[], []];
     const initial = game ? { game, rivals: scores ? atlanticGames(scores, today.id) : [], radio } : null;
-    return <LiveCompanion key={id} gameId={today.id} initial={initial} replay={false} initialTab={tab} initialSegment={segment} />;
+    return <LiveCompanion key={id} gameId={today.id} initial={initial} replay={false} initialTab={tab} initialSegment={segment} facts={facts} />;
   }
 
   const { next, last } = schedule ? splitSchedule(schedule.games) : { next: null, last: null };

@@ -20,6 +20,9 @@ import type { NewsItem } from "@/lib/news";
 import { useNotify } from "../notify/NotificationProvider";
 import { strengthTag } from "./GoalReplays";
 import { Latest } from "./Latest";
+import { ScreenAwake } from "./ScreenAwake";
+import type { Fact } from "@/lib/facts-shared";
+import { getFavourites } from "@/lib/favourites";
 import { latestItems } from "./latest-items";
 
 type Payload = { game: LiveGame; rivals: RivalGame[]; radio?: RadioEpisode[] };
@@ -39,12 +42,14 @@ export function LiveCompanion({
   replay,
   initialTab = "summary",
   initialSegment = "news",
+  facts,
 }: {
   gameId: number;
   initial: Payload | null;
   replay: boolean;
   initialTab?: GameTab;
   initialSegment?: MediaSegment;
+  facts?: Fact[];
 }) {
   const [tab, setTab] = useState<GameTab>(initialTab);
   const [media, setMedia] = useState<GameMedia | null>(null);
@@ -68,6 +73,27 @@ export function LiveCompanion({
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latest = useRef<Payload | null>(initial);
 
+  // Goals already seen, so a followed player's goal or assist alerts once, when it happens.
+  const knownGoals = useRef<Set<number> | null>(initial ? new Set(initial.game.goals.map((g) => g.id)) : null);
+  function announceFavouriteGoals(game: LiveGame) {
+    if (knownGoals.current) {
+      const favs = getFavourites();
+      for (const g of game.goals) {
+        if (knownGoals.current.has(g.id)) continue;
+        const scorer = g.scorerId != null && favs.has(g.scorerId);
+        const helpers = g.assists.filter((_, i) => favs.has(g.assistIds[i]));
+        if (!scorer && helpers.length === 0) continue;
+        notify({
+          key: `fav-goal-${g.id}`,
+          title: scorer ? `Your player: ${g.scorer} scores!` : `Your player: ${helpers.join(" and ")} with an assist`,
+          body: `${periodLabel(g.period, g.periodType)} ${g.time}${strengthTag(g)} · ${g.teamAbbrev === "OTT" ? "OTT" : g.teamAbbrev} · ${g.scoreAfter}`,
+          tone: "gold",
+        });
+      }
+    }
+    knownGoals.current = new Set(game.goals.map((g) => g.id));
+  }
+
   // Alert when a goal's replay clip shows up (the NHL posts them a few minutes after the goal).
   function announceGoalClips(game: LiveGame) {
     const ready = game.goals.filter((g) => g.clipId);
@@ -86,20 +112,25 @@ export function LiveCompanion({
     knownClips.current = new Set([...(knownClips.current ?? []), ...ready.map((g) => g.clipId!)]);
   }
 
+  // Requests can finish out of order (a slow one after a newer one); only the latest counts.
+  const loadSeq = useRef(0);
   const load = useCallback(
     async (at?: number) => {
+      const seq = ++loadSeq.current;
       try {
         const qs = at != null ? `?t=${at}` : "";
         const res = await fetch(`/api/game/${gameId}${qs}`, { cache: "no-store" });
         if (!res.ok) throw new Error(String(res.status));
         const next = (await res.json()) as Payload;
+        if (seq !== loadSeq.current) return;
+        announceFavouriteGoals(next.game);
         announceGoalClips(next.game);
         latest.current = next;
         setData(next);
         setError(false);
         setUpdatedAt(Date.now());
       } catch {
-        setError(true);
+        if (seq === loadSeq.current) setError(true);
       }
     },
     // announceGoalClips only reads refs and the stable notify function.
@@ -327,8 +358,11 @@ export function LiveCompanion({
             Runs about 20 s behind TV · check it during stoppages
           </p>
         )}
-        {(game.isPre || game.isLive) && game.broadcasts.length > 0 && (
-          <BroadcastLinks networks={game.broadcasts} className="mt-2 justify-center lg:justify-start" />
+        {(game.isPre || game.isLive) && (game.broadcasts.length > 0 || game.isLive) && (
+          <div className="mt-2 flex flex-wrap items-center justify-center gap-2 lg:justify-start">
+            {game.broadcasts.length > 0 && <BroadcastLinks networks={game.broadcasts} />}
+            <ScreenAwake active={game.isLive} />
+          </div>
         )}
       </section>
 
@@ -337,6 +371,8 @@ export function LiveCompanion({
       {tab === "summary" && (
         <GameSections
           game={game}
+          facts={facts}
+          radio={showLiveBar}
           aside={
             <>
               {rivals.length > 0 && (

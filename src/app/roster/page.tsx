@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ErrorNote, Section } from "@/components/ui";
+import { StarButton } from "@/components/StarButton";
 import { pct, savePct, toiFromSeconds } from "@/lib/format";
 import type { RosterPlayer } from "@/lib/nhl";
 import { getClubStats, getRoster, name } from "@/lib/nhl";
@@ -26,8 +27,10 @@ export default async function RosterPage() {
   const skaterStats = new Map((stats?.skaters ?? []).map((s) => [s.playerId, s]));
   const goalieStats = new Map((stats?.goalies ?? []).map((g) => [g.playerId, g]));
   const byNumber = (a: RosterPlayer, b: RosterPlayer) => (a.sweaterNumber ?? 99) - (b.sweaterNumber ?? 99);
-  const head = `grid border-b border-line px-3.5 py-2.5 text-[11px] font-semibold text-muted`;
-  const row = `grid min-h-11 items-center border-b border-line px-3.5 py-2.5 text-sm tabular last:border-0 hover:bg-surface-2`;
+  // Each row: a follow star, then the player link. The header is indented to match.
+  const head = `grid border-b border-line py-2.5 pr-3.5 pl-11 text-[11px] font-semibold text-muted`;
+  const row = `grid min-h-11 flex-1 items-center py-2.5 pr-3.5 text-sm tabular hover:bg-surface-2`;
+  const rowWrap = "flex items-center border-b border-line pl-1 last:border-0";
 
   const skaterGroup = (title: string, players: RosterPlayer[]) => (
     <Section title={title}>
@@ -40,7 +43,9 @@ export default async function RosterPage() {
         {[...players].sort(byNumber).map((p) => {
           const s = skaterStats.get(p.id);
           return (
-            <Link key={p.id} href={`/player/${p.id}`} className={`${row} ${SKATER_COLS}`}>
+            <div key={p.id} className={rowWrap}>
+            <StarButton id={p.id} name={`${name(p.firstName)} ${name(p.lastName)}`} />
+            <Link href={`/player/${p.id}`} className={`${row} ${SKATER_COLS}`}>
               <span className="font-display text-lg font-bold text-gold-text">{p.sweaterNumber ?? "–"}</span>
               <span className="flex min-w-0 flex-col">
                 <span className="truncate font-semibold">{name(p.firstName)} {name(p.lastName)}</span>
@@ -59,6 +64,7 @@ export default async function RosterPage() {
               <span className={lg}>{s?.avgTimeOnIcePerGame ? toiFromSeconds(s.avgTimeOnIcePerGame) : "–"}</span>
               <span className={lg}>{s?.faceoffWinPctg ? pct(s.faceoffWinPctg) : "–"}</span>
             </Link>
+            </div>
           );
         })}
       </div>
@@ -69,7 +75,7 @@ export default async function RosterPage() {
     <>
       <div className="px-4 pt-5">
         <h1 className="font-display text-3xl font-extrabold uppercase tracking-wider">Roster</h1>
-        <p className="mt-0.5 text-sm text-muted">Current roster · season stats</p>
+        <p className="mt-0.5 text-sm text-muted">Current roster · season stats · tap ☆ to follow a player</p>
       </div>
       {skaterGroup("Forwards", roster.forwards)}
       {skaterGroup("Defence", roster.defensemen)}
@@ -83,7 +89,9 @@ export default async function RosterPage() {
           {[...roster.goalies].sort(byNumber).map((p) => {
             const s = goalieStats.get(p.id);
             return (
-              <Link key={p.id} href={`/player/${p.id}`} className={`${row} ${GOALIE_COLS}`}>
+              <div key={p.id} className={rowWrap}>
+              <StarButton id={p.id} name={`${name(p.firstName)} ${name(p.lastName)}`} />
+              <Link href={`/player/${p.id}`} className={`${row} ${GOALIE_COLS}`}>
                 <span className="font-display text-lg font-bold text-gold-text">{p.sweaterNumber ?? "–"}</span>
                 <span className="flex min-w-0 flex-col">
                   <span className="truncate font-semibold">{name(p.firstName)} {name(p.lastName)}</span>
@@ -98,6 +106,7 @@ export default async function RosterPage() {
                 <span className="text-right font-bold">{savePct(s?.savePercentage)}</span>
                 <span className={md}>{s?.shutouts ?? "–"}</span>
               </Link>
+              </div>
             );
           })}
         </div>

@@ -27,6 +27,7 @@ export type Goal = {
   scorerId?: number;
   scorerTotal?: number;
   assists: string[];
+  assistIds: number[];
   strength: "PP" | "SH" | "EN" | "EV";
   shotType?: string;
   distance?: number;
@@ -45,7 +46,21 @@ export type Penalty = {
   minutes: number;
 };
 
-export type PeriodStats = { period: number; ottSog: number; oppSog: number; ottHd: number; oppHd: number };
+export type PeriodStats = {
+  period: number;
+  ottSog: number;
+  oppSog: number;
+  ottHd: number;
+  oppHd: number;
+  ottAtt: number; // shot attempts: on goal, missed and blocked
+  oppAtt: number;
+  ottFo: number; // faceoffs won by Ottawa, out of `fo`
+  fo: number;
+};
+
+// What each Sens player did in one period (for the intermission card), and the Sens goalie's saves.
+export type PeriodSkater = { id: number; name: string; g: number; a: number; sog: number; hits: number; blocks: number };
+export type PeriodLines = { period: number; skaters: PeriodSkater[]; goalie: { id: number; name: string; saves: number; shots: number } | null };
 
 // hits, blocks and plus-minus are null in replay mode (only final totals exist).
 export type Skater = {
@@ -83,6 +98,7 @@ export type LiveGame = {
   goals: Goal[];
   penalties: Penalty[];
   periods: PeriodStats[];
+  periodLines: PeriodLines[];
   powerPlay: { ottGoals: number; ottOpps: number; oppGoals: number; oppOpps: number };
   faceoffs: { ottWon: number; total: number };
   skaters: Skater[];
@@ -171,8 +187,29 @@ export function buildGame(pbp: PlayByPlay, box: BoxScore, opts: Options = {}): L
   const periodStats = (n: number) => {
     let s = periodMap.get(n);
     if (!s) {
-      s = { period: n, ottSog: 0, oppSog: 0, ottHd: 0, oppHd: 0 };
+      s = { period: n, ottSog: 0, oppSog: 0, ottHd: 0, oppHd: 0, ottAtt: 0, oppAtt: 0, ottFo: 0, fo: 0 };
       periodMap.set(n, s);
+    }
+    return s;
+  };
+
+  // Sens players by period.
+  const lineMap = new Map<number, { skaters: Map<number, PeriodSkater>; goalie: Map<number, { saves: number; shots: number }> }>();
+  const lines = (n: number) => {
+    let l = lineMap.get(n);
+    if (!l) {
+      l = { skaters: new Map(), goalie: new Map() };
+      lineMap.set(n, l);
+    }
+    return l;
+  };
+  const isOtt = (id?: number) => id != null && players.get(id)?.teamId === ottTeam.id;
+  const skaterIn = (n: number, id: number) => {
+    const m = lines(n).skaters;
+    let s = m.get(id);
+    if (!s) {
+      s = { id, name: players.get(id)?.name ?? last(id), g: 0, a: 0, sog: 0, hits: 0, blocks: 0 };
+      m.set(id, s);
     }
     return s;
   };
@@ -185,9 +222,20 @@ export function buildGame(pbp: PlayByPlay, box: BoxScore, opts: Options = {}): L
 
     if (type === "faceoff") {
       totalFo++;
-      if (sideOf(d.eventOwnerTeamId) === "OTT") ottFo++;
+      periodStats(n).fo++;
+      if (sideOf(d.eventOwnerTeamId) === "OTT") {
+        ottFo++;
+        periodStats(n).ottFo++;
+      }
       continue;
     }
+
+    if (type === "hit") {
+      if (isOtt(d.hittingPlayerId)) skaterIn(n, d.hittingPlayerId!).hits++;
+      continue;
+    }
+
+    if (type === "blocked-shot" && isOtt(d.blockingPlayerId)) skaterIn(n, d.blockingPlayerId!).blocks++;
 
     if (type === "penalty") {
       const team = sideOf(d.eventOwnerTeamId);
@@ -218,16 +266,32 @@ export function buildGame(pbp: PlayByPlay, box: BoxScore, opts: Options = {}): L
 
     const flow = team === "OTT" ? flowOtt : flowOpp;
     flow.push([t, flow[flow.length - 1][1] + 1]);
+    if (team === "OTT") periodStats(n).ottAtt++;
+    else periodStats(n).oppAtt++;
 
     if (type !== "shot-on-goal" && type !== "goal") continue;
 
     if (team === "OTT" && shooterId) {
       const c = tally(shooterId);
       c.sog++;
+      skaterIn(n, shooterId).sog++;
       if (type === "goal") {
         c.g++;
-        for (const aid of [d.assist1PlayerId, d.assist2PlayerId]) if (aid) tally(aid).a++;
+        skaterIn(n, shooterId).g++;
+        for (const aid of [d.assist1PlayerId, d.assist2PlayerId]) {
+          if (!aid) continue;
+          tally(aid).a++;
+          skaterIn(n, aid).a++;
+        }
       }
+    }
+    // Shots faced by the Sens goalie in net.
+    if (team === "OPP" && d.goalieInNetId && isOtt(d.goalieInNetId)) {
+      const gm = lines(n).goalie;
+      const g = gm.get(d.goalieInNetId) ?? { saves: 0, shots: 0 };
+      g.shots++;
+      if (type !== "goal") g.saves++;
+      gm.set(d.goalieInNetId, g);
     }
 
     if (team === "OTT") ottSog++;
@@ -295,6 +359,7 @@ export function buildGame(pbp: PlayByPlay, box: BoxScore, opts: Options = {}): L
         scorerId: d.scoringPlayerId,
         scorerTotal: d.scoringPlayerTotal,
         assists,
+        assistIds: [d.assist1PlayerId, d.assist2PlayerId].filter((x): x is number => Boolean(x)),
         strength,
         shotType: d.shotType,
         distance,
@@ -426,6 +491,17 @@ export function buildGame(pbp: PlayByPlay, box: BoxScore, opts: Options = {}): L
     goals,
     penalties,
     periods: [...periodMap.values()].sort((a, b) => a.period - b.period),
+    periodLines: [...lineMap.entries()]
+      .sort((a, b) => a[0] - b[0])
+      .map(([period, l]) => {
+        // The goalie who faced the most shots that period.
+        const g = [...l.goalie.entries()].sort((a, b) => b[1].shots - a[1].shots)[0];
+        return {
+          period,
+          skaters: [...l.skaters.values()],
+          goalie: g ? { id: g[0], name: players.get(g[0])?.name ?? last(g[0]), ...g[1] } : null,
+        };
+      }),
     powerPlay: pp,
     faceoffs: { ottWon: ottFo, total: totalFo },
     skaters,
