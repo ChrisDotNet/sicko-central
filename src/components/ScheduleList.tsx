@@ -75,13 +75,13 @@ export function ScheduleList({ games, focusDate }: { games: GameSummary[]; focus
         {shown.length === 0 && <p className="py-6 text-center text-sm text-muted">No games this month.</p>}
         {shown.map((g) => {
           const day = formatDay(g.startTimeUTC);
+          // Live and finished games get one button to the game; Video and Radio are tabs there.
           const href = g.state === "live" ? "/live" : g.state === "final" ? `/game/${g.id}` : null;
-          const videoHref = g.state === "live" ? "/live?tab=video" : g.state === "final" ? `/game/${g.id}?tab=video` : null;
           const sub =
             g.state === "live"
               ? "Live now · follow along"
               : g.state === "final"
-                ? "Final · Recap"
+                ? "Final"
                 : g.home
                   ? g.venue
                   : "Away";
@@ -107,14 +107,13 @@ export function ScheduleList({ games, focusDate }: { games: GameSummary[]; focus
                 <span className="text-sm font-bold tabular">
                   {g.state === "upcoming" ? formatTime(g.startTimeUTC) : scoreLine(g)}
                 </span>
-                {videoHref && (
+                {href && (
                   <Link
-                    href={videoHref}
-                    aria-label={`Video for ${g.home ? "vs" : "at"} ${g.opp}`}
-                    className="pointer-events-auto relative z-10 mt-0.5 inline-flex min-h-9 items-center gap-1 rounded-lg border border-line-strong bg-surface-2 px-2.5 text-xs font-bold text-ink"
+                    href={href}
+                    aria-label={`Game summary, ${g.home ? "vs" : "at"} ${g.opp}`}
+                    className="mt-0.5 inline-flex min-h-9 items-center rounded-lg border border-line-strong bg-surface-2 px-2.5 text-xs font-bold text-ink"
                   >
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5l12 7-12 7z" /></svg>
-                    Video
+                    Game Summary
                   </Link>
                 )}
               </div>
@@ -123,17 +122,7 @@ export function ScheduleList({ games, focusDate }: { games: GameSummary[]; focus
           const cls = `grid min-h-11 grid-cols-[48px_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border bg-surface px-3.5 py-3 ${
             g.state === "live" ? "border-sens" : "border-line"
           }`;
-          // The row is one big link to the game, with the Video button layered on top of it.
-          return href ? (
-            <div key={g.id} className={`relative ${cls}`}>
-              <Link
-                href={href}
-                aria-label={`${g.home ? "vs" : "at"} ${g.opp}, ${g.state === "live" ? "live" : "recap"}`}
-                className="absolute inset-0 rounded-xl"
-              />
-              <div className="pointer-events-none contents">{body}</div>
-            </div>
-          ) : (
+          return (
             <div key={g.id} className={cls}>
               {body}
             </div>
