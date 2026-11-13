@@ -19,7 +19,7 @@ export function GameSections({ game }: { game: LiveGame }) {
           <Section title="Where the shots came from" aside="Ottawa attacks right">
             <ShotMap shots={game.shots} oppAbbrev={game.opp.abbrev} periods={Math.max(3, game.period)} />
           </Section>
-          <Section title="Who's had the puck" aside="Shot attempts">
+          <Section title="Shot Attempts" aside="Shots, misses and blocks">
             <GameFlow game={game} />
           </Section>
           <Section title={game.isFinal ? "Goals" : "Tonight's goals"} aside={game.goals.length ? `${game.goals.filter((g) => g.clipId).length} of ${game.goals.length} replays posted` : undefined}>
