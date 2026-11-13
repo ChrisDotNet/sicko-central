@@ -30,7 +30,7 @@ async function LiveContent({ searchParams }: { searchParams: Promise<Record<stri
     const id = String(today.id);
     const [pbp, box] = await Promise.all([getPlayByPlay(id).catch(() => null), getBoxScore(id)]);
     const game = pbp ? buildGame(pbp, box) : null;
-    const radio = game ? await getRadioForGame(game.gameDate) : [];
+    const radio = game ? await getRadioForGame(game.startTimeUTC) : [];
     const initial = game ? { game, rivals: scores ? atlanticGames(scores, today.id) : [], radio } : null;
     return <LiveCompanion key={id} gameId={today.id} initial={initial} replay={false} initialTab={tab} />;
   }

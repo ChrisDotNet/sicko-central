@@ -27,7 +27,7 @@ export async function GET(request: Request, ctx: RouteContext<"/api/game/[id]">)
     }
     const game = buildGame(pbp, box, { untilElapsed });
     const rivals = scores && untilElapsed == null ? atlanticGames(scores, game.id) : [];
-    const radio = await getRadioForGame(game.gameDate);
+    const radio = await getRadioForGame(game.startTimeUTC);
     const maxAge = game.isFinal && untilElapsed == null ? 300 : 10;
     return Response.json(
       { game, rivals, radio },

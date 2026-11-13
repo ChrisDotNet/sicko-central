@@ -62,7 +62,7 @@ async function Recap({
         ))}
       {tab === "radio" && (
         <Section title="Radio call" aside="TSN 1200">
-          <RadioArchive episodes={await getRadioForGame(game.gameDate)} live={false} />
+          <RadioArchive episodes={await getRadioForGame(game.startTimeUTC)} live={false} />
         </Section>
       )}
     </>
