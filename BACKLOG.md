@@ -16,7 +16,10 @@ the next game better to watch?
 - **Streaming links go to the wrong place** (reported 2026-11-13). The SN1 link goes to
   https://www.sportsnet.ca/watch/, which is a 404. It should go to the game's own page on
   Sportsnet+, e.g. https://watch.sportsnet.ca/event/Ottawa_Pittsburgh_229090 for Nov 14 at
-  PIT. Needs a way to find each game's event id (229090); check the other networks' links too.
+  PIT. TSN has the same problem: Nov 17 at WPG should go to
+  https://www.tsn.ca/live/event/nhl-live-upcoming/GRNT47ad4969a6b9e296007c/ (TSN+ event page).
+  Needs a way to find each game's event id on both services (229090, GRNT47ad…); check the
+  other networks' links too.
 
 ## Suggested order
 
