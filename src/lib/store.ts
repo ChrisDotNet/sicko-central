@@ -1,32 +1,40 @@
 // Small key-value store for content we keep after its source moves on (news headlines,
-// video and radio lists for each game). Uses Upstash Redis through its REST API when the
-// Vercel Marketplace integration's environment variables are set; otherwise an in-memory
-// map, which only lasts as long as the server process (fine for local development).
+// video and radio lists for each game). Uses Neon Postgres (connected through the Vercel
+// Marketplace, which sets DATABASE_URL): one table of key → JSON text (kept as
+// text so it reads back exactly as written), created on first use.
+// Without a database it falls back to an in-memory map that only lasts as long as the
+// server process (fine for local development).
 // Never throws: storage problems just mean nothing extra is kept.
+import { neon } from "@neondatabase/serverless";
 
-const URL_ = process.env.KV_REST_API_URL ?? process.env.UPSTASH_REDIS_REST_URL;
-const TOKEN = process.env.KV_REST_API_TOKEN ?? process.env.UPSTASH_REDIS_REST_TOKEN;
+const URL_ = process.env.DATABASE_URL ?? process.env.POSTGRES_URL;
+const sql = URL_ ? neon(URL_) : null;
 
-export const storeEnabled = Boolean(URL_ && TOKEN);
+export const storeEnabled = Boolean(sql);
 
-const memory = new Map<string, string>();
+const memory = new Map<string, unknown>();
 
-async function command(args: string[]): Promise<unknown> {
-  const res = await fetch(URL_ as string, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${TOKEN}`, "Content-Type": "application/json" },
-    body: JSON.stringify(args),
-    cache: "no-store",
-    signal: AbortSignal.timeout(5_000),
+let ready: Promise<unknown> | null = null;
+function ensureTable() {
+  if (!sql) return Promise.resolve();
+  ready ??= sql`
+    CREATE TABLE IF NOT EXISTS kv_store (
+      key text PRIMARY KEY,
+      value text NOT NULL,
+      updated_at timestamptz NOT NULL DEFAULT now()
+    )`.catch((err) => {
+    ready = null; // try again next time
+    throw err;
   });
-  if (!res.ok) throw new Error(`store ${res.status}`);
-  const data = (await res.json()) as { result?: unknown };
-  return data.result ?? null;
+  return ready;
 }
 
 export async function getJson<T>(key: string): Promise<T | null> {
   try {
-    const raw = storeEnabled ? ((await command(["GET", key])) as string | null) : (memory.get(key) ?? null);
+    if (!sql) return (memory.get(key) as T) ?? null;
+    await ensureTable();
+    const rows = await sql`SELECT value FROM kv_store WHERE key = ${key}`;
+    const raw = rows[0]?.value as string | undefined;
     return raw ? (JSON.parse(raw) as T) : null;
   } catch {
     return null;
@@ -35,9 +43,15 @@ export async function getJson<T>(key: string): Promise<T | null> {
 
 export async function setJson(key: string, value: unknown): Promise<void> {
   try {
-    const raw = JSON.stringify(value);
-    if (storeEnabled) await command(["SET", key, raw]);
-    else memory.set(key, raw);
+    if (!sql) {
+      memory.set(key, value);
+      return;
+    }
+    await ensureTable();
+    const json = JSON.stringify(value);
+    await sql`
+      INSERT INTO kv_store (key, value, updated_at) VALUES (${key}, ${json}, now())
+      ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()`;
   } catch {
     /* keep going without storing */
   }

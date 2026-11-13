@@ -34,7 +34,7 @@ Each game's Media tab has three parts:
 - **Video**: recaps, condensed game, every goal and other highlights from NHL.com (`src/lib/video.ts`).
 - **Audio**: TSN 1200's radio call from its podcast feed (`src/lib/radio.ts`).
 
-TSN's and Sportsnet's feeds only hold two to three days, so `src/lib/media.ts` saves each game's lists (headlines, links, clip ids; never the media itself, about 15 KB a game) in Upstash Redis and merges them with what's live. A daily job (`/api/cron/collect`, `vercel.json`, 14:00 UTC) saves recent games even if nobody opens them. Without Upstash configured it falls back to memory, which works for development but forgets.
+TSN's and Sportsnet's feeds only hold two to three days, so `src/lib/media.ts` saves each game's lists (headlines, links, clip ids; never the media itself, about 15 KB a game) in Neon Postgres (one `kv_store` table, created automatically) and merges them with what's live. A daily job (`/api/cron/collect`, `vercel.json`, 14:00 UTC) saves recent games even if nobody opens them. Without a database configured it falls back to memory, which works for development but forgets.
 
 ## Goal replays
 
@@ -79,7 +79,7 @@ npm run lint
 ## Deploy
 
 1. In Vercel, **Add New → Project** and import this repo. The defaults are correct.
-2. **Storage → Upstash for Redis** (free plan), connect it to the project, and redeploy. This sets `KV_REST_API_URL` and `KV_REST_API_TOKEN`, which keep each game's news after the feeds move on.
+2. **Storage → Neon** (free plan), connect it to the project, and redeploy. This sets `DATABASE_URL`, which keeps each game's news after the feeds move on.
 3. Optional: set `CRON_SECRET` to any long random string so only Vercel's daily job can call `/api/cron/collect`.
 4. Add the domain under **Settings → Domains** once `sickocentral.ca` is registered.
 
