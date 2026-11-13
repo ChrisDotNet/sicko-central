@@ -2,6 +2,7 @@
 
 import { useEffect, useImperativeHandle, useRef, useState } from "react";
 import type { Ref } from "react";
+import { playSlapshot } from "@/lib/sfx";
 
 // The NHL's Brightcove player, loaded in the page (not an iframe) so we can tell when
 // a clip ends and start the next one. The player's own config carries the key it needs
@@ -158,6 +159,7 @@ export function ClipPlayer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transition]);
 
+  const upNext = transition ? items[transition.index] : null;
 
   // Create the player once; the player library owns this element's DOM.
   useEffect(() => {
@@ -183,6 +185,7 @@ export function ClipPlayer({
           if (props.current.autoAdvance && next < props.current.clipIds.length) {
             void fetchVideo(next);
             setTransition({ index: next, left: TRANSITION_SECS });
+            playSlapshot();
           } else {
             props.current.onDone();
           }
@@ -217,12 +220,30 @@ export function ClipPlayer({
   return (
     <div className="relative w-full bg-black">
       <div ref={box} className="w-full" />
-      {transition && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-ground" aria-label="Next goal coming up">
-          <span aria-hidden="true" className="font-display text-[34px] font-extrabold leading-none tracking-wide">
+      {upNext && transition && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2.5 bg-ground px-6 text-center">
+          <span aria-hidden="true" className="font-display text-[28px] font-extrabold leading-none tracking-wide">
             <span className="text-sens-bright">SICKO</span> <span className="text-ink">CENTRAL</span>
           </span>
-          <span aria-hidden="true" className="h-0.5 w-14 rounded-full bg-gold" />
+          <span aria-hidden="true" className="h-0.5 w-12 rounded-full bg-gold" />
+          <span className="text-xs font-bold uppercase tracking-widest text-gold-text">Up next in {transition.left}</span>
+          <span className="font-display text-2xl font-extrabold leading-tight tracking-wide">{upNext.title}</span>
+          <span className="text-sm text-muted">{upNext.sub}</span>
+          <div className="mt-1 flex gap-2">
+            <button type="button" onClick={() => goTo(transition.index)} className="min-h-11 rounded-xl bg-sens px-4 text-sm font-bold text-white">
+              Play now
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setTransition(null);
+                props.current.onDone();
+              }}
+              className="min-h-11 rounded-xl border border-line-strong px-4 text-sm font-semibold text-ink"
+            >
+              Stop here
+            </button>
+          </div>
         </div>
       )}
       {needsTap && !transition && (
