@@ -28,7 +28,9 @@ The API can change without notice. If something breaks, `src/lib/nhl.ts` (fetchi
 
 ## Screen sizes
 
-Phones get one column. Tablets (768 px and up) get two columns on the home, live and game pages and extra standings columns. Desktop (1024 px and up) moves the menu into the header and lays the live and game pages out in three columns: "Right now" and goals; shot map, shot attempts and skaters; then the out-of-town scoreboard and the latest media. Page widths live in `Page` (`src/components/ui.tsx`); the game layout is in `GameSections`.
+Phones get one column. Tablets (768 px and up) get two columns on the home, live and game pages and extra standings columns. Desktop (1024 px and up) moves the menu into the header and lays the live and game pages out in three columns: "Right now" and goals; shot map, shot attempts and skaters; then the out-of-town scoreboard and the latest media. The schedule becomes a month calendar from tablet up; roster, player and standings tables add columns as the screen widens; standings show divisions and conferences side by side on desktop.
+
+The menu's **Game** tab (the `/live` page) reflects today's game through `/api/status`, polled by `src/lib/game-status.ts`: a gold dot on game day, and a red LIVE treatment with the score while the game is on (plus a red strip under the header on phones and tablets, on other pages). Page widths live in `Page` (`src/components/ui.tsx`); the game layout is in `GameSections`.
 
 ## Media tab
 

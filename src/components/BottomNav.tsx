@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense } from "react";
+import { useGameStatus } from "@/lib/game-status";
+import type { GameStatus } from "@/lib/game-status";
 
 export const NAV_ITEMS = [
   {
@@ -22,7 +24,7 @@ export const NAV_ITEMS = [
   },
   {
     href: "/live",
-    label: "Live",
+    label: "Game",
     icon: (
       <>
         <circle cx="12" cy="12" r="3" fill="currentColor" />
@@ -50,21 +52,27 @@ export function isActive(path: string, href: string) {
   return path.startsWith(href);
 }
 
-function NavLinks({ path }: { path: string | null }) {
+function NavLinks({ path, status }: { path: string | null; status: GameStatus }) {
   return (
     <div className="grid grid-cols-5 px-1 pt-1.5 pb-[max(18px,env(safe-area-inset-bottom))]">
       {NAV_ITEMS.map((item) => {
         const active = path ? isActive(path, item.href) : false;
+        const game = item.href === "/live";
+        const live = game && status.state === "live";
+        const today = game && status.state === "pre";
         return (
           <Link
             key={item.href}
             href={item.href}
             aria-current={active ? "page" : undefined}
             className={`flex min-h-12 flex-col items-center justify-center gap-1 text-[11px] ${
-              active ? "font-bold text-sens-text" : "font-medium text-muted"
+              active || live ? "font-bold text-sens-text" : "font-medium text-muted"
             }`}
           >
+            <span className={`relative flex items-center justify-center ${live ? "rounded-full bg-sens px-2.5 py-0.5 text-white" : ""}`}>
+            {live && <span aria-hidden="true" className="live-ring absolute inset-0 rounded-full bg-sens" />}
             <svg
+              className="relative"
               width="22"
               height="22"
               viewBox="0 0 24 24"
@@ -77,7 +85,10 @@ function NavLinks({ path }: { path: string | null }) {
             >
               {item.icon}
             </svg>
-            {item.label}
+            {today && <span aria-hidden="true" className="absolute -top-0.5 -right-1.5 size-2 rounded-full bg-gold-bright ring-2 ring-[#111113]" />}
+            </span>
+            {live ? "LIVE" : item.label}
+            {today && <span className="sr-only"> (game today)</span>}
           </Link>
         );
       })}
@@ -87,7 +98,7 @@ function NavLinks({ path }: { path: string | null }) {
 
 function ActiveNav() {
   const path = usePathname();
-  return <NavLinks path={path} />;
+  return <NavLinks path={path} status={useGameStatus()} />;
 }
 
 export function BottomNav() {
@@ -96,7 +107,7 @@ export function BottomNav() {
       aria-label="Main"
       className="fixed inset-x-0 bottom-0 z-20 mx-auto max-w-xl border-t border-line bg-[#111113]/95 backdrop-blur md:max-w-4xl lg:hidden"
     >
-      <Suspense fallback={<NavLinks path={null} />}>
+      <Suspense fallback={<NavLinks path={null} status={{ state: "none" }} />}>
         <ActiveNav />
       </Suspense>
     </nav>

@@ -54,7 +54,9 @@ export function savePct(n: number | undefined): string {
 }
 
 export function toiFromSeconds(sec: number): string {
-  const m = Math.floor(sec / 60);
-  const s = Math.round(sec % 60);
+  // Round the total first, so 1319.6 s is 22:00, not 21:60.
+  const total = Math.round(sec);
+  const m = Math.floor(total / 60);
+  const s = total % 60;
   return `${m}:${String(s).padStart(2, "0")}`;
 }

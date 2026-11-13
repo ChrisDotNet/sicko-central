@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { HeaderNav } from "./HeaderNav";
+import { HeaderNav, LiveStrip } from "./HeaderNav";
 import { Logo } from "./Logo";
 import { AlertSoundToggle } from "./notify/AlertSoundToggle";
 
@@ -15,6 +15,7 @@ export function Header() {
           <AlertSoundToggle />
         </div>
       </div>
+      <LiveStrip />
     </header>
   );
 }

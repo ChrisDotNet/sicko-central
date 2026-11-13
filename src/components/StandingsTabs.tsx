@@ -35,7 +35,7 @@ export function StandingsTabs({ rows, ottConference, ottDivision }: { rows: Stan
 
   return (
     <>
-      <div role="group" aria-label="Standings view" className="flex gap-1.5 px-4 pt-4">
+      <div role="group" aria-label="Standings view" className="flex gap-1.5 px-4 pt-4 md:max-w-md">
         {VIEWS.map((v) => (
           <button
             key={v}
@@ -51,11 +51,17 @@ export function StandingsTabs({ rows, ottConference, ottDivision }: { rows: Stan
         ))}
       </div>
 
-      {view === "Division" &&
-        conferences.flatMap((c) => divisionsOf(c).map((d) => <Group key={d} title={d} aside={confName(c)} rows={byDivision(d)} />))}
+      {/* Desktop: the four divisions in a 2×2 grid, each conference on its own row. */}
+      {view === "Division" && (
+        <div className="lg:grid lg:grid-cols-2">
+          {conferences.flatMap((c) => divisionsOf(c).map((d) => <Group key={d} title={d} aside={confName(c)} rows={byDivision(d)} />))}
+        </div>
+      )}
 
-      {view === "Wild card" &&
-        conferences.map((c) => {
+      {/* Desktop: the two conferences side by side. */}
+      {view === "Wild card" && (
+        <div className="lg:grid lg:grid-cols-2">
+        {conferences.map((c) => {
           const inConf = rows.filter((r) => r.conferenceAbbrev === c);
           const wildcard = inConf.filter((r) => r.wildcardSequence > 0).sort((a, b) => a.wildcardSequence - b.wildcardSequence);
           return (
@@ -68,6 +74,8 @@ export function StandingsTabs({ rows, ottConference, ottDivision }: { rows: Stan
             </div>
           );
         })}
+        </div>
+      )}
 
       {view === "League" && (
         <Group title="NHL" aside="All 32 teams" rows={[...rows].sort((a, b) => a.leagueSequence - b.leagueSequence)} />

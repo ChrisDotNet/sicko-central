@@ -7,6 +7,7 @@ import { scoreLine } from "@/lib/schedule";
 import { ResultBadge, TeamBar } from "./ui";
 import { BroadcastLinks } from "./BroadcastLinks";
 import { GameSummaryButton } from "./GameSummaryButton";
+import { ScheduleCalendar } from "./ScheduleCalendar";
 
 const FILTERS = ["All", "Home", "Away"] as const;
 
@@ -25,15 +26,13 @@ export function ScheduleList({ games, focusDate }: { games: GameSummary[]; focus
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("All");
 
   const month = months[monthIdx];
-  const shown = games.filter(
-    (g) =>
-      formatDay(g.startTimeUTC).month === month &&
-      (filter === "All" || (filter === "Home" ? g.home : !g.home)),
-  );
+  const inMonth = games.filter((g) => formatDay(g.startTimeUTC).month === month);
+  const visible = (g: GameSummary) => filter === "All" || (filter === "Home" ? g.home : !g.home);
+  const shown = inMonth.filter(visible);
 
   return (
     <>
-      <div className="flex items-center justify-between px-2 pt-3.5">
+      <div className="flex items-center justify-between px-2 pt-3.5 md:max-w-sm md:px-2">
         <button
           type="button"
           aria-label="Previous month"
@@ -55,7 +54,7 @@ export function ScheduleList({ games, focusDate }: { games: GameSummary[]; focus
         </button>
       </div>
 
-      <div role="group" aria-label="Filter games" className="flex gap-1.5 px-4 pt-2 pb-3.5">
+      <div role="group" aria-label="Filter games" className="flex gap-1.5 px-4 pt-2 pb-3.5 md:max-w-sm">
         {FILTERS.map((f) => (
           <button
             key={f}
@@ -71,7 +70,10 @@ export function ScheduleList({ games, focusDate }: { games: GameSummary[]; focus
         ))}
       </div>
 
-      <div className="flex flex-col gap-2 px-4">
+      <ScheduleCalendar games={inMonth} visible={visible} />
+
+      {/* Phones: the list. Tablet and desktop use the calendar above. */}
+      <div className="flex flex-col gap-2 px-4 md:hidden">
         {shown.length === 0 && <p className="py-6 text-center text-sm text-muted">No games this month.</p>}
         {shown.map((g) => {
           const day = formatDay(g.startTimeUTC);

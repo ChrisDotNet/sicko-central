@@ -13,7 +13,7 @@ import { getRadioForGame } from "@/lib/radio";
 import { scoreLine, splitSchedule } from "@/lib/schedule";
 import { OTT } from "@/lib/teams";
 
-export const metadata: Metadata = { title: "Live" };
+export const metadata: Metadata = { title: "Game" };
 
 async function LiveContent({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const sp = await searchParams;

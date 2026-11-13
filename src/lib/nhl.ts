@@ -211,6 +211,11 @@ export type SeasonLine = {
   savePctg?: number;
   goalsAgainstAvg?: number;
   shutouts?: number;
+  pim?: number;
+  powerPlayGoals?: number;
+  shots?: number;
+  shootingPctg?: number;
+  gamesStarted?: number;
 };
 
 export type PlayerLanding = {
@@ -263,6 +268,13 @@ export type ClubSkater = {
   assists: number;
   points: number;
   plusMinus: number;
+  penaltyMinutes?: number;
+  powerPlayGoals?: number;
+  gameWinningGoals?: number;
+  shots?: number;
+  shootingPctg?: number;
+  avgTimeOnIcePerGame?: number;
+  faceoffWinPctg?: number;
 };
 
 export type ClubGoalie = {
@@ -273,6 +285,10 @@ export type ClubGoalie = {
   wins: number;
   savePercentage: number;
   goalsAgainstAverage: number;
+  gamesStarted?: number;
+  losses?: number;
+  overtimeLosses?: number;
+  shutouts?: number;
 };
 
 export type ClubStats = { skaters: ClubSkater[]; goalies: ClubGoalie[] };
