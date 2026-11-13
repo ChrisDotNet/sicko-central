@@ -12,6 +12,7 @@
 import { cacheLife } from "next/cache";
 import type { ScheduleGame } from "./nhl";
 import { getSchedule } from "./nhl";
+import type { TsnVideo as PartnerVideo } from "./tsn-video";
 
 const STORIES = "https://forge-dapi.d3.nhle.com/v2/content/en-us/stories";
 const TSN_FEED = "https://www.tsn.ca/arc/outboundfeeds/rss/category/nhl/?outputType=xml";
@@ -256,4 +257,54 @@ export function mergeNews(items: NewsItem[]): NewsItem[] {
 
 export function sortNews(items: NewsItem[]): NewsItem[] {
   return [...items].sort((a, b) => b.published.localeCompare(a.published));
+}
+
+// ---- Sportsnet video ----
+// Sportsnet's feed lists its videos alongside stories (Brightcove clips, tagged by team).
+// They play in Sportsnet's own Brightcove player, embedded; we never copy the video.
+const SN_PLAYER = "https://players.brightcove.net/1704050871/JCdte3tMv_default/index.html";
+
+function parseSportsnetVideos(xml: string): PartnerVideo[] {
+  const out: PartnerVideo[] = [];
+  for (const block of xml.split(/<item[\s>]/i).slice(1)) {
+    if (tag(block, "post_type") !== "bc-video") continue;
+    const teams = [...block.matchAll(/<team[^>]*>([^<]+)<\/team>/gi)].map((m) => m[1].trim());
+    const title = tag(block, "title");
+    if (!title) continue;
+    if (!(teams.includes("OTT") && teams.length <= 2) && !SENS.test(title)) continue;
+    const id = block.match(/<brightcove id="(\d+)"/)?.[1];
+    const url = tag(block, "link");
+    const published = iso(tag(block, "pubDate"));
+    if (!id || !url || !published) continue;
+    const ms = Number(block.match(/<content duration="(\d+)"/)?.[1] ?? 0);
+    out.push({
+      id,
+      title,
+      summary: shorten(tag(block, "description")),
+      seconds: ms ? Math.round(ms / 1000) : null,
+      thumb: feedImage(block),
+      url,
+      embedUrl: `${SN_PLAYER}?videoId=${id}`,
+      published,
+      expires: null,
+    });
+  }
+  return out;
+}
+
+async function getSportsnetVideos(): Promise<PartnerVideo[]> {
+  "use cache";
+  cacheLife("frequent");
+  const xml = await fetchText(SN_FEED);
+  return xml ? parseSportsnetVideos(xml) : [];
+}
+
+// Sportsnet videos for one game, matched by publish time like the stories, newest first.
+export async function getSportsnetVideosForGame(gameId: string): Promise<PartnerVideo[]> {
+  const [videos, schedule] = await Promise.all([getSportsnetVideos(), getSchedule()]);
+  const games = (schedule?.games ?? []).filter((g) => g.gameType >= 2);
+  const id = Number(gameId);
+  return videos
+    .filter((v) => assignGame({ url: v.url, outlet: "Sportsnet", kind: "Video", title: v.title, summary: v.summary, published: v.published }, games) === id)
+    .sort((a, b) => b.published.localeCompare(a.published));
 }

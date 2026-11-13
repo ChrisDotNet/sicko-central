@@ -6,6 +6,7 @@
 // TSN videos expire (about a month after posting), so each one carries its end date.
 import { cacheLife } from "next/cache";
 
+// Also used for Sportsnet's videos (src/lib/news.ts): same shape, different player.
 export type TsnVideo = {
   id: string; // Bell Media content id
   title: string;

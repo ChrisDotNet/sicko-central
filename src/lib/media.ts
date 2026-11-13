@@ -6,7 +6,7 @@
 // Only lists are saved (headlines, links, clip ids), never the media itself: about 15 KB
 // a game. The store is written only when something new turns up.
 import { cacheLife } from "next/cache";
-import { getNewsForGame, mergeNews, sortNews } from "./news";
+import { getNewsForGame, getSportsnetVideosForGame, mergeNews, sortNews } from "./news";
 import { getPlayByPlay, getSchedule } from "./nhl";
 import type { NewsItem } from "./news";
 import { getRadioForGame } from "./radio";
@@ -37,6 +37,7 @@ function merge(live: GameMedia, saved: GameMedia | null): GameMedia {
       highlights: unionBy(live.video.highlights, saved.video?.highlights, clip),
       goalThumbs: { ...(saved.video?.goalThumbs ?? {}), ...(live.video.goalThumbs ?? {}) },
       tsn: unionBy(live.video.tsn ?? [], saved.video?.tsn, (v) => v.id).sort((a, b) => b.published.localeCompare(a.published)),
+      sportsnet: unionBy(live.video.sportsnet ?? [], saved.video?.sportsnet, (v) => v.id).sort((a, b) => b.published.localeCompare(a.published)),
     },
     // The radio call is a set: if the feed has it, use the feed's version (fresh labels);
     // otherwise what we saved.
@@ -58,8 +59,8 @@ export async function collectGameMedia(gameId: string, startTimeUTC: string): Pr
   ]);
   // TSN video comes from the TSN stories found for this game (saved ones included).
   const tsnStories = mergeNews([...news, ...(saved?.news ?? [])]).filter((n) => n.outlet === "TSN").map((n) => n.url);
-  const tsn = await getTsnVideos(tsnStories);
-  const merged = merge({ news, video: { ...video, tsn }, radio }, saved);
+  const [tsn, sportsnet] = await Promise.all([getTsnVideos(tsnStories), getSportsnetVideosForGame(gameId)]);
+  const merged = merge({ news, video: { ...video, tsn, sportsnet }, radio }, saved);
   if (!isEmpty(merged) && JSON.stringify(merged) !== JSON.stringify(saved)) {
     await setJson(key(gameId), merged);
   }

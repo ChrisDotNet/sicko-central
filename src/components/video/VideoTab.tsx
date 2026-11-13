@@ -17,11 +17,11 @@ import { Thumb } from "../media/Thumb";
 // The player only loads on the first play, so opening the tab costs nothing.
 // Clips play one at a time; with "Play the next clip automatically" ticked, each NHL clip runs
 // on into the next one in the list (with the up-next card), the way "Watch all goals" did.
-// TSN videos play in TSN's own embedded player (Bell Media's, ads and all) in the same spot.
-// That player doesn't tell us when a video ends, so auto-play skips over TSN videos.
+// TSN and Sportsnet videos play in their own embedded players (ads and all) in the same spot.
+// Those players don't tell us when a video ends, so auto-play skips over them.
 
-type Section = "full" | "tsn" | "goals" | "highlights";
-// NHL clips are keyed by their positive clip id; TSN videos by their negated content id.
+type Section = "full" | "tsn" | "goals" | "highlights" | "sportsnet";
+// NHL clips are keyed by their positive clip id; TSN and Sportsnet videos by their negated id.
 type Entry = {
   clipId: number;
   section: Section;
@@ -33,6 +33,7 @@ type Entry = {
   ott?: boolean;
   badge?: string;
   embedUrl?: string;
+  source?: "TSN" | "Sportsnet";
 };
 type Filter = "all" | "ott" | "opp";
 
@@ -47,8 +48,9 @@ const SECTION_TITLES: Record<Section, string> = {
   tsn: "TSN: interviews & analysis",
   goals: "Goals in order",
   highlights: "Other highlights",
+  sportsnet: "Sportsnet: highlights & reaction",
 };
-const NOW_LABEL: Record<Section, string> = { full: "Full game", tsn: "TSN", goals: "Goals", highlights: "Highlights" };
+const NOW_LABEL: Record<Section, string> = { full: "Full game", tsn: "TSN", goals: "Goals", highlights: "Highlights", sportsnet: "Sportsnet" };
 
 const Play = ({ size = 16 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5l11 7-11 7z" /></svg>
@@ -124,8 +126,20 @@ export function VideoTab({
       url: v.url,
       badge: length(v.seconds),
       embedUrl: v.embedUrl,
+      source: "TSN" as const,
     }));
-    return [...full, ...tsn, ...goalEntries, ...hl];
+    const sn: Entry[] = (video?.sportsnet ?? []).map((v) => ({
+      clipId: -Number(v.id),
+      section: "sportsnet",
+      title: v.title,
+      sub: `${length(v.seconds)}${v.seconds ? " · " : ""}Sportsnet`,
+      thumb: v.thumb,
+      url: v.url,
+      badge: length(v.seconds),
+      embedUrl: v.embedUrl,
+      source: "Sportsnet" as const,
+    }));
+    return [...full, ...tsn, ...goalEntries, ...hl, ...sn];
   }, [video, goals, goalOk]);
 
   const waiting = goals.filter((g) => !g.clipId && goalOk(g));
@@ -187,7 +201,7 @@ export function VideoTab({
   const onError = useCallback(() => setFailed(true), []);
 
   const goalCount = (f: Filter) => goals.filter((g) => (f === "all" ? true : f === "ott" ? g.team === "OTT" : g.team !== "OTT")).length;
-  const sections: Section[] = ["full", "tsn", "goals", "highlights"];
+  const sections: Section[] = ["full", "tsn", "goals", "highlights", "sportsnet"];
   const firstGoal = entries.find((e) => e.section === "goals");
 
   if (entries.length === 0 && waiting.length === 0) {
@@ -210,7 +224,7 @@ export function VideoTab({
             <iframe
               key={tsnNow.clipId}
               src={tsnNow.embedUrl}
-              title={`${tsnNow.title} (TSN video)`}
+              title={`${tsnNow.title} (${tsnNow.source} video)`}
               allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
               allowFullScreen
               className="absolute inset-0 size-full border-0"
@@ -259,13 +273,13 @@ export function VideoTab({
               </div>
               <div className="text-xs text-muted">
                 {/* The source becomes a link while a clip plays, so it isn't named twice. */}
-                {current?.url ? shown.sub.replace(/(^| · )(NHL\.com|TSN)$/, "") : shown.sub}
+                {current?.url ? shown.sub.replace(/(^| · )(NHL\.com|TSN|Sportsnet)$/, "") : shown.sub}
                 {failed && <span className="text-sens-text"> · Wouldn&apos;t load here.</span>}
                 {current?.url && (
                   <>
-                    {shown.sub.replace(/(^| · )(NHL\.com|TSN)$/, "") ? " · " : ""}
+                    {shown.sub.replace(/(^| · )(NHL\.com|TSN|Sportsnet)$/, "") ? " · " : ""}
                     <a href={current.url} target="_blank" rel="noopener noreferrer" className="underline">
-                      {current.embedUrl ? "TSN" : failed ? "Open on NHL.com" : "NHL.com"}
+                      {current.source ?? (failed ? "Open on NHL.com" : "NHL.com")}
                     </a>
                   </>
                 )}
@@ -353,7 +367,11 @@ export function VideoTab({
                         {e.team && (
                           <span className={`absolute top-1 left-1 rounded px-1 text-[10px] font-bold ${e.ott ? "bg-gold text-ground" : "bg-line-strong text-ink"}`}>{e.team}</span>
                         )}
-                        {e.embedUrl && <span className="absolute top-1 left-1 rounded bg-sens px-1 text-[10px] font-bold text-white">TSN</span>}
+                        {e.source && (
+                          <span className={`absolute top-1 left-1 rounded px-1 text-[10px] font-bold text-white ${e.source === "TSN" ? "bg-sens" : "bg-[#1f4e99]"}`}>
+                            {e.source === "TSN" ? "TSN" : "SN"}
+                          </span>
+                        )}
                         {e.badge && <span className="absolute right-1 bottom-1 rounded bg-black/70 px-1 text-[10px] font-bold text-white">{e.badge}</span>}
                         {on && (
                           <span className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/45 text-[10px] font-bold tracking-widest text-white">PLAYING</span>

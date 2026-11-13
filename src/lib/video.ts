@@ -17,6 +17,7 @@ export type GameVideo = {
   highlights: VideoItem[];
   goalThumbs?: Record<string, string>;
   tsn?: TsnVideo[];
+  sportsnet?: TsnVideo[];
 };
 
 type ForgeItem = {
