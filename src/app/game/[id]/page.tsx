@@ -70,7 +70,6 @@ async function SummaryWithLatest({ id, game }: { id: string; game: LiveGame }) {
 async function GameMedia({ id, game, segment }: { id: string; game: LiveGame; segment: MediaSegment }) {
   const media = await getGameMedia(id, game.startTimeUTC);
   return (
-    <div className="lg:mx-auto lg:max-w-3xl">
     <MediaTab
       news={media.news}
       video={media.video}
@@ -80,8 +79,8 @@ async function GameMedia({ id, game, segment }: { id: string; game: LiveGame; se
       isPre={game.isPre}
       isFinal={game.isFinal}
       initialSegment={segment}
+      oppAbbrev={game.opp.abbrev}
     />
-    </div>
   );
 }
 

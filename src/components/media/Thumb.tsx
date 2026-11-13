@@ -6,10 +6,20 @@ import { useState } from "react";
 // the browser. Deliberately not passed through Next's image optimizer: that would copy the
 // outlet's photo onto our hosting, and Vercel Hobby limits optimized images anyway.
 // Decorative: the title next to it says what it is. Falls back to a plain block.
-export function Thumb({ src, className = "", play = false }: { src?: string | null; className?: string; play?: boolean }) {
+export function Thumb({
+  src,
+  className = "",
+  play = false,
+  square = false,
+}: {
+  src?: string | null;
+  className?: string;
+  play?: boolean;
+  square?: boolean;
+}) {
   const [failed, setFailed] = useState(false);
   return (
-    <span className={`relative block shrink-0 overflow-hidden rounded-lg bg-surface-2 ${className}`}>
+    <span className={`relative block shrink-0 overflow-hidden bg-surface-2 ${square ? "" : "rounded-lg"} ${className}`}>
       {src && !failed && (
         // eslint-disable-next-line @next/next/no-img-element -- see note above
         <img

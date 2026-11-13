@@ -93,6 +93,7 @@ export function MediaTab({
   initialSegment = "news",
   pending,
   videoNote,
+  oppAbbrev,
 }: {
   news: NewsItem[];
   video: GameVideo | null;
@@ -105,6 +106,7 @@ export function MediaTab({
   // A clip to open right away (from an alert): switches to Video. `n` changes per request.
   pending?: { clipId: number; n: number } | null;
   videoNote?: string;
+  oppAbbrev: string;
 }) {
   const [segment, setSegment] = useState<MediaSegment>(initialSegment);
   const [seenPending, setSeenPending] = useState(0);
@@ -131,7 +133,7 @@ export function MediaTab({
 
   return (
     <>
-      <div role="tablist" aria-label="Media type" className="flex gap-2 px-4 pt-4">
+      <div role="tablist" aria-label="Media type" className="flex gap-2 px-4 pt-4 md:max-w-md">
         {SEGMENTS.map((s) => (
           <button
             key={s.id}
@@ -148,7 +150,12 @@ export function MediaTab({
         ))}
       </div>
 
-      {segment === "news" && <NewsList news={news} startTimeUTC={startTimeUTC} isPre={isPre} />}
+      {/* News and Audio read best at a column width; Video uses the whole page. */}
+      {segment === "news" && (
+        <div className="lg:max-w-3xl">
+          <NewsList news={news} startTimeUTC={startTimeUTC} isPre={isPre} />
+        </div>
+      )}
 
       {segment === "video" &&
         (isPre ? (
@@ -156,11 +163,18 @@ export function MediaTab({
             <Note>Video shows up here once the game starts.</Note>
           </Section>
         ) : (
-          <VideoTab video={video} goals={goals} isFinal={isFinal} pending={pending && pending.n > consumed ? pending : null} note={videoNote} />
+          <VideoTab
+            video={video}
+            goals={goals}
+            isFinal={isFinal}
+            pending={pending && pending.n > consumed ? pending : null}
+            note={videoNote}
+            oppAbbrev={oppAbbrev}
+          />
         ))}
 
       {segment === "audio" && (
-        <Section title="Radio call" aside="TSN 1200">
+        <Section title="Radio call" aside="TSN 1200" className="lg:max-w-3xl">
           {isPre && radio.length === 0 ? (
             <Note>Listen live with the TSN 1200 bar below. The pre-game show and each period show up here once they&apos;ve aired.</Note>
           ) : (

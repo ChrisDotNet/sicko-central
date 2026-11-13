@@ -364,7 +364,6 @@ export function LiveCompanion({
       )}
 
       {tab === "media" && (
-        <div className="lg:mx-auto lg:max-w-3xl">
         <MediaTab
           news={replay ? [] : (media?.news ?? [])}
           video={replay ? null : (media?.video ?? null)}
@@ -376,8 +375,8 @@ export function LiveCompanion({
           initialSegment={initialSegment}
           pending={pending}
           videoNote={replay ? "Recaps and highlights are hidden in replay mode so they don't spoil the game." : undefined}
+          oppAbbrev={game.opp.abbrev}
         />
-        </div>
       )}
 
       {showLiveBar && (

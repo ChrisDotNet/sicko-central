@@ -87,6 +87,10 @@ export function ClipPlayer({
   const player = useRef<BcPlayer | null>(null);
   const cache = useRef(new Map<number, BcVideo>());
   const idx = useRef(start);
+  // The clip playing now, by id: lists can grow mid-game (a new goal posts), which shifts
+  // positions, so the position is re-found from the id whenever the list changes.
+  const currentId = useRef<number | null>(items[start]?.clipId ?? null);
+  const transitioning = useRef(false);
   const stallTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [needsTap, setNeedsTap] = useState(false);
   const [transition, setTransition] = useState<{ index: number; left: number } | null>(null);
@@ -94,8 +98,15 @@ export function ClipPlayer({
   const props = useRef({ clipIds, autoAdvance, onIndex, onDone, onError });
 
   useEffect(() => {
-    props.current = { clipIds: items.map((i) => i.clipId), autoAdvance, onIndex, onDone, onError };
+    const ids = items.map((i) => i.clipId);
+    props.current = { clipIds: ids, autoAdvance, onIndex, onDone, onError };
+    const at = currentId.current == null ? -1 : ids.indexOf(currentId.current);
+    if (at >= 0) idx.current = at;
   }, [items, autoAdvance, onIndex, onDone, onError]);
+
+  useEffect(() => {
+    transitioning.current = transition != null;
+  }, [transition]);
 
   const clearStall = () => {
     if (stallTimer.current) clearTimeout(stallTimer.current);
@@ -123,6 +134,7 @@ export function ClipPlayer({
     const p = player.current;
     if (!p) return;
     idx.current = i;
+    currentId.current = props.current.clipIds[i] ?? null;
     props.current.onIndex(i);
     p.catalog.load(video);
     clearStall();
@@ -138,6 +150,12 @@ export function ClipPlayer({
     if (i < 0 || i >= props.current.clipIds.length) return;
     setNeedsTap(false);
     setTransition(null);
+    // Not ready yet: remember the choice; the player starts it once it's ready.
+    if (!player.current) {
+      idx.current = i;
+      currentId.current = props.current.clipIds[i] ?? null;
+      return;
+    }
     const cached = cache.current.get(props.current.clipIds[i]);
     if (cached) {
       start_(i, cached);
@@ -198,6 +216,12 @@ export function ClipPlayer({
         };
         p.on("playing", started);
         p.on("adstart", started);
+        // Paused or finished (and not just between clips): let the radio pick up again.
+        p.on("pause", () => {
+          setTimeout(() => {
+            if (player.current?.paused() && !transitioning.current) announceReplayEnd();
+          }, 1500);
+        });
         p.ready(() => {
           if (!disposed) goTo(idx.current);
         });

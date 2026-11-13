@@ -2,24 +2,57 @@
 
 Chris's list, with how each could be done, what it's worth and what stands in the way.
 Value and effort are relative to each other (S = an afternoon-sized change, M = a few
-sessions, L = a project of its own). Updated 2026-11-13.
+sessions, L = a project of its own). Updated 2026-11-13. Value is judged against the mission.
+
+## The mission (the filter for everything below)
+
+Sicko Central is **the game-watching companion for Sens fans**: the thing you need in your
+hand while the game is on, alongside watching on TV (first) or listening on the radio
+(second). Everything else is secondary. Each idea gets weighed by one question: does it make
+the next game better to watch?
 
 ## Suggested order
 
-1. Player birthdays + game-day facts (data-driven "Did you know")
-2. All Sens news, not just game days
-3. Full career on the player page (junior, Europe, international, playoffs)
-4. Ticket links for home games
-5. Favourite players
-6. Sens franchise history
-7. Podcasts tab
-8. Player contracts (parked until there's a legitimate data source)
+**Tier 1: makes the live game better**
+1. Keep the screen awake during a game (new)
+2. Favourite players, with live alerts for their points and shots
+3. Game-day facts ("Did you know"), shown before puck drop and at intermissions
+4. Intermission card: the period in one screen (new)
+5. Install to home screen (new); true push alerts are blocked by hosting for now
+
+**Tier 2: around the game**
+6. Player birthdays (mostly feeds the game-day facts)
+7. Ticket links for home games
+8. All Sens news, not just game days
+
+**Tier 3: reference (good for the off-season, not the mission)**
+9. Full career on the player page
+10. Sens franchise history
+11. Podcasts tab
+12. Player contracts (parked: no legitimate data source yet)
 
 ## Items
 
 ### Animate the Game ("Live") tab during a game — **Done** (2026-11-13)
 Tab renamed to Game. Gold dot on game day; during the game a red pulsing LIVE tab (phone),
 a red LIVE pill with the score (desktop) and a red score strip on other pages.
+
+### Keep the screen awake during a game (new) — Value: high · Effort: S
+Phones dim and lock in a minute or two, which is exactly wrong for a second screen. The
+browser's Wake Lock API keeps the screen on while the Game page is open and a game is live
+(Chrome, Edge and Safari 16.4+ support it), released at the final or when you leave.
+With a visible on/off switch.
+
+### Intermission card (new) — Value: high · Effort: S–M
+At each intermission, swap the "Right now" card for the period in one screen: score and shots
+for the period, goal replays from it, power plays, top Sens skaters, the out-of-town scores,
+and the TSN 1200 intermission show. That's the time fans actually pick the phone up.
+
+### Install to home screen; push alerts (new) — Value: high · Effort: S (install) / L (push)
+Installing (a web app manifest plus icons) puts Sicko Central on the home screen, opening
+full screen like an app. Push alerts while the app is closed ("Sens score!") need a server
+that watches the game and sends them; Vercel Hobby can only run a scheduled job once a day,
+so that needs a paid plan or an outside service. Alerts while the page is open already work.
 
 ### Player birthdays — Value: medium · Effort: S
 The roster feed has every player's birth date. Show "Happy birthday" on the home page and the
