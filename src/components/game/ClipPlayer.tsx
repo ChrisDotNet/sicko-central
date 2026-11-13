@@ -14,6 +14,7 @@ type BcPlayer = {
   ready: (cb: () => void) => void;
   on: (event: string, cb: () => void) => void;
   play: () => Promise<void> | undefined;
+  paused: () => boolean;
   dispose: () => void;
   catalog: {
     getVideo: (id: string, cb: (err: unknown, video: BcVideo) => void) => void;
@@ -65,6 +66,14 @@ export function ClipPlayer({
   const player = useRef<BcPlayer | null>(null);
   const callbacks = useRef({ onEnded, onError });
   const [ready, setReady] = useState(false);
+  // Phones sometimes refuse to start the next clip on their own (autoplay rules, or an ad
+  // that needs a tap). If a clip hasn't started a few seconds after loading, offer one big tap.
+  const [needsTap, setNeedsTap] = useState(false);
+  const stallTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const clearStall = () => {
+    if (stallTimer.current) clearTimeout(stallTimer.current);
+    stallTimer.current = null;
+  };
 
   useEffect(() => {
     callbacks.current = { onEnded, onError };
@@ -90,6 +99,12 @@ export function ClipPlayer({
         const p = window.bc(el);
         player.current = p;
         p.on("ended", () => callbacks.current.onEnded());
+        const started = () => {
+          clearStall();
+          setNeedsTap(false);
+        };
+        p.on("playing", started);
+        p.on("adstart", started);
         p.ready(() => {
           if (!disposed) setReady(true);
         });
@@ -98,6 +113,7 @@ export function ClipPlayer({
 
     return () => {
       disposed = true;
+      clearStall();
       try {
         player.current?.dispose();
       } catch {
@@ -118,10 +134,33 @@ export function ClipPlayer({
         return;
       }
       p.catalog.load(video);
-      // Browsers may block autoplay for the first clip; the player then shows its play button.
-      p.play()?.catch(() => {});
+      clearStall();
+      stallTimer.current = setTimeout(() => {
+        if (player.current?.paused()) setNeedsTap(true);
+      }, 3500);
+      p.play()?.catch(() => setNeedsTap(true));
     });
+    return clearStall;
   }, [clipId, ready]);
 
-  return <div ref={box} className="w-full bg-black" />;
+  return (
+    <div className="relative w-full bg-black">
+      <div ref={box} className="w-full" />
+      {needsTap && (
+        <button
+          type="button"
+          onClick={() => {
+            setNeedsTap(false);
+            player.current?.play()?.catch(() => setNeedsTap(true));
+          }}
+          className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/60 text-white"
+        >
+          <span className="flex size-16 items-center justify-center rounded-full bg-sens">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5l11 7-11 7z" /></svg>
+          </span>
+          <span className="text-sm font-semibold">Tap to play</span>
+        </button>
+      )}
+    </div>
+  );
 }
