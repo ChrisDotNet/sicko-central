@@ -11,7 +11,7 @@ Built with Next.js (App Router, Cache Components), TypeScript and Tailwind. Host
 | `/` | Record, next game (or tonight's game), last result, division standings, team leaders |
 | `/schedule` | Season schedule by month, home/away filter, links to recaps |
 | `/live` | Live companion for today's game: "Right now" context card, shot map, game flow, goal replays, Sens skaters tonight, other Atlantic games |
-| `/game/[id]` | Recap of a finished game, using the same components |
+| `/game/[id]` | A game's page: **Summary** (same components as the live page) and **Media** (News, Video, Audio) |
 | `/roster` | Current roster with season stats |
 | `/player/[id]` | Bio, season and career stats, last five games, season-by-season |
 | `/standings` | Conference standings by division, plus the wild card race |
@@ -25,6 +25,16 @@ All data comes from the NHL's public, undocumented API (`api-web.nhle.com`). It'
 - The browser never calls an NHL domain, except for embedded goal clips (see below).
 
 The API can change without notice. If something breaks, `src/lib/nhl.ts` (fetching) and `src/lib/game.ts` (turning play-by-play into the live page's data) are the two places to look.
+
+## Media tab
+
+Each game's Media tab has three parts:
+
+- **News**, under Pregame and Postgame headings: NHL.com stories tagged with the game id, plus TSN and Sportsnet stories about the Sens from the 24 h before puck drop to 20 h after (`src/lib/news.ts`). Only headlines and the short summary from each outlet's RSS feed are shown; full articles open on the outlet's site.
+- **Video**: recaps, condensed game, every goal and other highlights from NHL.com (`src/lib/video.ts`).
+- **Audio**: TSN 1200's radio call from its podcast feed (`src/lib/radio.ts`).
+
+TSN's and Sportsnet's feeds only hold two to three days, so `src/lib/media.ts` saves each game's lists (headlines, links, clip ids; never the media itself, about 15 KB a game) in Upstash Redis and merges them with what's live. A daily job (`/api/cron/collect`, `vercel.json`, 14:00 UTC) saves recent games even if nobody opens them. Without Upstash configured it falls back to memory, which works for development but forgets.
 
 ## Goal replays
 
@@ -68,8 +78,10 @@ npm run lint
 
 ## Deploy
 
-1. In Vercel, **Add New → Project** and import this repo. The defaults are correct; no environment variables are needed.
-2. Add the domain under **Settings → Domains** once `sickocentral.ca` is registered.
+1. In Vercel, **Add New → Project** and import this repo. The defaults are correct.
+2. **Storage → Upstash for Redis** (free plan), connect it to the project, and redeploy. This sets `KV_REST_API_URL` and `KV_REST_API_TOKEN`, which keep each game's news after the feeds move on.
+3. Optional: set `CRON_SECRET` to any long random string so only Vercel's daily job can call `/api/cron/collect`.
+4. Add the domain under **Settings → Domains** once `sickocentral.ca` is registered.
 
 Vercel Hobby is for non-commercial use. Adding affiliate links or ads means moving to Pro or another host.
 

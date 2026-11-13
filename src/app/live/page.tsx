@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { LiveCompanion } from "@/components/game/LiveCompanion";
-import { parseTab } from "@/components/game/GameTabs";
+import { parseSegment, parseTab } from "@/components/game/GameTabs";
 import { Card, Chevron, Kicker } from "@/components/ui";
 import { BroadcastLinks } from "@/components/BroadcastLinks";
 import { buildGame } from "@/lib/game";
@@ -18,9 +18,10 @@ export const metadata: Metadata = { title: "Live" };
 async function LiveContent({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const sp = await searchParams;
   const tab = parseTab(sp.tab);
+  const segment = parseSegment(sp.show, sp.tab);
   const replayId = typeof sp.replay === "string" && /^\d{10}$/.test(sp.replay) ? Number(sp.replay) : null;
   if (replayId) {
-    return <LiveCompanion key={`replay-${replayId}`} gameId={replayId} initial={null} replay initialTab={tab} />;
+    return <LiveCompanion key={`replay-${replayId}`} gameId={replayId} initial={null} replay initialTab={tab} initialSegment={segment} />;
   }
 
   const [scores, schedule] = await Promise.all([getScoresNowLive().catch(() => null), getSchedule().catch(() => null)]);
@@ -32,7 +33,7 @@ async function LiveContent({ searchParams }: { searchParams: Promise<Record<stri
     const game = pbp ? buildGame(pbp, box) : null;
     const radio = game ? await getRadioForGame(game.startTimeUTC) : [];
     const initial = game ? { game, rivals: scores ? atlanticGames(scores, today.id) : [], radio } : null;
-    return <LiveCompanion key={id} gameId={today.id} initial={initial} replay={false} initialTab={tab} />;
+    return <LiveCompanion key={id} gameId={today.id} initial={initial} replay={false} initialTab={tab} initialSegment={segment} />;
   }
 
   const { next, last } = schedule ? splitSchedule(schedule.games) : { next: null, last: null };
@@ -61,7 +62,7 @@ async function LiveContent({ searchParams }: { searchParams: Promise<Record<stri
                 {scoreLine(last)} {last.home ? "vs" : "at"} {last.opp}
               </span>
             </span>
-            <span className="flex items-center gap-1 text-sm font-semibold">Recap <Chevron /></span>
+            <span className="flex items-center gap-1 text-sm font-semibold">Game Summary <Chevron /></span>
           </Link>
         </>
       )}

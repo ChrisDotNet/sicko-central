@@ -5,7 +5,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { LiveGame } from "@/lib/game";
 import type { RivalGame } from "@/lib/rivals";
 import type { RadioEpisode } from "@/lib/radio";
-import { RadioArchive } from "../radio/RadioArchive";
 import { LiveRadioBar } from "../radio/LiveRadioBar";
 import { periodLabel } from "@/lib/format";
 import { Section } from "../ui";
@@ -13,8 +12,11 @@ import { GameSections } from "./GameSections";
 import { BroadcastLinks } from "../BroadcastLinks";
 import { GameTabButtons } from "./GameTabs";
 import type { GameTab } from "./GameTabs";
-import { VideoTab } from "../video/VideoTab";
+import { MediaTab } from "../media/MediaTab";
+import type { MediaSegment } from "./GameTabs";
+import type { GameMedia } from "@/lib/media";
 import type { GameVideo } from "@/lib/video";
+import type { NewsItem } from "@/lib/news";
 import { useNotify } from "../notify/NotificationProvider";
 import { strengthTag } from "./GoalReplays";
 
@@ -26,21 +28,24 @@ const PRE_POLL_MS = 60_000;
 const REPLAY_STEP = 60;
 const REPLAY_TICK_MS = 3_000;
 const GAME_END = 3900;
-const VIDEO_POLL_MS = 60_000;
+const MEDIA_POLL_MS = 60_000;
+const MEDIA_PRE_POLL_MS = 5 * 60_000;
 
 export function LiveCompanion({
   gameId,
   initial,
   replay,
   initialTab = "summary",
+  initialSegment = "news",
 }: {
   gameId: number;
   initial: Payload | null;
   replay: boolean;
   initialTab?: GameTab;
+  initialSegment?: MediaSegment;
 }) {
   const [tab, setTab] = useState<GameTab>(initialTab);
-  const [video, setVideo] = useState<GameVideo | null>(null);
+  const [media, setMedia] = useState<GameMedia | null>(null);
   const [pending, setPending] = useState<{ clipId: number; n: number } | null>(null);
   const notify = useNotify();
   // Clips already known, so alerts only fire for ones that appear while the page is open.
@@ -48,6 +53,7 @@ export function LiveCompanion({
     initial ? new Set(initial.game.goals.flatMap((g) => (g.clipId ? [g.clipId] : []))) : null,
   );
   const knownVideo = useRef<Set<number> | null>(null);
+  const knownNews = useRef<Set<string> | null>(null);
   const openRef = useRef<(clipId: number) => void>(() => {});
   const videoComplete = useRef(false);
   const requests = useRef(0);
@@ -157,46 +163,66 @@ export function LiveCompanion({
     videoComplete.current = v.recaps.length > 0 && v.condensed.length > 0;
   }
 
-  // Video list: load it once the game starts and refresh every minute, so the Video tab is
-  // current and new recaps and highlights can raise alerts. Keeps going after the final until
-  // the recap and condensed game have posted. Not in replay mode, where the full post-game
-  // list would spoil the game.
-  const started = data ? !data.game.isPre : false;
+  // Alert for new stories from NHL.com, TSN and Sportsnet while the page is open.
+  function announceNews(news: NewsItem[]) {
+    if (knownNews.current) {
+      for (const n of news) {
+        if (knownNews.current.has(n.url)) continue;
+        notify({
+          key: `news-${n.url}`,
+          title: `${n.outlet}: ${n.title}`,
+          tone: "neutral",
+          sound: false,
+          action: { label: "Read", onSelect: () => window.open(n.url, "_blank", "noopener,noreferrer") },
+        });
+      }
+    }
+    knownNews.current = new Set([...(knownNews.current ?? []), ...news.map((n) => n.url)]);
+  }
+
+  // Media: news, video and radio for this game, refreshed every minute once the game
+  // starts (every five before), so the Media tab stays current and new clips and stories
+  // can raise alerts. Keeps going after the final until the recap and condensed game have
+  // posted. Not in replay mode, where post-game coverage would spoil the game.
   useEffect(() => {
-    if (replay || !started) return;
+    if (replay) return;
     let cancelled = false;
     let id: ReturnType<typeof setTimeout> | null = null;
     let polls = 0;
-    const fetchVideo = async () => {
+    const fetchMedia = async () => {
       polls += 1;
       try {
-        const res = await fetch(`/api/game/${gameId}/video`, { cache: "no-store" });
+        const res = await fetch(`/api/game/${gameId}/media`, { cache: "no-store" });
         if (res.ok && !cancelled) {
-          const v = (await res.json()) as GameVideo;
-          announceVideo(v);
-          setVideo(v);
+          const m = (await res.json()) as GameMedia;
+          announceVideo(m.video);
+          announceNews(m.news);
+          setMedia(m);
         }
       } catch {
         /* keep what we have */
       }
       const g = latest.current?.game;
       const complete = Boolean(g?.isFinal) && videoComplete.current;
-      if (!cancelled && !complete && polls < 240) id = setTimeout(fetchVideo, VIDEO_POLL_MS);
+      if (!cancelled && !complete && polls < 300) id = setTimeout(fetchMedia, g?.isPre ? MEDIA_PRE_POLL_MS : MEDIA_POLL_MS);
     };
-    id = setTimeout(fetchVideo, 0);
+    id = setTimeout(fetchMedia, 0);
     return () => {
       cancelled = true;
       if (id) clearTimeout(id);
     };
-    // announceVideo only reads refs and the stable notify function.
+    // announceVideo and announceNews only read refs and the stable notify function.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [replay, started, gameId]);
+  }, [replay, gameId]);
 
   const changeTab = (t: GameTab) => {
     setTab(t);
     try {
       const url = new URL(window.location.href);
-      if (t === "summary") url.searchParams.delete("tab");
+      if (t === "summary") {
+        url.searchParams.delete("tab");
+        url.searchParams.delete("show");
+      }
       else url.searchParams.set("tab", t);
       window.history.replaceState(null, "", url);
     } catch {
@@ -207,7 +233,7 @@ export function LiveCompanion({
   // "Watch" on an alert: switch to the Video tab and open that clip.
   useEffect(() => {
     openRef.current = (clipId: number) => {
-      changeTab("video");
+      changeTab("media");
       requests.current += 1;
       setPending({ clipId, n: requests.current });
     };
@@ -229,7 +255,8 @@ export function LiveCompanion({
   }
 
   const { game, rivals } = data;
-  const radio = data.radio ?? [];
+  // The game feed carries tonight's radio episodes; the media list adds any saved ones.
+  const radio = !replay && media?.radio.length ? media.radio : (data.radio ?? []);
   const hasPostgame = radio.some((e) => e.kind === "postgame");
   const showLiveBar = !replay && (game.isPre || game.isLive || (game.isFinal && !hasPostgame));
   const barLabel = game.isPre ? "Pre-game coverage before puck drop" : game.isLive ? "The radio call, live" : "Post-game show";
@@ -325,29 +352,19 @@ export function LiveCompanion({
         </>
       )}
 
-      {tab === "video" &&
-        (game.isPre ? (
-          <p className="mx-4 mt-6 rounded-2xl border border-line bg-surface p-4 text-sm text-muted">Video shows up here once the game starts.</p>
-        ) : (
-          <VideoTab
-            video={replay ? null : video}
-            goals={game.goals}
-            isFinal={game.isFinal}
-            pending={pending}
-            note={replay ? "Recaps and highlights are hidden in replay mode so they don't spoil the game." : undefined}
-          />
-        ))}
-
-      {tab === "radio" && (
-        <Section title="Radio call" aside="TSN 1200">
-          {game.isPre ? (
-            <p className="rounded-2xl border border-line bg-surface p-4 text-sm text-muted">
-              Listen live with the TSN 1200 bar below. The radio call for each period shows up here once it&apos;s over.
-            </p>
-          ) : (
-            <RadioArchive episodes={radio} live={!game.isFinal} />
-          )}
-        </Section>
+      {tab === "media" && (
+        <MediaTab
+          news={replay ? [] : (media?.news ?? [])}
+          video={replay ? null : (media?.video ?? null)}
+          radio={radio}
+          goals={game.goals}
+          startTimeUTC={game.startTimeUTC}
+          isPre={game.isPre}
+          isFinal={game.isFinal}
+          initialSegment={initialSegment}
+          pending={pending}
+          videoNote={replay ? "Recaps and highlights are hidden in replay mode so they don't spoil the game." : undefined}
+        />
       )}
 
       {showLiveBar && (

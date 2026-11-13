@@ -1,11 +1,28 @@
 import Link from "next/link";
 
-export type GameTab = "summary" | "video" | "radio";
+export type GameTab = "summary" | "media";
 
-export const TAB_LABELS: Record<GameTab, string> = { summary: "Summary", video: "Video", radio: "Radio" };
+export const TAB_LABELS: Record<GameTab, string> = { summary: "Summary", media: "Media" };
 
+// "video" and "radio" are from older links, before those tabs moved under Media.
 export function parseTab(v: unknown): GameTab {
-  return v === "video" || v === "radio" ? v : "summary";
+  return v === "media" || v === "video" || v === "radio" ? "media" : "summary";
+}
+
+export type MediaSegment = "news" | "video" | "audio";
+
+export const SEGMENTS: Array<{ id: MediaSegment; label: string }> = [
+  { id: "news", label: "News" },
+  { id: "video", label: "Video" },
+  { id: "audio", label: "Audio" },
+];
+
+export function parseSegment(show: unknown, tab: unknown): MediaSegment {
+  if (show === "news" || show === "video" || show === "audio") return show;
+  // Older links: ?tab=video and ?tab=radio.
+  if (tab === "video") return "video";
+  if (tab === "radio") return "audio";
+  return "news";
 }
 
 const tabClass = (active: boolean) =>
