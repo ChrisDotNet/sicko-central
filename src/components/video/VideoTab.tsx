@@ -9,16 +9,19 @@ import { strengthTag } from "../game/GoalReplays";
 import { ClipPlayer, preloadClipPlayer } from "../game/ClipPlayer";
 import type { ClipPlayerHandle } from "../game/ClipPlayer";
 import { Thumb } from "../media/Thumb";
+import { TsnPlayer, preloadTsnPlayer } from "./TsnPlayer";
+import { playSlapshot } from "@/lib/sfx";
 
 // The Video tab as a watch page: one player and a playlist, on every screen size.
 // - Phone: the player sits at the top and stays there while the playlist scrolls under it.
 // - Tablet: the same, with the playlist in two columns.
 // - Desktop: player on the left, playlist on the right.
 // The player only loads on the first play, so opening the tab costs nothing.
-// Clips play one at a time; with "Play the next clip automatically" ticked, each NHL clip runs
-// on into the next one in the list (with the up-next card), the way "Watch all goals" did.
-// TSN and Sportsnet videos play in their own embedded players (ads and all) in the same spot.
-// Those players don't tell us when a video ends, so auto-play skips over them.
+// Clips play one at a time; with "Play the next clip automatically" ticked, each video runs
+// on into the next one in the list (with an up-next card), the way "Watch all goals" did.
+// TSN videos play in TSN's own player (ads and all), run in our page so its "watch next"
+// playlist stays off and we hear when a video ends. Sportsnet videos play in Sportsnet's
+// player in a frame, which doesn't tell us when a video ends, so auto-play skips them.
 
 type Section = "full" | "tsn" | "goals" | "highlights" | "sportsnet";
 // NHL clips are keyed by their positive clip id; TSN and Sportsnet videos by their negated id.
@@ -34,6 +37,7 @@ type Entry = {
   badge?: string;
   embedUrl?: string;
   source?: "TSN" | "Sportsnet";
+  tsnId?: string; // TSN videos play in our page with TSN's player library
 };
 type Filter = "all" | "ott" | "opp";
 
@@ -81,6 +85,10 @@ export function VideoTab({
   const [handled, setHandled] = useState(0);
   const [wanted, setWanted] = useState<number | null>(null);
   const [jump, setJump] = useState<{ index: number; n: number } | null>(null);
+  // A TSN video run (`n` restarts the player even for the same video).
+  const [tsnRun, setTsnRun] = useState(0);
+  // Between sources (NHL ↔ TSN), our own up-next card counts down before the next video.
+  const [handoff, setHandoff] = useState<{ clipId: number; left: number } | null>(null);
   const player = useRef<ClipPlayerHandle>(null);
 
   const goalOk = useCallback((g: Goal) => filter === "all" || (filter === "ott" ? g.team === "OTT" : g.team !== "OTT"), [filter]);
@@ -127,6 +135,7 @@ export function VideoTab({
       badge: length(v.seconds),
       embedUrl: v.embedUrl,
       source: "TSN" as const,
+      tsnId: v.id,
     }));
     const sn: Entry[] = (video?.sportsnet ?? []).map((v) => ({
       clipId: -Number(v.id),
@@ -151,22 +160,53 @@ export function VideoTab({
   // The NHL player steps through NHL clips only.
   const nhl = useMemo(() => entries.filter((e) => !e.embedUrl), [entries]);
   const nhlPos = current && !current.embedUrl ? nhl.findIndex((e) => e.clipId === current.clipId) : -1;
-  // With the box ticked, the next NHL clip in the list plays next (after the up-next card).
-  const next = nhlPos >= 0 ? nhl[nhlPos + 1] : undefined;
-  const advances = autoNext && nhlPos >= 0 && !!next;
-  const tsnNow = current?.embedUrl ? current : null;
+  // With the box ticked, the next video in the list plays next. Sportsnet videos are skipped:
+  // their player runs in a frame and doesn't tell us when it ends.
+  const autoTarget = pos >= 0 ? entries.slice(pos + 1).find((e) => !e.embedUrl || e.tsnId) : undefined;
+  const next = autoTarget;
+  // NHL to NHL: the NHL player moves on itself (with its up-next card).
+  const advances = autoNext && nhlPos >= 0 && !!autoTarget && nhl[nhlPos + 1]?.clipId === autoTarget.clipId;
+  const embedNow = current?.embedUrl ? current : null; // TSN or Sportsnet
 
   const play = (clipId: number) => {
     const e = entries.find((x) => x.clipId === clipId);
     if (!e) return;
     setFailed(false);
+    setHandoff(null);
     setCurrentId(clipId);
-    if (e.embedUrl) return; // shown in TSN's player
+    if (e.tsnId) {
+      setTsnRun((n) => n + 1);
+      return;
+    }
+    if (e.embedUrl) return; // Sportsnet's player, in a frame
     const i = nhl.findIndex((x) => x.clipId === clipId);
     // Already showing the NHL player: switch clips straight from the tap (keeps iPhone happy).
-    if (playing && player.current && !tsnNow) player.current.goTo(i);
+    if (playing && player.current && !embedNow) player.current.goTo(i);
     else setPlaying({ start: i, n: (playing?.n ?? 0) + 1 });
   };
+
+  // Latest values for the player callbacks, which outlive renders.
+  const latest = useRef({ autoNext, autoTarget, advances, play });
+  useEffect(() => {
+    latest.current = { autoNext, autoTarget, advances, play };
+  });
+  // A video finished without the NHL player moving on: hand over to the next one, if any.
+  const handOver = useCallback(() => {
+    const { autoNext: on, autoTarget: t } = latest.current;
+    if (on && t) {
+      playSlapshot();
+      setHandoff({ clipId: t.clipId, left: 5 });
+    }
+  }, []);
+  useEffect(() => {
+    if (!handoff) return;
+    const id = setTimeout(() => {
+      if (handoff.left <= 1) latest.current.play(handoff.clipId);
+      else setHandoff({ ...handoff, left: handoff.left - 1 });
+    }, 1000);
+    return () => clearTimeout(id);
+  }, [handoff]);
+  const handoffEntry = handoff ? entries.find((e) => e.clipId === handoff.clipId) : undefined;
 
   // Alerts ask for a clip by id (state adjusted during render, not in an effect). If the
   // team filter hides it, clear the filter first and pick it up on the next render.
@@ -180,7 +220,7 @@ export function VideoTab({
       setWanted(null);
       setFailed(false);
       setCurrentId(wanted);
-      if (playing && !tsnNow) setJump({ index: i, n: (jump?.n ?? 0) + 1 });
+      if (playing && !embedNow) setJump({ index: i, n: (jump?.n ?? 0) + 1 });
       else setPlaying({ start: i, n: (playing?.n ?? 0) + 1 });
     } else if (filter !== "all") {
       setFilter("all");
@@ -197,7 +237,11 @@ export function VideoTab({
     setCurrentId(items[i]?.clipId ?? null);
     setFailed(false);
   }, [items]);
-  const onDone = useCallback(() => {}, []);
+  // The NHL player is done: either its clip ended with no NHL clip next (hand over), or the
+  // viewer pressed "Stop here" on its own up-next card (stop).
+  const onDone = useCallback(() => {
+    if (!latest.current.advances) handOver();
+  }, [handOver]);
   const onError = useCallback(() => setFailed(true), []);
 
   const goalCount = (f: Filter) => goals.filter((g) => (f === "all" ? true : f === "ott" ? g.team === "OTT" : g.team !== "OTT")).length;
@@ -219,15 +263,21 @@ export function VideoTab({
     <div className="px-4 pt-4 lg:grid lg:grid-cols-[minmax(0,1fr)_400px] lg:items-start lg:gap-6">
       {/* Player: pinned to the top of the screen on phones and tablets, and at the top of its column on desktop. */}
       <div className="sticky top-[env(safe-area-inset-top)] z-10 -mx-4 bg-ground pb-3 md:mx-0 lg:top-4">
-        <div className={`relative w-full overflow-hidden bg-black md:rounded-2xl md:border md:border-line ${playing && !tsnNow ? "" : "aspect-video"}`}>
-          {tsnNow ? (
+        <div className={`relative w-full overflow-hidden bg-black md:rounded-2xl md:border md:border-line ${playing && !embedNow ? "" : "aspect-video"}`}>
+          {embedNow?.tsnId ? (
+            <TsnPlayer key={`${embedNow.tsnId}-${tsnRun}`} contentId={embedNow.tsnId}
+              embedUrl={embedNow.embedUrl!}
+              title={embedNow.title}
+              onEnded={handOver} onError={onError} />
+          ) : embedNow ? (
             <iframe
-              key={tsnNow.clipId}
-              src={tsnNow.embedUrl}
-              title={`${tsnNow.title} (${tsnNow.source} video)`}
+              key={embedNow.clipId}
+              src={embedNow.embedUrl}
+              title={`${embedNow.title} (${embedNow.source} video)`}
               allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
               allowFullScreen
-              className="absolute inset-0 size-full border-0"
+              scrolling="no"
+              className="absolute inset-0 size-full overflow-hidden border-0"
             />
           ) : playing ? (
             <div>
@@ -246,7 +296,7 @@ export function VideoTab({
             shown && (
               <button
                 type="button"
-                onPointerDown={preloadClipPlayer}
+                onPointerDown={shown.tsnId ? preloadTsnPlayer : preloadClipPlayer}
                 onClick={() => play(shown.clipId)}
                 aria-label={`Play ${shown.title}`}
                 className="absolute inset-0 block"
@@ -259,6 +309,31 @@ export function VideoTab({
                 </span>
               </button>
             )
+          )}
+          {handoffEntry && handoff && (
+            // Our own up-next card when moving between sources (TSN's is turned off).
+            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-black/85 p-4 text-center text-white">
+              <span aria-hidden="true" className="h-0.5 w-12 rounded-full bg-gold" />
+              <span className="text-xs font-bold uppercase tracking-widest text-gold-text">Up next in {handoff.left}</span>
+              <span className="line-clamp-2 max-w-md font-display text-xl font-extrabold leading-tight tracking-wide md:text-2xl">
+                {handoffEntry.team ? `${handoffEntry.team} · ` : ""}
+                {handoffEntry.title}
+              </span>
+              <span className="text-sm text-white/70">{handoffEntry.sub}</span>
+              <div className="mt-1 flex gap-2">
+                <button
+                  type="button"
+                  onPointerDown={handoffEntry.tsnId ? preloadTsnPlayer : preloadClipPlayer}
+                  onClick={() => play(handoffEntry.clipId)}
+                  className="min-h-11 rounded-xl bg-sens px-4 text-sm font-bold text-white"
+                >
+                  Play now
+                </button>
+                <button type="button" onClick={() => setHandoff(null)} className="min-h-11 rounded-xl border border-white/40 px-4 text-sm font-semibold text-white">
+                  Stop here
+                </button>
+              </div>
+            </div>
           )}
         </div>
         {shown && (
@@ -358,7 +433,7 @@ export function VideoTab({
                       key={e.clipId}
                       type="button"
                       aria-current={on ? "true" : undefined}
-                      onPointerDown={preloadClipPlayer}
+                      onPointerDown={e.tsnId ? preloadTsnPlayer : preloadClipPlayer}
                       onClick={() => play(e.clipId)}
                       className={`flex items-center gap-3 rounded-xl border p-1.5 text-left ${on ? "border-gold-line bg-gold-ground" : "border-transparent hover:bg-surface-2"}`}
                     >
