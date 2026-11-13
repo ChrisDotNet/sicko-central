@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Goal } from "@/lib/game";
 import { periodLabel } from "@/lib/format";
 import { ClipPlayer, preloadClipPlayer } from "./ClipPlayer";
+import type { ClipPlayerHandle } from "./ClipPlayer";
 
 function strengthTag(g: Goal) {
   return g.strength === "EV" ? "" : ` · ${g.strength === "PP" ? "PPG" : g.strength === "SH" ? "SHG" : "ENG"}`;
@@ -16,14 +17,18 @@ export function GoalReplays({ goals }: { goals: Goal[] }) {
   const [playAll, setPlayAll] = useState(false);
   const [done, setDone] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [session, setSession] = useState(0);
   const dialog = useRef<HTMLDialogElement>(null);
+  const playerRef = useRef<ClipPlayerHandle>(null);
 
-  // In "watch all" mode, move straight to the next goal when a clip ends.
-  const handleEnded = useCallback(() => {
-    if (!queue) return;
-    if (playAll && pos < queue.length - 1) setPos(pos + 1);
-    else setDone(true);
-  }, [queue, playAll, pos]);
+  // The player decides when to move on (it must start the next clip inside the "ended"
+  // event for iPhone Safari to allow it) and reports the new position here.
+  const handleIndex = useCallback((i: number) => {
+    setPos(i);
+    setDone(false);
+    setFailed(false);
+  }, []);
+  const handleDone = useCallback(() => setDone(true), []);
   const handleError = useCallback(() => setFailed(true), []);
 
   useEffect(() => {
@@ -43,12 +48,10 @@ export function GoalReplays({ goals }: { goals: Goal[] }) {
     setPlayAll(all);
     setDone(false);
     setFailed(false);
+    setSession((s) => s + 1);
   };
-  const go = (next: number) => {
-    setPos(next);
-    setDone(false);
-    setFailed(false);
-  };
+  // Called straight from the button tap, so the browser treats the clip change as user-started.
+  const go = (next: number) => playerRef.current?.goTo(next);
   const current = queue?.[pos];
   const totalSecs = ready.length * 40;
 
@@ -129,7 +132,18 @@ export function GoalReplays({ goals }: { goals: Goal[] }) {
               </button>
             </div>
             <div className="relative w-full bg-black" aria-label={`${current.scorer} goal replay`}>
-              {current.clipId && <ClipPlayer clipId={current.clipId} onEnded={handleEnded} onError={handleError} />}
+              {queue && (
+                <ClipPlayer
+                  key={session}
+                  ref={playerRef}
+                  clipIds={queue.map((g) => g.clipId as number)}
+                  start={pos}
+                  autoAdvance={playAll}
+                  onIndex={handleIndex}
+                  onDone={handleDone}
+                  onError={handleError}
+                />
+              )}
             </div>
             {failed && (
               <p className="px-4 pt-3 text-sm text-ink-2">This clip wouldn&apos;t load here. Use the NHL.com link below{playAll && pos < (queue?.length ?? 0) - 1 ? ", or skip to the next goal" : ""}.</p>

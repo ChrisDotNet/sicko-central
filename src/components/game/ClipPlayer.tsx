@@ -1,15 +1,20 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useImperativeHandle, useRef, useState } from "react";
+import type { Ref } from "react";
 
 // The NHL's Brightcove player, loaded in the page (not an iframe) so we can tell when
 // a clip ends and start the next one. The player's own config carries the key it needs
 // to look up clips, so any NHL highlight clip id can be loaded into it.
+//
+// iPhone Safari only lets a video start without a tap if it starts synchronously in the
+// previous clip's "ended" event. So the next clip is fetched while the current one plays,
+// and swapped in immediately when it ends.
 const ACCOUNT = "6415718365001";
 const PLAYER = "D3UCGynRWU";
 const SCRIPT = `https://players.brightcove.net/${ACCOUNT}/${PLAYER}_default/index.min.js`;
 
-type BcVideo = unknown;
+type BcVideo = object;
 type BcPlayer = {
   ready: (cb: () => void) => void;
   on: (event: string, cb: () => void) => void;
@@ -53,31 +58,86 @@ export function preloadClipPlayer() {
   loadScript().catch(() => {});
 }
 
+export type ClipPlayerHandle = { goTo: (index: number) => void };
+
 export function ClipPlayer({
-  clipId,
-  onEnded,
+  clipIds,
+  start,
+  autoAdvance,
+  onIndex,
+  onDone,
   onError,
+  ref,
 }: {
-  clipId: number;
-  onEnded: () => void;
+  clipIds: number[];
+  start: number;
+  autoAdvance: boolean;
+  onIndex: (index: number) => void;
+  onDone: () => void;
   onError: () => void;
+  ref?: Ref<ClipPlayerHandle>;
 }) {
   const box = useRef<HTMLDivElement>(null);
   const player = useRef<BcPlayer | null>(null);
-  const callbacks = useRef({ onEnded, onError });
-  const [ready, setReady] = useState(false);
-  // Phones sometimes refuse to start the next clip on their own (autoplay rules, or an ad
-  // that needs a tap). If a clip hasn't started a few seconds after loading, offer one big tap.
-  const [needsTap, setNeedsTap] = useState(false);
+  const cache = useRef(new Map<number, BcVideo>());
+  const idx = useRef(start);
+  const props = useRef({ clipIds, autoAdvance, onIndex, onDone, onError });
   const stallTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [needsTap, setNeedsTap] = useState(false);
+
+  useEffect(() => {
+    props.current = { clipIds, autoAdvance, onIndex, onDone, onError };
+  }, [clipIds, autoAdvance, onIndex, onDone, onError]);
+
   const clearStall = () => {
     if (stallTimer.current) clearTimeout(stallTimer.current);
     stallTimer.current = null;
   };
 
-  useEffect(() => {
-    callbacks.current = { onEnded, onError };
-  }, [onEnded, onError]);
+  const fetchVideo = (i: number): Promise<BcVideo | null> => {
+    const id = props.current.clipIds[i];
+    const p = player.current;
+    if (id == null || !p) return Promise.resolve(null);
+    const hit = cache.current.get(id);
+    if (hit) return Promise.resolve(hit);
+    return new Promise((resolve) => {
+      p.catalog.getVideo(String(id), (err, video) => {
+        if (err || !video) return resolve(null);
+        cache.current.set(id, video);
+        resolve(video);
+      });
+    });
+  };
+
+  // Swap a fetched clip into the player and start it. Synchronous, so it keeps the
+  // browser's permission to autoplay when called from an "ended" event or a tap.
+  const start_ = (i: number, video: BcVideo) => {
+    const p = player.current;
+    if (!p) return;
+    idx.current = i;
+    props.current.onIndex(i);
+    p.catalog.load(video);
+    clearStall();
+    stallTimer.current = setTimeout(() => {
+      if (player.current?.paused()) setNeedsTap(true);
+    }, 3500);
+    p.play()?.catch(() => setNeedsTap(true));
+    // Get the next clip ready while this one plays.
+    void fetchVideo(i + 1);
+  };
+
+  const goTo = (i: number) => {
+    if (i < 0 || i >= props.current.clipIds.length) return;
+    setNeedsTap(false);
+    const cached = cache.current.get(props.current.clipIds[i]);
+    if (cached) {
+      start_(i, cached);
+      return;
+    }
+    void fetchVideo(i).then((v) => (v ? start_(i, v) : props.current.onError()));
+  };
+
+  useImperativeHandle(ref, () => ({ goTo }));
 
   // Create the player once; the player library owns this element's DOM.
   useEffect(() => {
@@ -98,7 +158,16 @@ export function ClipPlayer({
         if (disposed || !window.bc) return;
         const p = window.bc(el);
         player.current = p;
-        p.on("ended", () => callbacks.current.onEnded());
+        p.on("ended", () => {
+          const next = idx.current + 1;
+          const nextVideo = cache.current.get(props.current.clipIds[next]);
+          if (props.current.autoAdvance && next < props.current.clipIds.length) {
+            if (nextVideo) start_(next, nextVideo);
+            else goTo(next);
+          } else {
+            props.current.onDone();
+          }
+        });
         const started = () => {
           clearStall();
           setNeedsTap(false);
@@ -106,10 +175,10 @@ export function ClipPlayer({
         p.on("playing", started);
         p.on("adstart", started);
         p.ready(() => {
-          if (!disposed) setReady(true);
+          if (!disposed) goTo(idx.current);
         });
       })
-      .catch(() => callbacks.current.onError());
+      .catch(() => props.current.onError());
 
     return () => {
       disposed = true;
@@ -122,26 +191,9 @@ export function ClipPlayer({
       player.current = null;
       host.innerHTML = "";
     };
+    // The player is created once per mount; later changes go through goTo.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // Load (and start) a clip whenever the id changes.
-  useEffect(() => {
-    const p = player.current;
-    if (!ready || !p) return;
-    p.catalog.getVideo(String(clipId), (err, video) => {
-      if (err || !video) {
-        callbacks.current.onError();
-        return;
-      }
-      p.catalog.load(video);
-      clearStall();
-      stallTimer.current = setTimeout(() => {
-        if (player.current?.paused()) setNeedsTap(true);
-      }, 3500);
-      p.play()?.catch(() => setNeedsTap(true));
-    });
-    return clearStall;
-  }, [clipId, ready]);
 
   return (
     <div className="relative w-full bg-black">
