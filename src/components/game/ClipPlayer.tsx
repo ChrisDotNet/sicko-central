@@ -2,6 +2,7 @@
 
 import { useEffect, useImperativeHandle, useRef, useState } from "react";
 import type { Ref } from "react";
+import { playSlapshot } from "@/lib/sfx";
 
 // The NHL's Brightcove player, loaded in the page (not an iframe) so we can tell when
 // a clip ends and start the next one. The player's own config carries the key it needs
@@ -59,9 +60,13 @@ export function preloadClipPlayer() {
 }
 
 export type ClipPlayerHandle = { goTo: (index: number) => void };
+export type ClipItem = { clipId: number; title: string; sub: string };
+
+// Pause between clips in "watch all" mode, so each clip's audio finishes before the next starts.
+const TRANSITION_SECS = 3;
 
 export function ClipPlayer({
-  clipIds,
+  items,
   start,
   autoAdvance,
   onIndex,
@@ -69,7 +74,7 @@ export function ClipPlayer({
   onError,
   ref,
 }: {
-  clipIds: number[];
+  items: ClipItem[];
   start: number;
   autoAdvance: boolean;
   onIndex: (index: number) => void;
@@ -81,13 +86,15 @@ export function ClipPlayer({
   const player = useRef<BcPlayer | null>(null);
   const cache = useRef(new Map<number, BcVideo>());
   const idx = useRef(start);
-  const props = useRef({ clipIds, autoAdvance, onIndex, onDone, onError });
   const stallTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [needsTap, setNeedsTap] = useState(false);
+  const [transition, setTransition] = useState<{ index: number; left: number } | null>(null);
+  const clipIds = items.map((i) => i.clipId);
+  const props = useRef({ clipIds, autoAdvance, onIndex, onDone, onError });
 
   useEffect(() => {
-    props.current = { clipIds, autoAdvance, onIndex, onDone, onError };
-  }, [clipIds, autoAdvance, onIndex, onDone, onError]);
+    props.current = { clipIds: items.map((i) => i.clipId), autoAdvance, onIndex, onDone, onError };
+  }, [items, autoAdvance, onIndex, onDone, onError]);
 
   const clearStall = () => {
     if (stallTimer.current) clearTimeout(stallTimer.current);
@@ -129,6 +136,7 @@ export function ClipPlayer({
   const goTo = (i: number) => {
     if (i < 0 || i >= props.current.clipIds.length) return;
     setNeedsTap(false);
+    setTransition(null);
     const cached = cache.current.get(props.current.clipIds[i]);
     if (cached) {
       start_(i, cached);
@@ -138,6 +146,20 @@ export function ClipPlayer({
   };
 
   useImperativeHandle(ref, () => ({ goTo }));
+
+  // Count down the "up next" card, then start the next clip.
+  useEffect(() => {
+    if (!transition) return;
+    const id = setTimeout(() => {
+      if (transition.left <= 1) goTo(transition.index);
+      else setTransition({ ...transition, left: transition.left - 1 });
+    }, 1000);
+    return () => clearTimeout(id);
+    // goTo only reads refs; re-running on each tick is intended.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [transition]);
+
+  const upNext = transition ? items[transition.index] : null;
 
   // Create the player once; the player library owns this element's DOM.
   useEffect(() => {
@@ -160,10 +182,10 @@ export function ClipPlayer({
         player.current = p;
         p.on("ended", () => {
           const next = idx.current + 1;
-          const nextVideo = cache.current.get(props.current.clipIds[next]);
           if (props.current.autoAdvance && next < props.current.clipIds.length) {
-            if (nextVideo) start_(next, nextVideo);
-            else goTo(next);
+            void fetchVideo(next);
+            setTransition({ index: next, left: TRANSITION_SECS });
+            playSlapshot();
           } else {
             props.current.onDone();
           }
@@ -198,7 +220,33 @@ export function ClipPlayer({
   return (
     <div className="relative w-full bg-black">
       <div ref={box} className="w-full" />
-      {needsTap && (
+      {upNext && transition && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2.5 bg-ground px-6 text-center">
+          <span aria-hidden="true" className="font-display text-[28px] font-extrabold leading-none tracking-wide">
+            <span className="text-sens-bright">SICKO</span> <span className="text-ink">CENTRAL</span>
+          </span>
+          <span className="h-0.5 w-12 rounded-full bg-gold" />
+          <span className="text-xs font-bold uppercase tracking-widest text-gold-text">Up next in {transition.left}</span>
+          <span className="font-display text-2xl font-extrabold leading-tight tracking-wide">{upNext.title}</span>
+          <span className="text-sm text-muted">{upNext.sub}</span>
+          <div className="mt-1 flex gap-2">
+            <button type="button" onClick={() => goTo(transition.index)} className="min-h-11 rounded-xl bg-sens px-4 text-sm font-bold text-white">
+              Play now
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setTransition(null);
+                props.current.onDone();
+              }}
+              className="min-h-11 rounded-xl border border-line-strong px-4 text-sm font-semibold text-ink"
+            >
+              Stop here
+            </button>
+          </div>
+        </div>
+      )}
+      {needsTap && !transition && (
         <button
           type="button"
           onClick={() => {
