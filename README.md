@@ -39,6 +39,10 @@ The menu's **Game** tab (the `/live` page) reflects today's game through `/api/s
 - **Favourite players**: star a player anywhere (skaters table, roster, player page); saved in the browser. Followed players get a "Your players tonight" strip, gold rows and goal highlights, and their own alert when they score or assist (`src/lib/favourites.ts`).
 - **Did you know**: three game-day facts before puck drop and at intermissions, from NHL data only: birthdays, career milestones within reach (adjusted live, so a milestone reached tonight says so), point streaks, the team's streak and the season series (`src/lib/facts.ts`, `facts-shared.ts`).
 
+## Home Screen app
+
+`src/app/manifest.ts`, the icons in `public/` and the `appleWebApp` metadata make the site installable; it opens full screen. The home page shows an "add to Home Screen" card (`InstallPrompt`): an Install button where the browser offers one, the Share › Add to Home Screen steps on iPhone, nothing once installed or for 30 days after "Not now". Safe-area padding keeps the header and the pinned video player clear of the iPhone status bar.
+
 ## Media tab
 
 Each game's Media tab has three parts:

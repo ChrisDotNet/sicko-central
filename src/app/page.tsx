@@ -3,6 +3,7 @@ import { Card, Chevron, ErrorNote, Kicker, Page, ResultBadge, Section, TeamBar }
 import { StandingsTable } from "@/components/StandingsTable";
 import { BroadcastLinks } from "@/components/BroadcastLinks";
 import { GameSummaryButton } from "@/components/GameSummaryButton";
+import { InstallPrompt } from "@/components/InstallPrompt";
 import { formatDay, formatTime, savePct } from "@/lib/format";
 import { getClubStats, getSchedule, getScoresNow, getStandings, name } from "@/lib/nhl";
 import { scoreLine, splitSchedule } from "@/lib/schedule";
@@ -50,6 +51,7 @@ export default async function HomePage() {
   // the left and the record and last result on the right; then standings beside leaders.
   return (
     <Page width="wide">
+      <InstallPrompt />
       {live && (
         <section className="px-4 pt-4">
           <Link href="/live" className="flex min-h-11 items-center justify-between gap-3 rounded-2xl bg-sens px-4 py-3.5 text-white">

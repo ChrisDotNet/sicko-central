@@ -4,6 +4,7 @@ import { GameSections } from "@/components/game/GameSections";
 import { GameTabLinks, parseSegment, parseTab } from "@/components/game/GameTabs";
 import type { MediaSegment } from "@/components/game/GameTabs";
 import { MediaTab } from "@/components/media/MediaTab";
+import { BackButton } from "@/components/BackButton";
 import { Latest } from "@/components/game/Latest";
 import { latestItems } from "@/components/game/latest-items";
 import { ErrorNote, TeamBar } from "@/components/ui";
@@ -42,7 +43,10 @@ async function Recap({
 
   return (
     <>
-      <div className="px-4 pt-5">
+      <div className="px-2 pt-1">
+        <BackButton fallback="/schedule" />
+      </div>
+      <div className="px-4 pt-1">
         <p className="text-xs font-bold uppercase tracking-widest text-muted">
           {formatDay(game.startTimeUTC).long} · {game.venue}
         </p>

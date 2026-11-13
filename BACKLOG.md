@@ -18,7 +18,7 @@ the next game better to watch?
 2. ~~Favourite players, with live alerts~~ Done 2026-11-13
 3. ~~Game-day facts ("Did you know")~~ Done 2026-11-13
 4. ~~Intermission card~~ Done 2026-11-13
-5. Install to home screen (new); true push alerts are blocked by hosting for now
+5. ~~Install to home screen~~ Done 2026-11-13. Next: push notifications (pre-game reminder, then goal alerts) via Upstash QStash
 
 **Tier 2: around the game**
 6. Player birthdays (mostly feeds the game-day facts)
@@ -48,7 +48,19 @@ At each intermission, swap the "Right now" card for the period in one screen: sc
 for the period, goal replays from it, power plays, top Sens skaters, the out-of-town scores,
 and the TSN 1200 intermission show. That's the time fans actually pick the phone up.
 
-### Install to home screen; push alerts (new) — Value: high · Effort: S (install) / L (push)
+### Install to home screen — **Done** (2026-11-13)
+Manifest, icons, full-screen launch, an "add to Home Screen" card on the home page (Install
+button on Android/desktop Chrome, Share › Add to Home Screen steps on iPhone), and a Back
+button on game pages since the installed app has no browser back button.
+
+### Push notifications — Value: high · Effort: M (reminder) / M (goal alerts)
+Proposed 2026-11-13: web push, opted in with a button, subscriptions saved in Neon. A
+pre-game reminder (30 or 60 min before puck drop) booked each morning by the daily job as a
+delayed Upstash QStash message (free plan: 1,000 messages a day, delays up to 7 days); at
+send time it re-checks the start time. iPhone requires the app to be installed first (done).
+The same setup can send goal alerts while the app is closed (QStash calling the site about
+every minute during a game, ~200 messages a game). Needs a QStash token and signing keys in
+Vercel. Original note:
 Installing (a web app manifest plus icons) puts Sicko Central on the home screen, opening
 full screen like an app. Push alerts while the app is closed ("Sens score!") need a server
 that watches the game and sends them; Vercel Hobby can only run a scheduled job once a day,

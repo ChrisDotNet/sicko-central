@@ -167,7 +167,7 @@ export function VideoTab({
   return (
     <div className="px-4 pt-4 lg:grid lg:grid-cols-[minmax(0,1fr)_400px] lg:items-start lg:gap-6">
       {/* Player: pinned to the top of the screen on phones and tablets, and at the top of its column on desktop. */}
-      <div className="sticky top-0 z-10 -mx-4 bg-ground pb-3 md:mx-0 lg:top-4">
+      <div className="sticky top-[env(safe-area-inset-top)] z-10 -mx-4 bg-ground pb-3 md:mx-0 lg:top-4">
         <div className={`relative w-full overflow-hidden bg-black md:rounded-2xl md:border md:border-line ${playing ? "" : "aspect-video"}`}>
           {playing ? (
             <div>

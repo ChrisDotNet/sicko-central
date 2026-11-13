@@ -16,12 +16,17 @@ export const metadata: Metadata = {
   title: { default: "Sicko Central", template: "%s · Sicko Central" },
   description: "Ottawa Senators stats, schedule and a live companion for game nights.",
   robots: { index: false, follow: false },
+  // Installed to an iPhone Home Screen: open full screen, dark status bar over the header.
+  appleWebApp: { capable: true, title: "Sicko Central", statusBarStyle: "black-translucent" },
 };
 
 export const viewport: Viewport = {
   themeColor: "#0d0d0e",
   width: "device-width",
   initialScale: 1,
+  // Lets the page use the full screen on notched phones; the header and bottom bar pad
+  // themselves with the safe-area insets.
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
