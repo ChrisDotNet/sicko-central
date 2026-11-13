@@ -40,7 +40,7 @@ async function LiveContent({ searchParams }: { searchParams: Promise<Record<stri
       ? await Promise.all([
           getRadioForGame(game.startTimeUTC),
           getGameFacts(game.gameDate, game.opp.abbrev),
-          game.isPre ? getStartingGoalies(game.gameDate) : null,
+          game.isPre ? getStartingGoalies(id, game.opp.abbrev) : null,
         ])
       : [[], [], null];
     const initial = game ? { game, rivals: scores ? atlanticGames(scores, today.id) : [], radio } : null;

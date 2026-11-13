@@ -11,6 +11,13 @@ hand while the game is on, alongside watching on TV (first) or listening on the 
 (second). Everything else is secondary. Each idea gets weighed by one question: does it make
 the next game better to watch?
 
+## Bugs
+
+- **Streaming links go to the wrong place** (reported 2026-11-13). The SN1 link goes to
+  https://www.sportsnet.ca/watch/, which is a 404. It should go to the game's own page on
+  Sportsnet+, e.g. https://watch.sportsnet.ca/event/Ottawa_Pittsburgh_229090 for Nov 14 at
+  PIT. Needs a way to find each game's event id (229090); check the other networks' links too.
+
 ## Suggested order
 
 **Tier 1: makes the live game better**
@@ -20,7 +27,7 @@ the next game better to watch?
 4. ~~Intermission card~~ Done 2026-11-13
 5. ~~Install to home screen~~ Done 2026-11-13. Next: push notifications (pre-game reminder, then goal alerts) via Upstash QStash
 
-6a. ~~Starting goalies on game day~~ Done 2026-11-13 (Daily Faceoff)
+6a. ~~Starting goalies on game day~~ Done 2026-11-13 (NHL.com game preview)
 
 **Tier 2: around the game**
 6. Player birthdays (mostly feeds the game-day facts)

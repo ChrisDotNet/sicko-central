@@ -29,7 +29,7 @@ export default async function HomePage() {
   const { all, live, last, next } = splitSchedule(schedule.games);
   const comingUp = all.filter((g) => g.state === "upcoming" && g.id !== next?.id).slice(0, 4);
   const tonight = next != null && scores?.currentDate === next.gameDate;
-  const goalies = tonight && next ? await getStartingGoalies(next.gameDate) : null;
+  const goalies = tonight && next ? await getStartingGoalies(String(next.id), next.opp) : null;
   const ottRow = standings.find((r) => name(r.teamAbbrev) === OTT);
   const division = ottRow
     ? standings.filter((r) => r.divisionAbbrev === ottRow.divisionAbbrev).sort((a, b) => a.divisionSequence - b.divisionSequence)

@@ -49,7 +49,7 @@ export function GameSections({
           {intermission ? <IntermissionCard game={game} radio={radio} /> : <RightNow ctx={contextFor(game)} />}
         </section>
         {game.isPre && goalies !== undefined && !game.replay && (
-          <StartingGoalies initial={goalies} gameDate={game.gameDate} oppAbbrev={game.opp.abbrev} className="order-1" />
+          <StartingGoalies initial={goalies} gameId={game.id} oppAbbrev={game.opp.abbrev} className="order-1" />
         )}
         <YourPlayers skaters={game.skaters} className="order-1" />
         {facts && facts.length > 0 && (game.isPre || intermission) && <GameFacts facts={facts} skaters={game.skaters} className="order-1" />}
