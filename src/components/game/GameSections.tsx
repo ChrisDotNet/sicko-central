@@ -16,7 +16,7 @@ export function GameSections({ game }: { game: LiveGame }) {
       </section>
       {started && (
         <>
-          <Section title="Where the shots came from" aside="Ottawa attacks right">
+          <Section title="Shot Map" aside="Ottawa attacks right">
             <ShotMap shots={game.shots} oppAbbrev={game.opp.abbrev} periods={Math.max(3, game.period)} />
           </Section>
           <Section title="Shot Attempts" aside="Shots, misses and blocks">
