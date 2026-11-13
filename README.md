@@ -51,7 +51,7 @@ Current uses, all on the live page: a goal's replay clip posts, and a recap, con
 
 ## Replay mode (testing without a live game)
 
-`/live?replay=<gameId>` replays a finished game as if it were live, one minute of game time every 3 seconds. Goal clips "post" three game-minutes after each goal, so replay-ready alerts can be tested too. On days without a game, `/live` links to a replay of the last one. Example: `/live?replay=2026020288`.
+`/live?replay=<gameId>` replays a finished game as if it were live, one minute of game time every 3 seconds. Goal clips "post" three game-minutes after each goal, so replay-ready alerts can be tested too. It's a testing tool, not linked anywhere in the site; open the URL directly. Example: `/live?replay=2026020288`.
 
 ## High-danger zone
 

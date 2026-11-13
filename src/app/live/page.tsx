@@ -63,13 +63,6 @@ async function LiveContent({ searchParams }: { searchParams: Promise<Record<stri
             </span>
             <span className="flex items-center gap-1 text-sm font-semibold">Recap <Chevron /></span>
           </Link>
-          <Link href={`/live?replay=${last.id}`} className="flex min-h-11 items-center justify-between rounded-2xl border border-dashed border-gold-line bg-gold-ground p-4 text-sm">
-            <span className="flex flex-col gap-0.5">
-              <span className="font-semibold text-gold-text">Replay the last game as if it were live</span>
-              <span className="text-xs text-muted">Runs a full game in about 3 minutes. For testing the companion.</span>
-            </span>
-            <Chevron />
-          </Link>
         </>
       )}
     </div>
