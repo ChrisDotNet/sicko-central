@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Card, Chevron, ErrorNote, Kicker, ResultBadge, Section, TeamBar } from "@/components/ui";
 import { StandingsTable } from "@/components/StandingsTable";
 import { BroadcastLinks } from "@/components/BroadcastLinks";
+import { GameSummaryButton } from "@/components/GameSummaryButton";
 import { formatDay, formatTime, savePct } from "@/lib/format";
 import { getClubStats, getSchedule, getScoresNow, getStandings, name } from "@/lib/nhl";
 import { scoreLine, splitSchedule } from "@/lib/schedule";
@@ -118,7 +119,7 @@ export default async function HomePage() {
           </Card>
         )}
         {last && last.result && (
-          <Link href={`/game/${last.id}`} className="flex min-h-11 items-center justify-between rounded-2xl border border-line bg-surface p-4">
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-surface p-4">
             <div className="flex flex-col gap-1">
               <Kicker tone="muted">Last result</Kicker>
               <span className="mt-1 flex items-center gap-2">
@@ -129,10 +130,8 @@ export default async function HomePage() {
               </span>
               <span className="text-sm text-muted">{formatDay(last.startTimeUTC).long} · Final</span>
             </div>
-            <span className="flex items-center gap-1 text-sm font-semibold">
-              Recap <Chevron />
-            </span>
-          </Link>
+            <GameSummaryButton href={`/game/${last.id}`} label={`Game summary, ${last.home ? "vs" : "at"} ${last.opp}`} />
+          </div>
         )}
       </section>
 
