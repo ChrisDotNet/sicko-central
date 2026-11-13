@@ -15,6 +15,8 @@ import { GameTabButtons } from "./GameTabs";
 import type { GameTab } from "./GameTabs";
 import { VideoTab } from "../video/VideoTab";
 import type { GameVideo } from "@/lib/video";
+import { useNotify } from "../notify/NotificationProvider";
+import { strengthTag } from "./GoalReplays";
 
 type Payload = { game: LiveGame; rivals: RivalGame[]; radio?: RadioEpisode[] };
 
@@ -39,6 +41,16 @@ export function LiveCompanion({
 }) {
   const [tab, setTab] = useState<GameTab>(initialTab);
   const [video, setVideo] = useState<GameVideo | null>(null);
+  const [pending, setPending] = useState<{ clipId: number; n: number } | null>(null);
+  const notify = useNotify();
+  // Clips already known, so alerts only fire for ones that appear while the page is open.
+  const knownClips = useRef<Set<number> | null>(
+    initial ? new Set(initial.game.goals.flatMap((g) => (g.clipId ? [g.clipId] : []))) : null,
+  );
+  const knownVideo = useRef<Set<number> | null>(null);
+  const openRef = useRef<(clipId: number) => void>(() => {});
+  const videoComplete = useRef(false);
+  const requests = useRef(0);
   const [data, setData] = useState<Payload | null>(initial);
   const [error, setError] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<number | null>(null);
@@ -48,6 +60,24 @@ export function LiveCompanion({
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latest = useRef<Payload | null>(initial);
 
+  // Alert when a goal's replay clip shows up (the NHL posts them a few minutes after the goal).
+  function announceGoalClips(game: LiveGame) {
+    const ready = game.goals.filter((g) => g.clipId);
+    if (knownClips.current) {
+      for (const g of ready) {
+        if (knownClips.current.has(g.clipId!)) continue;
+        notify({
+          key: `goal-clip-${g.clipId}`,
+          title: `Replay ready: ${g.scorer} goal`,
+          body: `${g.teamAbbrev}${strengthTag(g)} · ${periodLabel(g.period, g.periodType)} ${g.time} · ${g.scoreAfter}`,
+          tone: g.team === "OTT" ? "gold" : "neutral",
+          action: { label: "Watch", onSelect: () => openRef.current(g.clipId!) },
+        });
+      }
+    }
+    knownClips.current = new Set([...(knownClips.current ?? []), ...ready.map((g) => g.clipId!)]);
+  }
+
   const load = useCallback(
     async (at?: number) => {
       try {
@@ -55,6 +85,7 @@ export function LiveCompanion({
         const res = await fetch(`/api/game/${gameId}${qs}`, { cache: "no-store" });
         if (!res.ok) throw new Error(String(res.status));
         const next = (await res.json()) as Payload;
+        announceGoalClips(next.game);
         latest.current = next;
         setData(next);
         setError(false);
@@ -63,6 +94,8 @@ export function LiveCompanion({
         setError(true);
       }
     },
+    // announceGoalClips only reads refs and the stable notify function.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [gameId],
   );
 
@@ -102,28 +135,62 @@ export function LiveCompanion({
     return () => clearTimeout(id);
   }, [replay, paused, t]);
 
-  // Video tab: load the game's video list when the tab opens, then refresh every minute
-  // while the game is on (recaps and highlights keep posting). Not in replay mode, where
-  // the full post-game list would spoil the game.
+  function announceVideo(v: GameVideo) {
+    const all = [
+      ...v.recaps.map((x) => ({ ...x, kind: "recap" })),
+      ...v.condensed.map((x) => ({ ...x, kind: "condensed" })),
+      ...v.highlights.map((x) => ({ ...x, kind: "highlight" })),
+    ];
+    if (knownVideo.current) {
+      for (const x of all) {
+        if (knownVideo.current.has(x.clipId)) continue;
+        notify({
+          key: `video-${x.clipId}`,
+          title: x.kind === "highlight" ? `New highlight: ${x.title}` : `${x.title} is up`,
+          body: x.kind === "condensed" ? "The whole game in about 10 minutes" : x.kind === "recap" ? "Watch the game's highlights" : undefined,
+          tone: "neutral",
+          action: { label: "Watch", onSelect: () => openRef.current(x.clipId) },
+        });
+      }
+    }
+    knownVideo.current = new Set([...(knownVideo.current ?? []), ...all.map((x) => x.clipId)]);
+    videoComplete.current = v.recaps.length > 0 && v.condensed.length > 0;
+  }
+
+  // Video list: load it once the game starts and refresh every minute, so the Video tab is
+  // current and new recaps and highlights can raise alerts. Keeps going after the final until
+  // the recap and condensed game have posted. Not in replay mode, where the full post-game
+  // list would spoil the game.
+  const started = data ? !data.game.isPre : false;
   useEffect(() => {
-    if (replay || tab !== "video") return;
+    if (replay || !started) return;
     let cancelled = false;
     let id: ReturnType<typeof setTimeout> | null = null;
+    let polls = 0;
     const fetchVideo = async () => {
+      polls += 1;
       try {
         const res = await fetch(`/api/game/${gameId}/video`, { cache: "no-store" });
-        if (res.ok && !cancelled) setVideo((await res.json()) as GameVideo);
+        if (res.ok && !cancelled) {
+          const v = (await res.json()) as GameVideo;
+          announceVideo(v);
+          setVideo(v);
+        }
       } catch {
         /* keep what we have */
       }
-      if (!cancelled && !latest.current?.game.isFinal) id = setTimeout(fetchVideo, VIDEO_POLL_MS);
+      const g = latest.current?.game;
+      const complete = Boolean(g?.isFinal) && videoComplete.current;
+      if (!cancelled && !complete && polls < 240) id = setTimeout(fetchVideo, VIDEO_POLL_MS);
     };
     id = setTimeout(fetchVideo, 0);
     return () => {
       cancelled = true;
       if (id) clearTimeout(id);
     };
-  }, [replay, tab, gameId]);
+    // announceVideo only reads refs and the stable notify function.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [replay, started, gameId]);
 
   const changeTab = (t: GameTab) => {
     setTab(t);
@@ -136,6 +203,15 @@ export function LiveCompanion({
       /* not important */
     }
   };
+
+  // "Watch" on an alert: switch to the Video tab and open that clip.
+  useEffect(() => {
+    openRef.current = (clipId: number) => {
+      changeTab("video");
+      requests.current += 1;
+      setPending({ clipId, n: requests.current });
+    };
+  });
 
   // "Updated 12 s ago" ticker.
   useEffect(() => {
@@ -257,6 +333,7 @@ export function LiveCompanion({
             video={replay ? null : video}
             goals={game.goals}
             isFinal={game.isFinal}
+            pending={pending}
             note={replay ? "Recaps and highlights are hidden in replay mode so they don't spoil the game." : undefined}
           />
         ))}

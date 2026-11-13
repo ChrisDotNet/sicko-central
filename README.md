@@ -30,9 +30,28 @@ The API can change without notice. If something breaks, `src/lib/nhl.ts` (fetchi
 
 Goal events in play-by-play gain a `highlightClip` id once the NHL posts the clip, usually a few minutes after the goal. The page plays it in the NHL's own Brightcove player in an embedded frame. If the embed ever stops playing, the dialog has a fallback link to the clip on NHL.com.
 
+## Notifications
+
+`src/components/notify/NotificationProvider.tsx` wraps the whole app. Any client component can raise an alert for time-sensitive content:
+
+```tsx
+const notify = useNotify();
+notify({
+  key: "goal-clip-6408310992112",           // dedupes: a key never shows twice per visit
+  title: "Replay ready: Pinto goal",
+  body: "OTT · 1st 07:11 · 1–0",
+  tone: "gold",                              // "gold" for Sens content, "neutral" otherwise
+  action: { label: "Watch", onSelect: () => openClip(6408310992112) },
+});
+```
+
+Each alert shows a toast under the header (auto-dismisses after 10 s, at most three at once), plays a short chime and buzzes on Android. The bell in the header turns sounds on or off for that device. Browsers only allow sound after a tap, so the provider unlocks audio on the first tap anywhere.
+
+Current uses, all on the live page: a goal's replay clip posts, and a recap, condensed game or new highlight posts. Alerts only fire for content that appears while the page is open, not for what was already there.
+
 ## Replay mode (testing without a live game)
 
-`/live?replay=<gameId>` replays a finished game as if it were live, one minute of game time every 3 seconds. On days without a game, `/live` links to a replay of the last one. Example: `/live?replay=2026020288`.
+`/live?replay=<gameId>` replays a finished game as if it were live, one minute of game time every 3 seconds. Goal clips "post" three game-minutes after each goal, so replay-ready alerts can be tested too. On days without a game, `/live` links to a replay of the last one. Example: `/live?replay=2026020288`.
 
 ## High-danger zone
 

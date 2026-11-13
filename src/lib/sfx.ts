@@ -49,3 +49,56 @@ export function playSlapshot() {
   src.connect(gain).connect(c.destination);
   src.start();
 }
+
+// A short two-note chime for in-app alerts (synthesized, no audio file).
+export function playChime() {
+  const c = ctx;
+  if (!c || c.state !== "running") return;
+  const t = c.currentTime + 0.02;
+  const notes: Array<[number, number]> = [
+    [1046.5, 0],
+    [1568, 0.13],
+  ];
+  for (const [freq, at] of notes) {
+    const osc = c.createOscillator();
+    osc.type = "sine";
+    osc.frequency.value = freq;
+    const g = c.createGain();
+    g.gain.setValueAtTime(0.0001, t + at);
+    g.gain.exponentialRampToValueAtTime(0.22, t + at + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + at + 0.32);
+    osc.connect(g).connect(c.destination);
+    osc.start(t + at);
+    osc.stop(t + at + 0.35);
+  }
+}
+
+// Alert sound preference (per device). Stored locally; defaults to on.
+const SOUND_KEY = "sicko:alert-sound";
+const SOUND_EVENT = "sicko:alert-sound-change";
+
+export function alertSoundOn(): boolean {
+  try {
+    return localStorage.getItem(SOUND_KEY) !== "off";
+  } catch {
+    return true;
+  }
+}
+
+export function setAlertSound(on: boolean) {
+  try {
+    localStorage.setItem(SOUND_KEY, on ? "on" : "off");
+  } catch {
+    /* private mode: preference just won't persist */
+  }
+  window.dispatchEvent(new Event(SOUND_EVENT));
+}
+
+export function subscribeAlertSound(cb: () => void) {
+  window.addEventListener(SOUND_EVENT, cb);
+  window.addEventListener("storage", cb);
+  return () => {
+    window.removeEventListener(SOUND_EVENT, cb);
+    window.removeEventListener("storage", cb);
+  };
+}

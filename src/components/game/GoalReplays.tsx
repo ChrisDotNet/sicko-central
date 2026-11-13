@@ -8,11 +8,11 @@ import { preloadClipPlayer } from "./ClipPlayer";
 import { ClipDialog, nextReelSession } from "../video/ClipDialog";
 import type { Reel, ReelItem } from "../video/ClipDialog";
 
-function strengthTag(g: Goal) {
+export function strengthTag(g: Goal) {
   return g.strength === "EV" ? "" : ` · ${g.strength === "PP" ? "PPG" : g.strength === "SH" ? "SHG" : "ENG"}`;
 }
 
-function toItem(g: Goal): ReelItem {
+export function goalToReelItem(g: Goal): ReelItem {
   return {
     clipId: g.clipId as number,
     title: `${g.teamAbbrev} · ${g.scorer}${strengthTag(g)}`,
@@ -31,7 +31,7 @@ export function GoalReplays({ goals }: { goals: Goal[] }) {
 
   const open = (start: number, playAll: boolean) => {
     if (playAll) unlockSfx();
-    setReel({ items: ready.map(toItem), start, playAll, session: nextReelSession() });
+    setReel({ items: ready.map(goalToReelItem), start, playAll, session: nextReelSession() });
   };
   const totalSecs = ready.length * 40;
 

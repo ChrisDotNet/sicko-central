@@ -5,7 +5,7 @@ import type { Goal } from "@/lib/game";
 import type { GameVideo, VideoItem } from "@/lib/video";
 import { unlockSfx } from "@/lib/sfx";
 import { Section } from "../ui";
-import { GoalReplays } from "../game/GoalReplays";
+import { GoalReplays, goalToReelItem } from "../game/GoalReplays";
 import { preloadClipPlayer } from "../game/ClipPlayer";
 import { ClipDialog, nextReelSession } from "./ClipDialog";
 import type { Reel, ReelItem } from "./ClipDialog";
@@ -28,13 +28,37 @@ export function VideoTab({
   goals,
   isFinal,
   note,
+  pending,
 }: {
   video: GameVideo | null;
   goals: Goal[];
   isFinal: boolean;
   note?: string;
+  // A clip to open right away, e.g. from a "replay ready" alert. `n` changes on each request.
+  pending?: { clipId: number; n: number } | null;
 }) {
   const [reel, setReel] = useState<Reel | null>(null);
+  const [handled, setHandled] = useState(0);
+
+  // Open a requested clip once (adjusting state during render, not in an effect).
+  if (pending && pending.n !== handled) {
+    setHandled(pending.n);
+    const readyGoals = goals.filter((g) => g.clipId);
+    const gi = readyGoals.findIndex((g) => g.clipId === pending.clipId);
+    if (gi >= 0) {
+      setReel({ items: readyGoals.map(goalToReelItem), start: gi, playAll: false, session: nextReelSession() });
+    } else {
+      const lists = [[...(video?.recaps ?? []), ...(video?.condensed ?? [])], video?.highlights ?? []];
+      for (const list of lists) {
+        const i = list.findIndex((v) => v.clipId === pending.clipId);
+        if (i >= 0) {
+          const items = list === lists[1] ? list : [list[i]];
+          setReel({ items: items.map(toItem), start: list === lists[1] ? i : 0, playAll: false, session: nextReelSession() });
+          break;
+        }
+      }
+    }
+  }
   const open = (items: VideoItem[], start: number, playAll: boolean) => {
     if (playAll) unlockSfx();
     setReel({ items: items.map(toItem), start, playAll, session: nextReelSession() });

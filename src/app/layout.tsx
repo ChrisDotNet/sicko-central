@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Barlow_Condensed, Inter } from "next/font/google";
 import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
+import { NotificationProvider } from "@/components/notify/NotificationProvider";
 import "./globals.css";
 
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
@@ -27,11 +28,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${inter.variable} ${barlow.variable} antialiased`}>
       <body className="min-h-dvh font-sans">
-        <div className="mx-auto flex min-h-dvh max-w-xl flex-col">
-          <Header />
-          <main className="flex-1 pb-28">{children}</main>
-          <BottomNav />
-        </div>
+        <NotificationProvider>
+          <div className="mx-auto flex min-h-dvh max-w-xl flex-col">
+            <Header />
+            <main className="flex-1 pb-28">{children}</main>
+            <BottomNav />
+          </div>
+        </NotificationProvider>
       </body>
     </html>
   );
