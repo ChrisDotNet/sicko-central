@@ -1,6 +1,7 @@
 import { buildGame } from "@/lib/game";
 import { getBoxScore, getPlayByPlay, getScoresNowLive } from "@/lib/nhl";
 import { atlanticGames } from "@/lib/rivals";
+import { getRadioForGame } from "@/lib/radio";
 
 // Live game data for the companion page. The browser polls this route; the NHL is
 // never called from the browser. The CDN caches each response for about 10 s, so the
@@ -23,9 +24,10 @@ export async function GET(request: Request, ctx: RouteContext<"/api/game/[id]">)
     ]);
     const game = buildGame(pbp, box, { untilElapsed });
     const rivals = scores && untilElapsed == null ? atlanticGames(scores, game.id) : [];
+    const radio = await getRadioForGame(game.gameDate);
     const maxAge = game.isFinal && untilElapsed == null ? 300 : 10;
     return Response.json(
-      { game, rivals },
+      { game, rivals, radio },
       { headers: { "Cache-Control": `public, s-maxage=${maxAge}, stale-while-revalidate=${maxAge * 2}` } },
     );
   } catch (err) {

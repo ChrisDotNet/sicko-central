@@ -3,6 +3,7 @@
 import { useEffect, useImperativeHandle, useRef, useState } from "react";
 import type { Ref } from "react";
 import { playSlapshot } from "@/lib/sfx";
+import { announceReplayEnd, announceReplayStart } from "@/lib/media-bus";
 
 // The NHL's Brightcove player, loaded in the page (not an iframe) so we can tell when
 // a clip ends and start the next one. The player's own config carries the key it needs
@@ -193,6 +194,7 @@ export function ClipPlayer({
         const started = () => {
           clearStall();
           setNeedsTap(false);
+          announceReplayStart();
         };
         p.on("playing", started);
         p.on("adstart", started);
@@ -205,6 +207,7 @@ export function ClipPlayer({
     return () => {
       disposed = true;
       clearStall();
+      announceReplayEnd();
       try {
         player.current?.dispose();
       } catch {

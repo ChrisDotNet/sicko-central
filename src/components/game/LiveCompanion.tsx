@@ -4,11 +4,14 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { LiveGame } from "@/lib/game";
 import type { RivalGame } from "@/lib/rivals";
+import type { RadioEpisode } from "@/lib/radio";
+import { RadioArchive } from "../radio/RadioArchive";
+import { LiveRadioBar } from "../radio/LiveRadioBar";
 import { periodLabel } from "@/lib/format";
 import { Section } from "../ui";
 import { GameSections } from "./GameSections";
 
-type Payload = { game: LiveGame; rivals: RivalGame[] };
+type Payload = { game: LiveGame; rivals: RivalGame[]; radio?: RadioEpisode[] };
 
 const LIVE_POLL_MS = 15_000;
 const PRE_POLL_MS = 60_000;
@@ -97,6 +100,10 @@ export function LiveCompanion({ gameId, initial, replay }: { gameId: number; ini
   }
 
   const { game, rivals } = data;
+  const radio = data.radio ?? [];
+  const hasPostgame = radio.some((e) => e.kind === "postgame");
+  const showLiveBar = !replay && (game.isPre || game.isLive || (game.isFinal && !hasPostgame));
+  const barLabel = game.isPre ? "Pre-game coverage before puck drop" : game.isLive ? "The radio call, live" : "Post-game show";
   const ago = updatedAt && now ? Math.max(0, Math.round((now - updatedAt) / 1000)) : null;
 
   return (
@@ -166,6 +173,12 @@ export function LiveCompanion({ gameId, initial, replay }: { gameId: number; ini
 
       <GameSections game={game} />
 
+      {!game.isPre && (
+        <Section title="Radio call" aside="TSN 1200">
+          <RadioArchive episodes={radio} live={!game.isFinal} />
+        </Section>
+      )}
+
       {rivals.length > 0 && (
         <Section title="Around the Atlantic">
           <div className="flex flex-col gap-2">
@@ -179,6 +192,12 @@ export function LiveCompanion({ gameId, initial, replay }: { gameId: number; ini
             ))}
           </div>
         </Section>
+      )}
+      {showLiveBar && (
+        <>
+          <div className="h-20" aria-hidden="true" />
+          <LiveRadioBar label={barLabel} />
+        </>
       )}
     </>
   );

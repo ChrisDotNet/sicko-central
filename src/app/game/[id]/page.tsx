@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { GameSections } from "@/components/game/GameSections";
-import { ErrorNote, TeamBar } from "@/components/ui";
+import { ErrorNote, Section, TeamBar } from "@/components/ui";
 import { buildGame } from "@/lib/game";
 import { formatDay } from "@/lib/format";
 import { getBoxScore, getPlayByPlay } from "@/lib/nhl";
+import { getRadioForGame } from "@/lib/radio";
+import { RadioArchive } from "@/components/radio/RadioArchive";
 
 async function Recap({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -38,6 +40,9 @@ async function Recap({ params }: { params: Promise<{ id: string }> }) {
         </div>
       </div>
       <GameSections game={game} />
+      <Section title="Radio call" aside="TSN 1200">
+        <RadioArchive episodes={await getRadioForGame(game.gameDate)} live={false} />
+      </Section>
     </>
   );
 }

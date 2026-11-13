@@ -7,6 +7,7 @@ import { buildGame } from "@/lib/game";
 import { formatDay, formatTime } from "@/lib/format";
 import { getBoxScore, getPlayByPlay, getSchedule, getScoresNowLive } from "@/lib/nhl";
 import { atlanticGames } from "@/lib/rivals";
+import { getRadioForGame } from "@/lib/radio";
 import { scoreLine, splitSchedule } from "@/lib/schedule";
 import { OTT } from "@/lib/teams";
 
@@ -25,7 +26,9 @@ async function LiveContent({ searchParams }: { searchParams: Promise<Record<stri
   if (today) {
     const id = String(today.id);
     const [pbp, box] = await Promise.all([getPlayByPlay(id).catch(() => null), getBoxScore(id)]);
-    const initial = pbp ? { game: buildGame(pbp, box), rivals: scores ? atlanticGames(scores, today.id) : [] } : null;
+    const game = pbp ? buildGame(pbp, box) : null;
+    const radio = game ? await getRadioForGame(game.gameDate) : [];
+    const initial = game ? { game, rivals: scores ? atlanticGames(scores, today.id) : [], radio } : null;
     return <LiveCompanion key={id} gameId={today.id} initial={initial} replay={false} />;
   }
 
