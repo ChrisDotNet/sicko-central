@@ -11,6 +11,8 @@ async function get<T>(path: string): Promise<T> {
   const res = await fetch(`${WEB}${path}`, {
     headers: { "User-Agent": "SickoCentral/0.1 (hobby fan site)" },
     cache: "no-store",
+    // Fail fast if the NHL is slow, so pages show an error note instead of hanging a build.
+    signal: AbortSignal.timeout(10_000),
   });
   if (!res.ok) throw new NhlError(`NHL ${res.status} for ${path}`);
   return (await res.json()) as T;
@@ -274,42 +276,52 @@ export type ClubGoalie = {
 export type ClubStats = { skaters: ClubSkater[]; goalies: ClubGoalie[] };
 
 // ---------- cached fetchers ----------
+// These never throw: with Cache Components a thrown error inside a cached function fails
+// the build, so failures come back as null (or an empty value) and pages show an error note.
 
-export async function getSchedule(): Promise<Schedule> {
-  "use cache";
-  cacheLife("frequent");
-  return get<Schedule>("/club-schedule-season/OTT/now");
+async function safe<T>(path: string): Promise<T | null> {
+  try {
+    return await get<T>(path);
+  } catch {
+    return null;
+  }
 }
 
-export async function getScoresNow(): Promise<Scores> {
+export async function getSchedule(): Promise<Schedule | null> {
   "use cache";
   cacheLife("frequent");
-  return get<Scores>("/score/now");
+  return safe<Schedule>("/club-schedule-season/OTT/now");
 }
 
-export async function getScoresNowLive(): Promise<Scores> {
+export async function getScoresNow(): Promise<Scores | null> {
+  "use cache";
+  cacheLife("frequent");
+  return safe<Scores>("/score/now");
+}
+
+export async function getScoresNowLive(): Promise<Scores | null> {
   "use cache";
   cacheLife("live");
-  return get<Scores>("/score/now");
+  return safe<Scores>("/score/now");
 }
 
 export async function getStandings(): Promise<StandingRow[]> {
   "use cache";
   cacheLife("frequent");
-  const data = await get<{ standings: StandingRow[] }>("/standings/now");
-  return data.standings ?? [];
+  const data = await safe<{ standings: StandingRow[] }>("/standings/now");
+  return data?.standings ?? [];
 }
 
-export async function getRoster(): Promise<Roster> {
+export async function getRoster(): Promise<Roster | null> {
   "use cache";
   cacheLife("daily");
-  return get<Roster>("/roster/OTT/current");
+  return safe<Roster>("/roster/OTT/current");
 }
 
-export async function getClubStats(): Promise<ClubStats> {
+export async function getClubStats(): Promise<ClubStats | null> {
   "use cache";
   cacheLife("daily");
-  return get<ClubStats>("/club-stats/OTT/now");
+  return safe<ClubStats>("/club-stats/OTT/now");
 }
 
 export async function getPlayer(id: string): Promise<PlayerLanding | null> {
@@ -323,10 +335,10 @@ export async function getPlayer(id: string): Promise<PlayerLanding | null> {
 }
 
 // Live game data: cached for about 10 s, so every viewer shares one NHL call.
-export async function getPlayByPlay(gameId: string): Promise<PlayByPlay> {
+export async function getPlayByPlay(gameId: string): Promise<PlayByPlay | null> {
   "use cache";
   cacheLife("live");
-  return get<PlayByPlay>(`/gamecenter/${encodeURIComponent(gameId)}/play-by-play`);
+  return safe<PlayByPlay>(`/gamecenter/${encodeURIComponent(gameId)}/play-by-play`);
 }
 
 export async function getBoxScore(gameId: string): Promise<BoxScore> {

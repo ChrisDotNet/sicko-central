@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { LiveCompanion } from "@/components/game/LiveCompanion";
 import { Card, Chevron, Kicker } from "@/components/ui";
+import { BroadcastLinks } from "@/components/BroadcastLinks";
 import { buildGame } from "@/lib/game";
 import { formatDay, formatTime } from "@/lib/format";
 import { getBoxScore, getPlayByPlay, getSchedule, getScoresNowLive } from "@/lib/nhl";
@@ -45,8 +46,8 @@ async function LiveContent({ searchParams }: { searchParams: Promise<Record<stri
           </div>
           <div className="text-sm text-ink-2">
             {formatDay(next.startTimeUTC).long} · {formatTime(next.startTimeUTC)}
-            {next.broadcasts.length ? ` · ${next.broadcasts.join(", ")}` : ""}
           </div>
+          <BroadcastLinks networks={next.broadcasts} className="mt-3" />
         </Card>
       )}
       {last && (

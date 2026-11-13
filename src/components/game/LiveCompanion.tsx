@@ -10,6 +10,7 @@ import { LiveRadioBar } from "../radio/LiveRadioBar";
 import { periodLabel } from "@/lib/format";
 import { Section } from "../ui";
 import { GameSections } from "./GameSections";
+import { BroadcastLinks } from "../BroadcastLinks";
 
 type Payload = { game: LiveGame; rivals: RivalGame[]; radio?: RadioEpisode[] };
 
@@ -169,6 +170,9 @@ export function LiveCompanion({ gameId, initial, replay }: { gameId: number; ini
             Runs about 20 s behind TV · check it during stoppages
           </p>
         )}
+        {(game.isPre || game.isLive) && game.broadcasts.length > 0 && (
+          <BroadcastLinks networks={game.broadcasts} className="mt-2 justify-center" />
+        )}
       </section>
 
       <GameSections game={game} />
@@ -180,7 +184,7 @@ export function LiveCompanion({ gameId, initial, replay }: { gameId: number; ini
       )}
 
       {rivals.length > 0 && (
-        <Section title="Around the Atlantic">
+        <Section title="Out of town scoreboard">
           <div className="flex flex-col gap-2">
             {rivals.map((r) => (
               <div key={r.id} className="flex items-center justify-between rounded-xl border border-line bg-surface px-3.5 py-3">

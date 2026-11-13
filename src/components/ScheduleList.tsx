@@ -6,6 +6,7 @@ import { formatDay, formatTime } from "@/lib/format";
 import type { GameSummary } from "@/lib/schedule";
 import { scoreLine } from "@/lib/schedule";
 import { ResultBadge, TeamBar } from "./ui";
+import { BroadcastLinks } from "./BroadcastLinks";
 
 const FILTERS = ["All", "Home", "Away"] as const;
 
@@ -80,7 +81,9 @@ export function ScheduleList({ games, focusDate }: { games: GameSummary[]; focus
               ? "Live now · follow along"
               : g.state === "final"
                 ? "Final · Recap"
-                : [g.home ? g.venue : "Away", g.broadcasts.join(", ")].filter(Boolean).join(" · ");
+                : g.home
+                  ? g.venue
+                  : "Away";
           const body = (
             <>
               <div className="flex flex-col items-center leading-tight">
@@ -95,6 +98,7 @@ export function ScheduleList({ games, focusDate }: { games: GameSummary[]; focus
                   </span>
                 </span>
                 <span className="truncate text-xs text-muted">{sub}</span>
+                {g.state === "upcoming" && <BroadcastLinks networks={g.broadcasts} className="mt-1" />}
               </div>
               <div className="flex flex-col items-end gap-1">
                 {g.state === "live" && <ResultBadge result="LIVE" />}

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Card, Chevron, ErrorNote, Kicker, ResultBadge, Section, TeamBar } from "@/components/ui";
 import { StandingsTable } from "@/components/StandingsTable";
+import { BroadcastLinks } from "@/components/BroadcastLinks";
 import { formatDay, formatTime, savePct } from "@/lib/format";
 import { getClubStats, getSchedule, getScoresNow, getStandings, name } from "@/lib/nhl";
 import { scoreLine, splitSchedule } from "@/lib/schedule";
@@ -82,18 +83,21 @@ export default async function HomePage() {
 
       <section className="flex flex-col gap-2.5 px-4 pt-4">
         {next && tonight && (
-          <Link href="/live" className="flex min-h-11 items-center justify-between rounded-2xl border border-gold-line bg-gold-ground p-4">
-            <div className="flex flex-col gap-1">
-              <Kicker>Tonight</Kicker>
-              <span className="font-display text-2xl font-extrabold leading-none tracking-wide">
-                {next.home ? "vs" : "at"} {next.opp} · {formatTime(next.startTimeUTC)}
+          <div className="rounded-2xl border border-gold-line bg-gold-ground p-4">
+            <Link href="/live" className="flex min-h-11 items-center justify-between">
+              <div className="flex flex-col gap-1">
+                <Kicker>Tonight</Kicker>
+                <span className="font-display text-2xl font-extrabold leading-none tracking-wide">
+                  {next.home ? "vs" : "at"} {next.opp} · {formatTime(next.startTimeUTC)}
+                </span>
+                <span className="text-sm text-muted">{next.venue}</span>
+              </div>
+              <span className="flex items-center gap-1 text-sm font-semibold">
+                Game centre <Chevron />
               </span>
-              <span className="text-sm text-muted">{next.broadcasts.join(", ") || next.venue}</span>
-            </div>
-            <span className="flex items-center gap-1 text-sm font-semibold">
-              Game centre <Chevron />
-            </span>
-          </Link>
+            </Link>
+            <BroadcastLinks networks={next.broadcasts} className="mt-3" />
+          </div>
         )}
         {next && !tonight && (
           <Card className="p-4">
@@ -106,12 +110,11 @@ export default async function HomePage() {
                 <span className="text-sm text-ink-2">
                   {formatDay(next.startTimeUTC).long} · {formatTime(next.startTimeUTC)}
                 </span>
-                <span className="text-sm text-muted">
-                  {[next.venue, next.broadcasts.join(", ")].filter(Boolean).join(" · ")}
-                </span>
+                <span className="text-sm text-muted">{next.venue}</span>
               </div>
               <TeamBar abbrev={next.opp} className="h-11 w-2.5" />
             </div>
+            <BroadcastLinks networks={next.broadcasts} className="mt-3" />
           </Card>
         )}
         {last && last.result && (

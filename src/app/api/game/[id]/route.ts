@@ -22,6 +22,9 @@ export async function GET(request: Request, ctx: RouteContext<"/api/game/[id]">)
       getBoxScore(id),
       getScoresNowLive().catch(() => null),
     ]);
+    if (!pbp) {
+      return Response.json({ error: "NHL data unavailable" }, { status: 502, headers: { "Cache-Control": "public, s-maxage=5" } });
+    }
     const game = buildGame(pbp, box, { untilElapsed });
     const rivals = scores && untilElapsed == null ? atlanticGames(scores, game.id) : [];
     const radio = await getRadioForGame(game.gameDate);

@@ -46,9 +46,19 @@ function duration(v: string | null): number | null {
 async function getFeedItems(): Promise<FeedItem[]> {
   "use cache";
   cacheLife("frequent");
-  const res = await fetch(FEED, { cache: "no-store", headers: { "User-Agent": "SickoCentral/0.1 (hobby fan site)" } });
-  if (!res.ok) throw new Error(`Radio feed ${res.status}`);
-  const xml = await res.text();
+  // Never throw from a cached function (it would fail the build); no feed means no episodes.
+  let xml: string;
+  try {
+    const res = await fetch(FEED, {
+      cache: "no-store",
+      headers: { "User-Agent": "SickoCentral/0.1 (hobby fan site)" },
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!res.ok) return [];
+    xml = await res.text();
+  } catch {
+    return [];
+  }
   const items: FeedItem[] = [];
   for (const block of xml.split(/<item[\s>]/i).slice(1)) {
     const title = tag(block, "title");

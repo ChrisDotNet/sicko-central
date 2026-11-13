@@ -1,5 +1,5 @@
 import type { StandingRow } from "@/lib/nhl";
-import { name } from "@/lib/nhl";
+import { name } from "@/lib/nhl-shared";
 import { OTT } from "@/lib/teams";
 
 export function StandingsTable({ rows, showRank = true }: { rows: StandingRow[]; showRank?: boolean }) {
