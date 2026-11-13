@@ -8,6 +8,7 @@ import { Section } from "../ui";
 import { GoalReplays, goalToReelItem } from "../game/GoalReplays";
 import { preloadClipPlayer } from "../game/ClipPlayer";
 import { ClipDialog, nextReelSession } from "./ClipDialog";
+import { Thumb } from "../media/Thumb";
 import type { Reel, ReelItem } from "./ClipDialog";
 
 function length(sec: number | null) {
@@ -86,14 +87,12 @@ export function VideoTab({
                 type="button"
                 onPointerDown={preloadClipPlayer}
                 onClick={() => open([v], 0, false)}
-                className="flex min-h-16 items-center justify-between gap-3 rounded-2xl border border-gold-line bg-gold-ground px-4 py-3.5 text-left"
+                className="flex min-h-16 items-center gap-3.5 rounded-2xl border border-gold-line bg-gold-ground p-2.5 pr-4 text-left hover:border-gold"
               >
-                <span className="flex min-w-0 flex-col gap-0.5">
+                <Thumb src={v.thumb} play className="aspect-video w-32 md:w-40" />
+                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                   <span className="font-display text-xl font-extrabold tracking-wide">{v.title}</span>
                   <span className="text-xs text-muted">{v.seconds ? `${length(v.seconds)} · ` : ""}NHL.com</span>
-                </span>
-                <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-gold text-ground">
-                  <Play />
                 </span>
               </button>
             ))}
@@ -102,7 +101,7 @@ export function VideoTab({
       </Section>
 
       <Section title="Goals" aside={goals.length ? `${goals.filter((g) => g.clipId).length} of ${goals.length} posted` : undefined}>
-        <GoalReplays goals={goals} />
+        <GoalReplays goals={goals} thumbs={video?.goalThumbs} />
       </Section>
 
       {highlights.length > 0 && (
@@ -119,21 +118,19 @@ export function VideoTab({
           )}
           <div className="overflow-hidden rounded-2xl border border-line bg-surface">
             {highlights.map((h, i) => (
-              <div key={h.clipId} className="grid grid-cols-[minmax(0,1fr)_44px] items-center gap-3 border-b border-line px-3.5 py-2.5 last:border-0">
+              <button
+                key={h.clipId}
+                type="button"
+                onPointerDown={preloadClipPlayer}
+                onClick={() => open(highlights, i, false)}
+                className="flex w-full items-center gap-3 border-b border-line px-2.5 py-2.5 text-left last:border-0 hover:bg-surface-2"
+              >
+                <Thumb src={h.thumb} play className="aspect-video w-24 md:w-32" />
                 <span className="flex min-w-0 flex-col gap-0.5">
                   <span className="text-sm font-semibold">{h.title}</span>
                   {h.seconds ? <span className="text-xs text-muted">{length(h.seconds)}</span> : null}
                 </span>
-                <button
-                  type="button"
-                  aria-label={`Play ${h.title}`}
-                  onPointerDown={preloadClipPlayer}
-                  onClick={() => open(highlights, i, false)}
-                  className="flex size-11 items-center justify-center rounded-full bg-line text-ink"
-                >
-                  <Play />
-                </button>
-              </div>
+              </button>
             ))}
           </div>
         </Section>

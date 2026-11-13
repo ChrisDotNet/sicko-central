@@ -6,6 +6,7 @@ import { periodLabel } from "@/lib/format";
 import { unlockSfx } from "@/lib/sfx";
 import { preloadClipPlayer } from "./ClipPlayer";
 import { ClipDialog, nextReelSession } from "../video/ClipDialog";
+import { Thumb } from "../media/Thumb";
 import type { Reel, ReelItem } from "../video/ClipDialog";
 
 export function strengthTag(g: Goal) {
@@ -21,7 +22,8 @@ export function goalToReelItem(g: Goal): ReelItem {
   };
 }
 
-export function GoalReplays({ goals }: { goals: Goal[] }) {
+// `thumbs` (clip id → still) is passed on the Media tab, where each goal gets a thumbnail.
+export function GoalReplays({ goals, thumbs }: { goals: Goal[]; thumbs?: Record<string, string> }) {
   const ready = goals.filter((g) => g.clipId);
   const [reel, setReel] = useState<Reel | null>(null);
 
@@ -51,8 +53,15 @@ export function GoalReplays({ goals }: { goals: Goal[] }) {
       <div className="overflow-hidden rounded-2xl border border-line bg-surface">
         {[...goals].reverse().map((g) => {
           const idx = ready.indexOf(g);
+          const thumb = thumbs && g.clipId ? thumbs[String(g.clipId)] : undefined;
           return (
-            <div key={g.id} className="grid grid-cols-[minmax(0,1fr)_44px] items-center gap-3 border-b border-line px-3.5 py-2.5 last:border-0">
+            <div
+              key={g.id}
+              className={`grid items-center gap-3 border-b border-line px-3.5 py-2.5 last:border-0 ${
+                thumbs ? "grid-cols-[auto_minmax(0,1fr)_44px] pl-2.5" : "grid-cols-[minmax(0,1fr)_44px]"
+              }`}
+            >
+              {thumbs && <Thumb src={thumb} className="aspect-video w-20 md:w-24" />}
               <div className="flex min-w-0 flex-col gap-0.5">
                 <span className="flex items-center gap-1.5">
                   <span className={`rounded px-1.5 py-px text-[11px] font-bold tracking-wider ${g.team === "OTT" ? "bg-gold text-ground" : "bg-line-strong text-ink"}`}>

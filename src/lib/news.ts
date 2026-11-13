@@ -31,6 +31,9 @@ export type NewsItem = {
   title: string;
   summary: string | null;
   published: string; // ISO
+  // The outlet's own thumbnail from its feed, loaded straight from the outlet (never copied).
+  // Absent on items saved before thumbnails were added.
+  image?: string | null;
 };
 
 const UA = { "User-Agent": "SickoCentral/0.1 (hobby fan site)" };
@@ -78,6 +81,29 @@ function iso(date: string | null): string | null {
   return Number.isNaN(t) ? null : new Date(t).toISOString();
 }
 
+// ---- Thumbnails ----
+
+// NHL images come as a template; this size is 16:9 at about 480 px wide.
+export function nhlImage(t?: { templateUrl?: string } | null): string | null {
+  return t?.templateUrl ? t.templateUrl.replace("{formatInstructions}", "t_ratio16_9-size30") : null;
+}
+
+// The first image in an RSS item (media:content, else an image enclosure).
+function feedImage(block: string): string | null {
+  const m =
+    block.match(/<media:content[^>]*\burl="([^"]+)"[^>]*>/i) ??
+    block.match(/<enclosure[^>]*\burl="([^"]+)"[^>]*type="image/i);
+  if (!m) return null;
+  const url = decode(m[1]);
+  return url.startsWith("https://") ? url : null;
+}
+
+// TSN's image server resizes on request; ask for a thumbnail instead of the 2,000 px original.
+function tsnThumb(url: string | null): string | null {
+  if (!url) return null;
+  return url.replace(/([?&])width=\d+/, "$1width=480").replace(/([?&])height=\d+/, "$1height=270");
+}
+
 // ---- NHL.com ----
 
 type Story = {
@@ -88,6 +114,7 @@ type Story = {
   contentDate?: string;
   context?: { slug?: string };
   tags?: Array<{ slug: string }>;
+  thumbnail?: { templateUrl?: string };
 };
 
 export async function getNhlStories(gameId: string): Promise<NewsItem[]> {
@@ -115,7 +142,7 @@ export async function getNhlStories(gameId: string): Promise<NewsItem[]> {
     const tags = (s.tags ?? []).map((t) => t.slug);
     const url = s.context?.slug === "nhl" ? `https://www.nhl.com/news/${s.slug}` : `https://www.nhl.com/senators/news/${s.slug}`;
     const kind = tags.includes("game-recap") ? "Recap" : tags.includes("game-preview") ? "Preview" : "Story";
-    out.push({ url, outlet: "NHL.com", kind, title, summary: shorten(s.summary), published });
+    out.push({ url, outlet: "NHL.com", kind, title, summary: shorten(s.summary), published, image: nhlImage(s.thumbnail) });
   }
   return out;
 }
@@ -133,7 +160,7 @@ function parseTsn(xml: string): NewsItem[] {
     const summary = tag(block, "description");
     if (!title || !url || !published) continue;
     if (!SENS.test(title) && !SENS.test(summary ?? "")) continue;
-    out.push({ url, outlet: "TSN", kind: "Story", title, summary: shorten(summary), published });
+    out.push({ url, outlet: "TSN", kind: "Story", title, summary: shorten(summary), published, image: tsnThumb(feedImage(block)) });
   }
   return out;
 }
@@ -161,7 +188,15 @@ function parseSportsnet(xml: string): NewsItem[] {
     const published = iso(tag(block, "pubDate"));
     if (!url || !published) continue;
     const categories = [...block.matchAll(/<category>([\s\S]*?)<\/category>/gi)].map((m) => decode(m[1]));
-    out.push({ url, outlet: "Sportsnet", kind: snKind(categories), title, summary: shorten(tag(block, "description")), published });
+    out.push({
+      url,
+      outlet: "Sportsnet",
+      kind: snKind(categories),
+      title,
+      summary: shorten(tag(block, "description")),
+      published,
+      image: feedImage(block),
+    });
   }
   return out;
 }

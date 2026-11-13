@@ -9,6 +9,7 @@ import { formatDay, formatTime } from "@/lib/format";
 import { Section } from "../ui";
 import { RadioArchive } from "../radio/RadioArchive";
 import { VideoTab } from "../video/VideoTab";
+import { Thumb } from "./Thumb";
 import { SEGMENTS } from "../game/GameTabs";
 import type { MediaSegment } from "../game/GameTabs";
 
@@ -28,17 +29,20 @@ function NewsCard({ n }: { n: NewsItem }) {
       href={n.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex flex-col gap-1.5 border-b border-line px-3.5 py-3 last:border-0"
+      className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 border-b border-line px-3.5 py-3 last:border-0 hover:bg-surface-2 md:gap-4"
     >
-      <span className="flex items-center gap-2 text-xs text-muted">
-        <span className={`rounded px-1.5 py-0.5 text-[11px] font-bold tracking-wide ${OUTLET_STYLE[n.outlet]}`}>{n.outlet}</span>
-        <span>
-          {n.kind} · {formatDay(n.published).long}, {formatTime(n.published)}
+      <span className="flex min-w-0 flex-col gap-1.5">
+        <span className="flex items-center gap-2 text-xs text-muted">
+          <span className={`rounded px-1.5 py-0.5 text-[11px] font-bold tracking-wide ${OUTLET_STYLE[n.outlet]}`}>{n.outlet}</span>
+          <span>
+            {n.kind} · {formatDay(n.published).long}, {formatTime(n.published)}
+          </span>
         </span>
+        <span className="text-[15px] font-semibold leading-snug text-ink">{n.title}</span>
+        {n.summary && <span className="line-clamp-3 text-sm leading-snug text-ink-2">{n.summary}</span>}
+        <span className="text-xs font-semibold text-sens-text">Read on {n.outlet} ↗</span>
       </span>
-      <span className="text-[15px] font-semibold leading-snug text-ink">{n.title}</span>
-      {n.summary && <span className="text-sm leading-snug text-ink-2">{n.summary}</span>}
-      <span className="text-xs font-semibold text-sens-text">Read on {n.outlet} ↗</span>
+      {n.image && <Thumb src={n.image} className="mt-0.5 aspect-video w-28 md:w-40" />}
     </a>
   );
 }

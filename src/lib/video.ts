@@ -2,12 +2,14 @@
 // Every video is tagged with its game id. Like the stats API it's public but undocumented,
 // so failures come back as an empty list rather than an error.
 import { cacheLife } from "next/cache";
+import { nhlImage } from "./news";
 
 const FORGE = "https://forge-dapi.d3.nhle.com/v2/content/en-us/videos";
 const WEB = "https://api-web.nhle.com/v1";
 
-export type VideoItem = { clipId: number; title: string; seconds: number | null; url?: string };
-export type GameVideo = { recaps: VideoItem[]; condensed: VideoItem[]; highlights: VideoItem[] };
+export type VideoItem = { clipId: number; title: string; seconds: number | null; url?: string; thumb?: string | null };
+// goalThumbs: a still for each goal clip (by clip id), since goals come from play-by-play.
+export type GameVideo = { recaps: VideoItem[]; condensed: VideoItem[]; highlights: VideoItem[]; goalThumbs?: Record<string, string> };
 
 type ForgeItem = {
   slug: string;
@@ -15,6 +17,7 @@ type ForgeItem = {
   contentDate?: string;
   fields?: { brightcoveId?: string; duration?: string; audioLanguage?: string };
   tags?: Array<{ slug: string }>;
+  thumbnail?: { templateUrl?: string };
 };
 
 async function fetchJson<T>(url: string): Promise<T | null> {
@@ -67,6 +70,7 @@ export async function getGameVideo(gameId: string): Promise<GameVideo> {
   const condensed: VideoItem[] = [];
   const highlights: Array<VideoItem & { key: string; date: string }> = [];
   const seen = new Set<number>();
+  const goalThumbs: Record<string, string> = {};
 
   for (const it of forge?.items ?? []) {
     const id = Number(it.fields?.brightcoveId);
@@ -74,7 +78,9 @@ export async function getGameVideo(gameId: string): Promise<GameVideo> {
     if (it.fields?.audioLanguage && it.fields.audioLanguage !== "en") continue;
     seen.add(id);
     const tags = (it.tags ?? []).map((t) => t.slug);
-    const base = { clipId: id, seconds: seconds(it.fields?.duration), url: `https://www.nhl.com/video/${it.slug}` };
+    const thumb = nhlImage(it.thumbnail);
+    if (thumb && tags.includes("goal")) goalThumbs[String(id)] = thumb;
+    const base = { clipId: id, seconds: seconds(it.fields?.duration), url: `https://www.nhl.com/video/${it.slug}`, thumb };
 
     if (tags.includes("condensed-game")) {
       condensed.push({ ...base, title: "Condensed game" });
@@ -100,6 +106,7 @@ export async function getGameVideo(gameId: string): Promise<GameVideo> {
     clipId: r.clipId,
     seconds: r.seconds,
     url: r.url,
+    thumb: r.thumb,
     title: recaps.length > 1 && r.label ? `Game recap · ${r.label}` : r.title,
   }));
 
@@ -108,6 +115,7 @@ export async function getGameVideo(gameId: string): Promise<GameVideo> {
     condensed: condensed.slice(0, 1),
     highlights: highlights
       .sort((a, b) => a.date.localeCompare(b.date))
-      .map(({ clipId, title, seconds: s, url }) => ({ clipId, title, seconds: s, url })),
+      .map(({ clipId, title, seconds: s, url, thumb }) => ({ clipId, title, seconds: s, url, thumb })),
+    goalThumbs,
   };
 }

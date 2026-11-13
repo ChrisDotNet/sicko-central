@@ -34,6 +34,7 @@ function merge(live: GameMedia, saved: GameMedia | null): GameMedia {
       recaps: unionBy(live.video.recaps, saved.video?.recaps, clip),
       condensed: unionBy(live.video.condensed, saved.video?.condensed, clip).slice(0, 1),
       highlights: unionBy(live.video.highlights, saved.video?.highlights, clip),
+      goalThumbs: { ...(saved.video?.goalThumbs ?? {}), ...(live.video.goalThumbs ?? {}) },
     },
     // The radio call is a set: if the feed has it, use the feed's version (fresh labels);
     // otherwise what we saved.

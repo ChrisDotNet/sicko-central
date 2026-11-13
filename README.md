@@ -38,6 +38,7 @@ Each game's Media tab has three parts:
 
 - **News**, under Pregame and Postgame headings: NHL.com stories tagged with the game id, plus TSN and Sportsnet stories about the Sens from the 24 h before puck drop to 20 h after (`src/lib/news.ts`). Only headlines and the short summary from each outlet's RSS feed are shown; full articles open on the outlet's site.
 - **Video**: recaps, condensed game, every goal and other highlights from NHL.com (`src/lib/video.ts`).
+- **Thumbnails**: each outlet's own image from its feed or content API, loaded by the browser straight from the outlet (`Thumb`), never copied or passed through Vercel's image optimizer. TSN's are requested at 480 px.
 - **Audio**: TSN 1200's radio call from its podcast feed (`src/lib/radio.ts`).
 
 TSN's and Sportsnet's feeds only hold two to three days, so `src/lib/media.ts` saves each game's lists (headlines, links, clip ids; never the media itself, about 15 KB a game) in Neon Postgres (one `kv_store` table, created automatically) and merges them with what's live. A daily job (`/api/cron/collect`, `vercel.json`, 14:00 UTC) saves recent games even if nobody opens them. Without a database configured it falls back to memory, which works for development but forgets.
