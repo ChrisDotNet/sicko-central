@@ -1,11 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Goal } from "@/lib/game";
 import { periodLabel } from "@/lib/format";
-
-// NHL goal clips play in the NHL's own Brightcove player, embedded so fans stay on the page.
-const PLAYER = "https://players.brightcove.net/6415718365001/D3UCGynRWU_default/index.html";
+import { ClipPlayer, preloadClipPlayer } from "./ClipPlayer";
 
 function strengthTag(g: Goal) {
   return g.strength === "EV" ? "" : ` · ${g.strength === "PP" ? "PPG" : g.strength === "SH" ? "SHG" : "ENG"}`;
@@ -15,7 +13,18 @@ export function GoalReplays({ goals }: { goals: Goal[] }) {
   const ready = goals.filter((g) => g.clipId);
   const [queue, setQueue] = useState<Goal[] | null>(null);
   const [pos, setPos] = useState(0);
+  const [playAll, setPlayAll] = useState(false);
+  const [done, setDone] = useState(false);
+  const [failed, setFailed] = useState(false);
   const dialog = useRef<HTMLDialogElement>(null);
+
+  // In "watch all" mode, move straight to the next goal when a clip ends.
+  const handleEnded = useCallback(() => {
+    if (!queue) return;
+    if (playAll && pos < queue.length - 1) setPos(pos + 1);
+    else setDone(true);
+  }, [queue, playAll, pos]);
+  const handleError = useCallback(() => setFailed(true), []);
 
   useEffect(() => {
     const d = dialog.current;
@@ -28,9 +37,17 @@ export function GoalReplays({ goals }: { goals: Goal[] }) {
     return <p className="rounded-2xl border border-line bg-surface p-4 text-sm text-muted">No goals yet. Replays show up here a few minutes after each goal.</p>;
   }
 
-  const open = (list: Goal[], start = 0) => {
+  const open = (list: Goal[], start = 0, all = false) => {
     setQueue(list);
     setPos(start);
+    setPlayAll(all);
+    setDone(false);
+    setFailed(false);
+  };
+  const go = (next: number) => {
+    setPos(next);
+    setDone(false);
+    setFailed(false);
   };
   const current = queue?.[pos];
   const totalSecs = ready.length * 40;
@@ -40,7 +57,8 @@ export function GoalReplays({ goals }: { goals: Goal[] }) {
       {ready.length > 0 && (
         <button
           type="button"
-          onClick={() => open(ready)}
+          onPointerDown={preloadClipPlayer}
+          onClick={() => open(ready, 0, true)}
           className="mb-2.5 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-sens text-[15px] font-bold text-white"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5l12 7-12 7z" /></svg>
@@ -72,6 +90,7 @@ export function GoalReplays({ goals }: { goals: Goal[] }) {
                 <button
                   type="button"
                   aria-label={`Play ${g.scorer} goal`}
+                  onPointerDown={preloadClipPlayer}
                   onClick={() => open(ready, idx)}
                   className="flex size-11 items-center justify-center rounded-full bg-line text-ink"
                 >
@@ -109,25 +128,25 @@ export function GoalReplays({ goals }: { goals: Goal[] }) {
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
               </button>
             </div>
-            <div className="relative aspect-video w-full bg-black">
-              <iframe
-                key={current.clipId}
-                src={`${PLAYER}?videoId=${current.clipId}&autoplay=true`}
-                title={`${current.scorer} goal replay`}
-                allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-                allowFullScreen
-                className="absolute inset-0 size-full border-0"
-              />
+            <div className="relative w-full bg-black" aria-label={`${current.scorer} goal replay`}>
+              {current.clipId && <ClipPlayer clipId={current.clipId} onEnded={handleEnded} onError={handleError} />}
             </div>
+            {failed && (
+              <p className="px-4 pt-3 text-sm text-ink-2">This clip wouldn&apos;t load here. Use the NHL.com link below{playAll && pos < (queue?.length ?? 0) - 1 ? ", or skip to the next goal" : ""}.</p>
+            )}
+            {done && playAll && <p className="px-4 pt-3 text-sm text-ink-2">That&apos;s every goal so far.</p>}
             {queue && queue.length > 1 && (
               <div className="grid grid-cols-2 gap-2 p-3">
-                <button type="button" disabled={pos === 0} onClick={() => setPos((p) => p - 1)} className="min-h-11 rounded-xl border border-line-strong text-sm font-semibold disabled:opacity-30">
+                <button type="button" disabled={pos === 0} onClick={() => go(pos - 1)} className="min-h-11 rounded-xl border border-line-strong text-sm font-semibold disabled:opacity-30">
                   Previous goal
                 </button>
-                <button type="button" disabled={pos >= queue.length - 1} onClick={() => setPos((p) => p + 1)} className="min-h-11 rounded-xl bg-ink text-sm font-semibold text-ground disabled:opacity-30">
-                  Next goal
+                <button type="button" disabled={pos >= queue.length - 1} onClick={() => go(pos + 1)} className="min-h-11 rounded-xl bg-ink text-sm font-semibold text-ground disabled:opacity-30">
+                  {playAll ? "Skip to next" : "Next goal"}
                 </button>
               </div>
+            )}
+            {playAll && !done && queue && pos < queue.length - 1 && (
+              <p className="px-4 text-xs text-muted">Next up: {queue[pos + 1].scorer}. Plays automatically.</p>
             )}
             {current.clipUrl && (
               <a href={current.clipUrl} target="_blank" rel="noopener noreferrer" className="px-4 pb-3 text-center text-xs text-muted underline">
