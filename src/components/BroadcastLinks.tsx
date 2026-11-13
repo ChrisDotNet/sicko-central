@@ -8,9 +8,15 @@ export function BroadcastLinks({
 }: {
   networks: string[];
   className?: string;
-  size?: "md" | "sm";
+  // "row": for a row shared with other buttons (the next-game card): no arrow, tighter padding.
+  size?: "md" | "sm" | "row";
 }) {
-  const box = size === "sm" ? "min-h-6 px-1.5 text-[11px]" : "min-h-8 px-2.5 text-xs";
+  const box =
+    size === "sm"
+      ? "min-h-6 px-1.5 text-[11px]"
+      : size === "row"
+        ? "min-h-8 gap-1.5 px-2 text-xs"
+        : "min-h-8 px-2.5 text-xs";
   if (networks.length === 0) return null;
   return (
     <div className={`flex flex-wrap items-center gap-1.5 ${className}`}>
@@ -26,12 +32,27 @@ export function BroadcastLinks({
             className={`inline-flex items-center gap-1 rounded-md border border-line-strong bg-surface-2 font-bold text-ink ${box}`}
           >
             {n}
-            <svg width={size === "sm" ? 10 : 12} height={size === "sm" ? 10 : 12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M7 17L17 7M9 7h8v8" />
-            </svg>
+            {size !== "row" && (
+              <svg
+                width={size === "sm" ? 10 : 12}
+                height={size === "sm" ? 10 : 12}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M7 17L17 7M9 7h8v8" />
+              </svg>
+            )}
           </a>
         ) : (
-          <span key={n} className={`inline-flex items-center rounded-md border border-line font-bold text-muted ${box}`}>
+          <span
+            key={n}
+            className={`inline-flex items-center rounded-md border border-line font-bold text-muted ${box}`}
+          >
             {n}
           </span>
         );

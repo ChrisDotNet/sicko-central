@@ -42,20 +42,38 @@ function streak(r: StandingRow) {
   return `${code}${r.streakCount}`;
 }
 
-function Snapshot({ opp, oppName, row, series, tone }: { opp: string; oppName: string; row: StandingRow | null; series: Series; tone: "plain" | "gold" }) {
+function Snapshot({
+  opp,
+  oppName,
+  row,
+  series,
+  tone,
+}: {
+  opp: string;
+  oppName: string;
+  row: StandingRow | null;
+  series: Series;
+  tone: "plain" | "gold";
+}) {
   const line = tone === "gold" ? "border-gold-line" : "border-line";
   const last = series.last;
   return (
     <div className={`grid grid-cols-2 border-t ${line}`}>
       <div className={`border-r px-3.5 py-2.5 md:px-5 ${line}`}>
-        <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted">{oppName || opp}</div>
+        <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted">
+          {oppName || opp}
+        </div>
         {row ? (
           <>
             <div className="text-[15px] font-bold">
-              {row.wins}-{row.losses}-{row.otLosses} · {ordinal(row.divisionSequence)} {SHORT_DIVISION[row.divisionName] ?? row.divisionName}
+              {row.wins}-{row.losses}-{row.otLosses} ·{" "}
+              {ordinal(row.divisionSequence)}{" "}
+              {SHORT_DIVISION[row.divisionName] ?? row.divisionName}
             </div>
             <div className="text-xs text-muted">
-              {row.l10Wins != null ? `Last 10: ${row.l10Wins}-${row.l10Losses}-${row.l10OtLosses}` : ""}
+              {row.l10Wins != null
+                ? `Last 10: ${row.l10Wins}-${row.l10Losses}-${row.l10OtLosses}`
+                : ""}
               {streak(row) ? ` · ${streak(row)}` : ""}
             </div>
           </>
@@ -64,24 +82,41 @@ function Snapshot({ opp, oppName, row, series, tone }: { opp: string; oppName: s
         )}
       </div>
       <div className="px-3.5 py-2.5 md:px-5">
-        <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted">Season series</div>
+        <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted">
+          Season series
+        </div>
         {last ? (
           <>
             <div className="text-[15px] font-bold">
               {series.wins}–{series.losses}
-              {series.of > 0 && <span className="font-medium text-muted"> · game {series.game} of {series.of}</span>}
+              {series.of > 0 && (
+                <span className="font-medium text-muted">
+                  {" "}
+                  · game {series.game} of {series.of}
+                </span>
+              )}
             </div>
             <div className="text-xs text-muted">
-              Last: <span className={`font-bold ${last.result === "W" ? "text-emerald-400" : "text-sens-text"}`}>{last.result}</span>{" "}
+              Last:{" "}
+              <span
+                className={`font-bold ${last.result === "W" ? "text-emerald-400" : "text-sens-text"}`}
+              >
+                {last.result}
+              </span>{" "}
               {last.ottScore}–{last.oppScore}
-              {last.lastPeriodType && last.lastPeriodType !== "REG" ? ` ${last.lastPeriodType}` : ""} {last.home ? "vs" : "at"} {opp},{" "}
+              {last.lastPeriodType && last.lastPeriodType !== "REG"
+                ? ` ${last.lastPeriodType}`
+                : ""}{" "}
+              {last.home ? "vs" : "at"} {opp},{" "}
               {formatDay(last.startTimeUTC).long.replace(/^\w+, /, "")}
             </div>
           </>
         ) : (
           <>
             <div className="text-[15px] font-bold">First meeting</div>
-            {series.of > 0 && <div className="text-xs text-muted">Game 1 of {series.of}</div>}
+            {series.of > 0 && (
+              <div className="text-xs text-muted">Game 1 of {series.of}</div>
+            )}
           </>
         )}
       </div>
@@ -97,8 +132,15 @@ function ordinal(n: number) {
 
 function Fact({ text, tone }: { text: string; tone: "plain" | "gold" }) {
   return (
-    <div className={`flex gap-2.5 border-t px-3.5 py-2.5 md:px-5 ${tone === "gold" ? "border-gold-line" : "border-line bg-ground/40"}`}>
-      <span aria-hidden="true" className="text-sm font-extrabold text-gold-text">?</span>
+    <div
+      className={`flex gap-2.5 border-t px-3.5 py-2.5 md:px-5 ${tone === "gold" ? "border-gold-line" : "border-line bg-ground/40"}`}
+    >
+      <span
+        aria-hidden="true"
+        className="text-sm font-extrabold text-gold-text"
+      >
+        ?
+      </span>
       <span className="text-sm leading-snug text-ink-2">
         <span className="sr-only">Did you know: </span>
         {text}
@@ -120,29 +162,67 @@ function Goalies({ goalies, opp }: { goalies: StartingGoalies; opp: string }) {
   ].filter((r) => r.g);
   return (
     <div className="flex flex-col gap-1.5 border-t border-gold-line px-3.5 py-2.5 md:px-5">
-      <div className="text-[11px] font-semibold uppercase tracking-wider text-muted">Starting goalies</div>
+      <div className="text-[11px] font-semibold uppercase tracking-wider text-muted">
+        Starting goalies
+      </div>
       {rows.map(({ abbrev, g }) => (
         <div key={abbrev} className="flex items-center gap-2 text-sm">
           <TeamBar abbrev={abbrev} className="h-4 w-1.5" />
           <span className="flex-1 font-bold">{g!.name}</span>
-          <span className={`rounded-full border px-2 py-0.5 text-[11px] font-bold ${CHIP[g!.status]}`}>{g!.status}</span>
+          <span
+            className={`rounded-full border px-2 py-0.5 text-[11px] font-bold ${CHIP[g!.status]}`}
+          >
+            {g!.status}
+          </span>
         </div>
       ))}
     </div>
   );
 }
 
+const TicketIcon = () => (
+  <svg
+    width="12"
+    height="12"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4z" />
+    <path d="M14 6v2M14 11v2M14 16v2" />
+  </svg>
+);
+
+// Ticket links: a ticket icon marks them, no label.
 function Tickets({ links }: { links: TicketLinks }) {
-  const cls = "inline-flex min-h-8 items-center gap-1 rounded-md border px-2.5 text-xs font-bold";
+  const cls =
+    "inline-flex min-h-8 items-center gap-1 rounded-md border px-2 text-xs font-bold";
   return (
-    <span className="flex flex-wrap items-center gap-1.5">
-      <span className="text-xs text-muted">Tickets</span>
-      <a href={links.gametime} target="_blank" rel="noopener noreferrer" className={`${cls} border-gold-line text-gold-text`}>
-        Gametime ↗
+    <span className="flex items-center gap-1.5">
+      <a
+        href={links.gametime}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Tickets on Gametime"
+        className={`${cls} border-gold-line text-gold-text`}
+      >
+        <TicketIcon />
+        Gametime
       </a>
       {links.ticketmaster && (
-        <a href={links.ticketmaster} target="_blank" rel="noopener noreferrer" className={`${cls} border-line-strong text-ink`}>
-          Ticketmaster ↗
+        <a
+          href={links.ticketmaster}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Tickets on Ticketmaster"
+          className={`${cls} border-line-strong text-ink`}
+        >
+          <TicketIcon />
+          Ticketmaster
         </a>
       )}
     </span>
@@ -170,8 +250,10 @@ export function NextGameCard({
 }) {
   const tone = tonight ? "gold" : "plain";
   const footer = (
-    <div className={`flex flex-wrap items-center justify-between gap-2 border-t px-3.5 py-3 md:px-5 ${tonight ? "border-gold-line" : "border-line"}`}>
-      <BroadcastLinks networks={next.broadcasts} />
+    <div
+      className={`flex flex-wrap items-center justify-between gap-x-1 gap-y-2 border-t px-3.5 py-2.5 md:px-5 ${tonight ? "border-gold-line" : "border-line"}`}
+    >
+      <BroadcastLinks networks={next.broadcasts} size="row" />
       <Tickets links={tickets} />
     </div>
   );
@@ -179,11 +261,15 @@ export function NextGameCard({
   if (tonight) {
     return (
       <div className="overflow-hidden rounded-2xl border border-gold-line bg-gold-ground">
-        <Link href="/live" className="flex min-h-11 items-start justify-between gap-3 px-4 pt-4 pb-3 md:px-5 md:pt-5">
+        <Link
+          href="/live"
+          className="flex min-h-11 items-start justify-between gap-3 px-4 pt-4 pb-3 md:px-5 md:pt-5"
+        >
           <div className="flex flex-col gap-1">
             <Kicker>Tonight</Kicker>
             <span className="font-display text-3xl font-extrabold leading-none tracking-wide md:text-5xl">
-              {next.home ? "vs" : "at"} {next.opp} · {formatTime(next.startTimeUTC)}
+              {next.home ? "vs" : "at"} {next.opp} ·{" "}
+              {formatTime(next.startTimeUTC)}
             </span>
             <span className="text-sm text-muted">{next.venue}</span>
           </div>
@@ -192,8 +278,16 @@ export function NextGameCard({
           </span>
         </Link>
         <Countdown startTimeUTC={next.startTimeUTC} />
-        {goalies && (goalies.ott || goalies.opp) && <Goalies goalies={goalies} opp={next.opp} />}
-        <Snapshot opp={next.opp} oppName={oppName} row={row} series={series} tone={tone} />
+        {goalies && (goalies.ott || goalies.opp) && (
+          <Goalies goalies={goalies} opp={next.opp} />
+        )}
+        <Snapshot
+          opp={next.opp}
+          oppName={oppName}
+          row={row}
+          series={series}
+          tone={tone}
+        />
         {fact && <Fact text={fact} tone={tone} />}
         {footer}
       </div>
@@ -209,13 +303,20 @@ export function NextGameCard({
             {next.home ? "vs" : "at"} {next.opp}
           </span>
           <span className="text-sm text-ink-2">
-            {formatDay(next.startTimeUTC).long} · {formatTime(next.startTimeUTC)}
+            {formatDay(next.startTimeUTC).long} ·{" "}
+            {formatTime(next.startTimeUTC)}
           </span>
           <span className="text-sm text-muted">{next.venue}</span>
         </div>
         <TeamBar abbrev={next.opp} className="mt-5 h-11 w-2.5" />
       </div>
-      <Snapshot opp={next.opp} oppName={oppName} row={row} series={series} tone={tone} />
+      <Snapshot
+        opp={next.opp}
+        oppName={oppName}
+        row={row}
+        series={series}
+        tone={tone}
+      />
       {fact && <Fact text={fact} tone={tone} />}
       {footer}
     </div>
