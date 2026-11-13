@@ -35,6 +35,9 @@ export type NewsItem = {
   // The outlet's own thumbnail from its feed, loaded straight from the outlet (never copied).
   // Absent on items saved before thumbnails were added.
   image?: string | null;
+  // The game it's about: NHL.com's game tag, or for TSN and Sportsnet the game whose window
+  // it falls in. Set on the all-news list only.
+  gameId?: number;
 };
 
 const UA = { "User-Agent": "SickoCentral/0.1 (hobby fan site)" };
@@ -121,7 +124,18 @@ type Story = {
 export async function getNhlStories(gameId: string): Promise<NewsItem[]> {
   "use cache";
   cacheLife("frequent");
-  const raw = await fetchText(`${STORIES}?tags.slug=gameid-${encodeURIComponent(gameId)}&limit=50`);
+  return parseStories(await fetchText(`${STORIES}?tags.slug=gameid-${encodeURIComponent(gameId)}&limit=50`));
+}
+
+// Every Sens story on NHL.com (the league's and the club's), newest first. Each carries the
+// game it's about, if it's tagged with one.
+export async function getNhlTeamStories(): Promise<NewsItem[]> {
+  "use cache";
+  cacheLife("frequent");
+  return parseStories(await fetchText(`${STORIES}?tags.slug=teamid-9&limit=40`));
+}
+
+function parseStories(raw: string | null): NewsItem[] {
   if (!raw) return [];
   let items: Story[] = [];
   try {
@@ -143,7 +157,17 @@ export async function getNhlStories(gameId: string): Promise<NewsItem[]> {
     const tags = (s.tags ?? []).map((t) => t.slug);
     const url = s.context?.slug === "nhl" ? `https://www.nhl.com/news/${s.slug}` : `https://www.nhl.com/senators/news/${s.slug}`;
     const kind = tags.includes("game-recap") ? "Recap" : tags.includes("game-preview") ? "Preview" : "Story";
-    out.push({ url, outlet: "NHL.com", kind, title, summary: shorten(s.summary), published, image: nhlImage(s.thumbnail) });
+    const gameTag = tags.find((t) => /^gameid-\d{10}$/.test(t));
+    out.push({
+      url,
+      outlet: "NHL.com",
+      kind,
+      title,
+      summary: shorten(s.summary),
+      published,
+      image: nhlImage(s.thumbnail),
+      ...(gameTag ? { gameId: Number(gameTag.slice(7)) } : {}),
+    });
   }
   return out;
 }

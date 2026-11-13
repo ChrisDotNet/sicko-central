@@ -1,9 +1,11 @@
 import { connection } from "next/server";
 import { collectGameMedia } from "@/lib/media";
 import { getSchedule } from "@/lib/nhl";
+import { collectSensNews } from "@/lib/sens-news";
 
-// Daily job (vercel.json): save news, video and radio for recent and upcoming games before
-// TSN's and Sportsnet's feeds roll past them. Their feeds hold two to three days, so once
+// Daily job (vercel.json): save the all-Sens news list, and news, video and radio for recent
+// and upcoming games, before TSN's and Sportsnet's feeds roll past them. Their feeds hold
+// two to three days, so once
 // a day is enough; page views save anything newer in between.
 // Set CRON_SECRET in Vercel to keep anyone else from running it.
 const PAST_MS = 4 * 86400_000;
@@ -31,5 +33,6 @@ export async function GET(request: Request) {
       radio: m.radio.length,
     });
   }
-  return Response.json({ collected: results }, { headers: { "Cache-Control": "no-store" } });
+  const news = await collectSensNews();
+  return Response.json({ collected: results, news: news.length }, { headers: { "Cache-Control": "no-store" } });
 }

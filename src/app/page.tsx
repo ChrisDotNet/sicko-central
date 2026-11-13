@@ -9,6 +9,8 @@ import { getClubStats, getSchedule, getScoresNow, getStandings, name } from "@/l
 import { scoreLine, splitSchedule } from "@/lib/schedule";
 import { OTT } from "@/lib/teams";
 import { getStartingGoalies } from "@/lib/goalies";
+import { getSensNews } from "@/lib/sens-news";
+import { SensNewsList } from "@/components/news/SensNewsList";
 
 function ordinal(n: number) {
   const s = ["th", "st", "nd", "rd"];
@@ -23,6 +25,7 @@ export default async function HomePage() {
     getClubStats().catch(() => null),
     getScoresNow().catch(() => null),
   ]);
+  const news = (await getSensNews().catch(() => [])).slice(0, 6);
 
   if (!schedule) return <ErrorNote>NHL data isn&apos;t available right now. Try again in a minute.</ErrorNote>;
 
@@ -159,6 +162,7 @@ export default async function HomePage() {
       <div className="md:grid md:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] md:items-start">
         {division.length > 0 && (
           <Section
+            className="md:col-start-1"
             title={ottRow?.divisionName ?? "Division"}
             aside={
               <Link href="/standings" className="text-sm font-semibold text-ink">
@@ -169,7 +173,20 @@ export default async function HomePage() {
             <StandingsTable rows={division} extraFrom="lg" />
           </Section>
         )}
-        <div>
+        {news.length > 0 && (
+          <Section
+            className="md:col-start-1"
+            title="Sens news"
+            aside={
+              <Link href="/news" className="text-sm font-semibold text-ink">
+                All news
+              </Link>
+            }
+          >
+            <SensNewsList items={news} games={all} compact />
+          </Section>
+        )}
+        <div className="md:col-start-2 md:row-span-2 md:row-start-1">
           {leaders.length > 0 && (
             <Section title="Team leaders">
               <div className="grid grid-cols-2 gap-2.5">

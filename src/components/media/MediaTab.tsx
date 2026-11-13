@@ -2,50 +2,19 @@
 
 import { useState } from "react";
 import type { Goal } from "@/lib/game";
-import type { NewsItem, Outlet } from "@/lib/news";
+import type { NewsItem } from "@/lib/news";
+import { NewsCard } from "../news/NewsCard";
 import type { RadioEpisode } from "@/lib/radio";
 import type { GameVideo } from "@/lib/video";
-import { formatDay, formatTime } from "@/lib/format";
 import { Section } from "../ui";
 import { RadioArchive } from "../radio/RadioArchive";
 import { VideoTab } from "../video/VideoTab";
-import { Thumb } from "./Thumb";
 import { SEGMENTS } from "../game/GameTabs";
 import type { MediaSegment } from "../game/GameTabs";
-
-const OUTLET_STYLE: Record<Outlet, string> = {
-  "NHL.com": "bg-ink text-ground",
-  TSN: "bg-sens text-white",
-  Sportsnet: "bg-[#1f4e99] text-white",
-};
 
 const Note = ({ children }: { children: React.ReactNode }) => (
   <p className="rounded-2xl border border-line bg-surface p-4 text-sm text-muted">{children}</p>
 );
-
-function NewsCard({ n }: { n: NewsItem }) {
-  return (
-    <a
-      href={n.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 border-b border-line px-3.5 py-3 last:border-0 hover:bg-surface-2 md:gap-4"
-    >
-      <span className="flex min-w-0 flex-col gap-1.5">
-        <span className="flex items-center gap-2 text-xs text-muted">
-          <span className={`rounded px-1.5 py-0.5 text-[11px] font-bold tracking-wide ${OUTLET_STYLE[n.outlet]}`}>{n.outlet}</span>
-          <span>
-            {n.kind} · {formatDay(n.published).long}, {formatTime(n.published)}
-          </span>
-        </span>
-        <span className="text-[15px] font-semibold leading-snug text-ink">{n.title}</span>
-        {n.summary && <span className="line-clamp-3 text-sm leading-snug text-ink-2">{n.summary}</span>}
-        <span className="text-xs font-semibold text-sens-text">Read on {n.outlet} ↗</span>
-      </span>
-      {n.image && <Thumb src={n.image} className="mt-0.5 aspect-video w-28 md:w-40" />}
-    </a>
-  );
-}
 
 function NewsList({ news, startTimeUTC, isPre }: { news: NewsItem[]; startTimeUTC: string; isPre: boolean }) {
   const start = Date.parse(startTimeUTC);

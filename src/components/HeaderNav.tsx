@@ -7,6 +7,9 @@ import { useGameStatus } from "@/lib/game-status";
 import type { GameStatus } from "@/lib/game-status";
 import { NAV_ITEMS, isActive } from "./BottomNav";
 
+// The header has room for one more than the bottom bar: News (desktop only).
+const ITEMS = [...NAV_ITEMS.map(({ href, label }) => ({ href, label })), { href: "/news", label: "News" }];
+
 const score = (s: Extract<GameStatus, { opp: string }>) => `OTT ${s.ottScore} â€“ ${s.oppScore} ${s.opp}`;
 
 // Desktop only: the main menu sits in the header instead of the bottom bar. During a game
@@ -14,7 +17,7 @@ const score = (s: Extract<GameStatus, { opp: string }>) => `OTT ${s.ottScore} â€
 function Links({ path, status }: { path: string | null; status: GameStatus }) {
   return (
     <>
-      {NAV_ITEMS.map((item) => {
+      {ITEMS.map((item) => {
         const active = path ? isActive(path, item.href) : false;
         const game = item.href === "/live";
         if (game && status.state === "live") {

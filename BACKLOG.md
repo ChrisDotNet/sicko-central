@@ -35,7 +35,7 @@ the next game better to watch?
 **Tier 2: around the game**
 6. Player birthdays (mostly feeds the game-day facts)
 7. Ticket links for home games
-8. All Sens news, not just game days
+8. ~~All Sens news, not just game days~~ Done 2026-11-13 (home page section, /news page, News in desktop header)
 
 **Tier 3: reference (good for the off-season, not the mission)**
 9. Full career on the player page
@@ -94,7 +94,7 @@ wrong stat on a fan site is worse than none. Candidates the NHL API can back up:
 Rank by how notable each is and show the top three on the game page before puck drop.
 An AI model could optionally reword the chosen facts, but only to phrase what the data says.
 
-### All Sens news, not just game-specific — Value: high · Effort: S
+### All Sens news, not just game-specific — **Done** (2026-11-13; Ottawa Citizen left out: Postmedia paywall)
 The NHL.com, TSN and Sportsnet feeds are already read and filtered for the Sens; today only
 stories near a game are kept. Add a News view (home page section plus its own page) with
 every Sens story, saved the same way so it outlasts the feeds. Same headline-and-summary
