@@ -5,7 +5,6 @@ import type { Goal } from "@/lib/game";
 import { periodLabel } from "@/lib/format";
 import { ClipPlayer, preloadClipPlayer } from "./ClipPlayer";
 import type { ClipPlayerHandle } from "./ClipPlayer";
-import { unlockSfx } from "@/lib/sfx";
 
 function strengthTag(g: Goal) {
   return g.strength === "EV" ? "" : ` · ${g.strength === "PP" ? "PPG" : g.strength === "SH" ? "SHG" : "ENG"}`;
@@ -62,10 +61,7 @@ export function GoalReplays({ goals }: { goals: Goal[] }) {
         <button
           type="button"
           onPointerDown={preloadClipPlayer}
-          onClick={() => {
-            unlockSfx();
-            open(ready, 0, true);
-          }}
+          onClick={() => open(ready, 0, true)}
           className="mb-2.5 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-sens text-[15px] font-bold text-white"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5l12 7-12 7z" /></svg>
@@ -174,6 +170,14 @@ export function GoalReplays({ goals }: { goals: Goal[] }) {
               <a href={current.clipUrl} target="_blank" rel="noopener noreferrer" className="px-4 pb-3 text-center text-xs text-muted underline">
                 Not playing? Open it on NHL.com
               </a>
+            )}
+            {playAll && (
+              <p className="px-4 pb-3 text-center text-[10px] text-muted">
+                Slapshot sound: &ldquo;Hockey Puck Slap&rdquo; by jameb32, SoundBible.com,{" "}
+                <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noopener noreferrer" className="underline">
+                  CC BY 3.0
+                </a>
+              </p>
             )}
           </div>
         )}
