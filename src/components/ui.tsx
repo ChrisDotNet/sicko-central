@@ -2,6 +2,18 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { teamColor } from "@/lib/teams";
 
+// Page widths. Phones get one column everywhere; wider screens get more room where a page
+// has a layout that uses it.
+const WIDTHS = {
+  narrow: "max-w-xl md:max-w-2xl",
+  medium: "max-w-xl md:max-w-4xl md:px-2",
+  wide: "max-w-xl md:max-w-4xl md:px-2 lg:max-w-[1360px] lg:px-6",
+} as const;
+
+export function Page({ width = "narrow", children }: { width?: keyof typeof WIDTHS; children: ReactNode }) {
+  return <div className={`mx-auto w-full ${WIDTHS[width]}`}>{children}</div>;
+}
+
 export function Section({
   title,
   aside,

@@ -26,6 +26,10 @@ All data comes from the NHL's public, undocumented API (`api-web.nhle.com`). It'
 
 The API can change without notice. If something breaks, `src/lib/nhl.ts` (fetching) and `src/lib/game.ts` (turning play-by-play into the live page's data) are the two places to look.
 
+## Screen sizes
+
+Phones get one column. Tablets (768 px and up) get two columns on the home, live and game pages and extra standings columns. Desktop (1024 px and up) moves the menu into the header and lays the live and game pages out in three columns: "Right now" and goals; shot map, shot attempts and skaters; then the out-of-town scoreboard and the latest media. Page widths live in `Page` (`src/components/ui.tsx`); the game layout is in `GameSections`.
+
 ## Media tab
 
 Each game's Media tab has three parts:

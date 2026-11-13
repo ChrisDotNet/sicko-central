@@ -47,7 +47,18 @@ export type Penalty = {
 
 export type PeriodStats = { period: number; ottSog: number; oppSog: number; ottHd: number; oppHd: number };
 
-export type Skater = { id: number; name: string; g: number; a: number; sog: number; toi: string };
+// hits, blocks and plus-minus are null in replay mode (only final totals exist).
+export type Skater = {
+  id: number;
+  name: string;
+  g: number;
+  a: number;
+  sog: number;
+  toi: string;
+  hits: number | null;
+  blocks: number | null;
+  plusMinus: number | null;
+};
 
 export type LiveGame = {
   id: number;
@@ -371,6 +382,9 @@ export function buildGame(pbp: PlayByPlay, box: BoxScore, opts: Options = {}): L
         a: replay ? c.a : (s.assists ?? 0),
         sog: replay ? c.sog : (s.sog ?? 0),
         toi: replay ? "–" : (s.toi ?? ""),
+        hits: replay ? null : (s.hits ?? 0),
+        blocks: replay ? null : (s.blockedShots ?? 0),
+        plusMinus: replay ? null : (s.plusMinus ?? 0),
       };
     })
     .sort((a, b) => b.g + b.a - (a.g + a.a) || b.g - a.g || b.sog - a.sog);

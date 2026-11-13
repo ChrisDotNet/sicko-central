@@ -4,6 +4,8 @@ import { GameSections } from "@/components/game/GameSections";
 import { GameTabLinks, parseSegment, parseTab } from "@/components/game/GameTabs";
 import type { MediaSegment } from "@/components/game/GameTabs";
 import { MediaTab } from "@/components/media/MediaTab";
+import { Latest } from "@/components/game/Latest";
+import { latestItems } from "@/components/game/latest-items";
 import { ErrorNote, TeamBar } from "@/components/ui";
 import { buildGame } from "@/lib/game";
 import type { LiveGame } from "@/lib/game";
@@ -53,15 +55,22 @@ async function Recap({
         </div>
       </div>
       <GameTabLinks base={`/game/${id}`} active={tab} />
-      {tab === "summary" && <GameSections game={game} />}
+      {tab === "summary" && <SummaryWithLatest id={id} game={game} />}
       {tab === "media" && <GameMedia id={id} game={game} segment={parseSegment(sp.show, sp.tab)} />}
     </>
   );
 }
 
+async function SummaryWithLatest({ id, game }: { id: string; game: LiveGame }) {
+  const media = await getGameMedia(id, game.startTimeUTC);
+  const items = latestItems(media, { video: () => `/game/${id}?tab=media&show=video` });
+  return <GameSections game={game} aside={<Latest items={items} all={{ href: `/game/${id}?tab=media` }} />} />;
+}
+
 async function GameMedia({ id, game, segment }: { id: string; game: LiveGame; segment: MediaSegment }) {
   const media = await getGameMedia(id, game.startTimeUTC);
   return (
+    <div className="lg:mx-auto lg:max-w-3xl">
     <MediaTab
       news={media.news}
       video={media.video}
@@ -72,6 +81,7 @@ async function GameMedia({ id, game, segment }: { id: string; game: LiveGame; se
       isFinal={game.isFinal}
       initialSegment={segment}
     />
+    </div>
   );
 }
 

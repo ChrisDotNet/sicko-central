@@ -87,7 +87,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       {children}
       <div
         aria-live="polite"
-        className="pointer-events-none fixed inset-x-0 top-[60px] z-40 mx-auto flex max-w-xl flex-col gap-2 px-3"
+        className="pointer-events-none fixed inset-x-0 top-[60px] z-40 mx-auto flex max-w-xl flex-col gap-2 px-3 lg:inset-x-auto lg:right-6 lg:top-[72px] lg:w-[400px] lg:px-0"
       >
         {shown.map((n) => (
           <div

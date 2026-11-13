@@ -26,14 +26,14 @@ export function parseSegment(show: unknown, tab: unknown): MediaSegment {
 }
 
 const tabClass = (active: boolean) =>
-  `flex min-h-11 flex-1 items-center justify-center border-b-2 text-sm font-semibold ${
+  `flex min-h-11 flex-1 items-center justify-center border-b-2 text-sm font-semibold lg:flex-none lg:px-6 ${
     active ? "border-sens-bright text-ink" : "border-transparent text-muted"
   }`;
 
 // Link tabs for a server-rendered page (the recap page): each tab is its own URL.
 export function GameTabLinks({ base, active }: { base: string; active: GameTab }) {
   return (
-    <nav aria-label="Game sections" className="mt-4 flex border-b border-line px-2">
+    <nav aria-label="Game sections" className="mt-4 flex border-b border-line px-2 lg:mx-4 lg:px-0">
       {(Object.keys(TAB_LABELS) as GameTab[]).map((t) => (
         <Link
           key={t}
@@ -53,7 +53,7 @@ export function GameTabLinks({ base, active }: { base: string; active: GameTab }
 // Button tabs for the live page, which keeps its state client-side while polling.
 export function GameTabButtons({ active, onChange, labels }: { active: GameTab; onChange: (t: GameTab) => void; labels?: Partial<Record<GameTab, string>> }) {
   return (
-    <div role="tablist" aria-label="Game sections" className="mt-3 flex border-b border-line px-2">
+    <div role="tablist" aria-label="Game sections" className="mt-3 flex border-b border-line px-2 lg:mx-4 lg:mt-4 lg:px-0">
       {(Object.keys(TAB_LABELS) as GameTab[]).map((t) => (
         <button key={t} type="button" role="tab" aria-selected={t === active} onClick={() => onChange(t)} className={tabClass(t === active)}>
           {labels?.[t] ?? TAB_LABELS[t]}

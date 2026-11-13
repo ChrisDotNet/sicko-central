@@ -29,9 +29,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en" className={`${inter.variable} ${barlow.variable} antialiased`}>
       <body className="min-h-dvh font-sans">
         <NotificationProvider>
-          <div className="mx-auto flex min-h-dvh max-w-xl flex-col">
+          <div className="flex min-h-dvh flex-col">
             <Header />
-            <main className="flex-1 pb-28">{children}</main>
+            <main className="flex-1 pb-28 lg:pb-12">{children}</main>
             <BottomNav />
           </div>
         </NotificationProvider>

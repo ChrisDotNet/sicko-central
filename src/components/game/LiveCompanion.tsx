@@ -19,6 +19,8 @@ import type { GameVideo } from "@/lib/video";
 import type { NewsItem } from "@/lib/news";
 import { useNotify } from "../notify/NotificationProvider";
 import { strengthTag } from "./GoalReplays";
+import { Latest } from "./Latest";
+import { latestItems } from "./latest-items";
 
 type Payload = { game: LiveGame; rivals: RivalGame[]; radio?: RadioEpisode[] };
 
@@ -293,8 +295,8 @@ export function LiveCompanion({
         </section>
       )}
 
-      <section aria-label="Game status" className="px-4 pt-2.5">
-        <div className="flex items-center gap-2.5 rounded-xl border border-line bg-surface px-3 py-2">
+      <section aria-label="Game status" className="px-4 pt-2.5 lg:pt-5">
+        <div className="flex items-center gap-2.5 rounded-xl border border-line bg-surface px-3 py-2 lg:gap-4 lg:rounded-2xl lg:px-5 lg:py-3">
           {game.isLive && (
             <span className="flex items-center gap-1.5 text-[11px] font-bold tracking-widest text-sens-text">
               <span className="size-1.5 rounded-full bg-sens-bright" />
@@ -302,12 +304,12 @@ export function LiveCompanion({
             </span>
           )}
           {game.isFinal && <span className="text-[11px] font-bold tracking-widest text-muted">FINAL</span>}
-          <span className="font-display text-[19px] font-extrabold tracking-wide">
+          <span className="font-display text-[19px] font-extrabold tracking-wide lg:text-[30px] lg:leading-none">
             {game.isPre
               ? `OTT ${game.ott.isHome ? "vs" : "at"} ${game.opp.abbrev}`
               : `OTT ${game.ott.score} – ${game.opp.score} ${game.opp.abbrev}`}
           </span>
-          {game.isPre && <span className="text-[13px] text-muted">Tonight</span>}
+          {game.isPre && <span className="text-[13px] text-muted lg:text-[15px]">Tonight</span>}
           {game.isLive && (
             <span className="text-[13px] text-muted">
               {game.intermission ? `End of ${periodLabel(game.period)}` : `${periodLabel(game.period, game.periodType)} · ${game.clock.replace(/^0/, "")}`}
@@ -320,39 +322,49 @@ export function LiveCompanion({
           )}
         </div>
         {game.isLive && !replay && (
-          <p className="mt-1.5 text-center text-[11px] text-muted">
+          <p className="mt-1.5 text-center text-[11px] text-muted lg:text-left">
             {error ? "Connection hiccup, retrying · " : ago != null ? `Updated ${ago} s ago · ` : ""}
             Runs about 20 s behind TV · check it during stoppages
           </p>
         )}
         {(game.isPre || game.isLive) && game.broadcasts.length > 0 && (
-          <BroadcastLinks networks={game.broadcasts} className="mt-2 justify-center" />
+          <BroadcastLinks networks={game.broadcasts} className="mt-2 justify-center lg:justify-start" />
         )}
       </section>
 
       <GameTabButtons active={tab} onChange={changeTab} />
 
       {tab === "summary" && (
-        <>
-          <GameSections game={game} />
-          {rivals.length > 0 && (
-            <Section title="Out of town scoreboard">
-              <div className="flex flex-col gap-2">
-                {rivals.map((r) => (
-                  <div key={r.id} className="flex items-center justify-between rounded-xl border border-line bg-surface px-3.5 py-3">
-                    <span className="font-display text-[19px] font-bold tracking-wide">
-                      {r.awayScore != null ? `${r.away} ${r.awayScore} – ${r.homeScore} ${r.home}` : `${r.away} at ${r.home}`}
-                    </span>
-                    <span className="text-[13px] text-muted">{r.status}</span>
+        <GameSections
+          game={game}
+          aside={
+            <>
+              {rivals.length > 0 && (
+                <Section title="Out of town scoreboard">
+                  <div className="flex flex-col gap-2 md:grid md:grid-cols-3 lg:flex">
+                    {rivals.map((r) => (
+                      <div key={r.id} className="flex items-center justify-between rounded-xl border border-line bg-surface px-3.5 py-3">
+                        <span className="font-display text-[19px] font-bold tracking-wide">
+                          {r.awayScore != null ? `${r.away} ${r.awayScore} – ${r.homeScore} ${r.home}` : `${r.away} at ${r.home}`}
+                        </span>
+                        <span className="text-[13px] text-muted">{r.status}</span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </Section>
-          )}
-        </>
+                </Section>
+              )}
+              <Latest
+                items={replay ? [] : latestItems(media, { video: (clipId) => () => openRef.current(clipId) })}
+                all={{ onSelect: () => changeTab("media") }}
+              />
+              {showLiveBar && <div aria-hidden="true" className="hidden h-24 lg:block" />}
+            </>
+          }
+        />
       )}
 
       {tab === "media" && (
+        <div className="lg:mx-auto lg:max-w-3xl">
         <MediaTab
           news={replay ? [] : (media?.news ?? [])}
           video={replay ? null : (media?.video ?? null)}
@@ -365,11 +377,12 @@ export function LiveCompanion({
           pending={pending}
           videoNote={replay ? "Recaps and highlights are hidden in replay mode so they don't spoil the game." : undefined}
         />
+        </div>
       )}
 
       {showLiveBar && (
         <>
-          <div className="h-20" aria-hidden="true" />
+          <div className="h-20 lg:hidden" aria-hidden="true" />
           <LiveRadioBar label={barLabel} />
         </>
       )}

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense } from "react";
 
-const items = [
+export const NAV_ITEMS = [
   {
     href: "/",
     label: "Home",
@@ -43,7 +43,7 @@ const items = [
   { href: "/standings", label: "Standings", icon: <path d="M5 20V10M12 20V4M19 20v-7" /> },
 ];
 
-function isActive(path: string, href: string) {
+export function isActive(path: string, href: string) {
   if (href === "/") return path === "/";
   if (href === "/live") return path.startsWith("/live") || path.startsWith("/game");
   if (href === "/roster") return path.startsWith("/roster") || path.startsWith("/player");
@@ -53,7 +53,7 @@ function isActive(path: string, href: string) {
 function NavLinks({ path }: { path: string | null }) {
   return (
     <div className="grid grid-cols-5 px-1 pt-1.5 pb-[max(18px,env(safe-area-inset-bottom))]">
-      {items.map((item) => {
+      {NAV_ITEMS.map((item) => {
         const active = path ? isActive(path, item.href) : false;
         return (
           <Link
@@ -94,7 +94,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Main"
-      className="fixed inset-x-0 bottom-0 z-20 mx-auto max-w-xl border-t border-line bg-[#111113]/95 backdrop-blur"
+      className="fixed inset-x-0 bottom-0 z-20 mx-auto max-w-xl border-t border-line bg-[#111113]/95 backdrop-blur md:max-w-4xl lg:hidden"
     >
       <Suspense fallback={<NavLinks path={null} />}>
         <ActiveNav />

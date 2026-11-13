@@ -124,6 +124,8 @@ export type BoxSkater = {
   sog: number;
   toi: string;
   hits?: number;
+  plusMinus?: number;
+  blockedShots?: number;
   faceoffWinningPctg?: number;
 };
 

@@ -31,7 +31,7 @@ export function ClipDialog({ reel, noun, onClose }: { reel: Reel | null; noun: s
       ref={dialog}
       onClose={onClose}
       aria-label="Video"
-      className="m-auto w-[min(100vw-24px,640px)] rounded-2xl border border-line bg-surface p-0 text-ink backdrop:bg-black/80"
+      className="m-auto w-[min(100vw-24px,640px)] lg:w-[min(100vw-96px,960px)] rounded-2xl border border-line bg-surface p-0 text-ink backdrop:bg-black/80"
     >
       {reel && <ReelBody key={reel.session} reel={reel} noun={noun} onClose={onClose} />}
     </dialog>
