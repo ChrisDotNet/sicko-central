@@ -13,6 +13,7 @@ import { getRadioForGame } from "./radio";
 import type { RadioEpisode } from "./radio";
 import { getJson, setJson } from "./store";
 import { getGameVideo } from "./video";
+import { getTsnVideos } from "./tsn-video";
 import type { GameVideo, VideoItem } from "./video";
 
 export type GameMedia = { news: NewsItem[]; video: GameVideo; radio: RadioEpisode[] };
@@ -35,6 +36,7 @@ function merge(live: GameMedia, saved: GameMedia | null): GameMedia {
       condensed: unionBy(live.video.condensed, saved.video?.condensed, clip).slice(0, 1),
       highlights: unionBy(live.video.highlights, saved.video?.highlights, clip),
       goalThumbs: { ...(saved.video?.goalThumbs ?? {}), ...(live.video.goalThumbs ?? {}) },
+      tsn: unionBy(live.video.tsn ?? [], saved.video?.tsn, (v) => v.id).sort((a, b) => b.published.localeCompare(a.published)),
     },
     // The radio call is a set: if the feed has it, use the feed's version (fresh labels);
     // otherwise what we saved.
@@ -54,11 +56,17 @@ export async function collectGameMedia(gameId: string, startTimeUTC: string): Pr
     getRadioForGame(startTimeUTC),
     getJson<GameMedia>(key(gameId)),
   ]);
-  const merged = merge({ news, video, radio }, saved);
+  // TSN video comes from the TSN stories found for this game (saved ones included).
+  const tsnStories = mergeNews([...news, ...(saved?.news ?? [])]).filter((n) => n.outlet === "TSN").map((n) => n.url);
+  const tsn = await getTsnVideos(tsnStories);
+  const merged = merge({ news, video: { ...video, tsn }, radio }, saved);
   if (!isEmpty(merged) && JSON.stringify(merged) !== JSON.stringify(saved)) {
     await setJson(key(gameId), merged);
   }
-  return merged;
+  // Everything stays saved; expired TSN videos just aren't shown.
+  const now = Date.now();
+  const live = (merged.video.tsn ?? []).filter((v) => !v.expires || Date.parse(v.expires) > now);
+  return { ...merged, video: { ...merged.video, tsn: live } };
 }
 
 // Puck drop for a game id: from the season schedule, or the game's own feed for games

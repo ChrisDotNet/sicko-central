@@ -3,13 +3,21 @@
 // so failures come back as an empty list rather than an error.
 import { cacheLife } from "next/cache";
 import { nhlImage } from "./news";
+import type { TsnVideo } from "./tsn-video";
 
 const FORGE = "https://forge-dapi.d3.nhle.com/v2/content/en-us/videos";
 const WEB = "https://api-web.nhle.com/v1";
 
 export type VideoItem = { clipId: number; title: string; seconds: number | null; url?: string; thumb?: string | null };
 // goalThumbs: a still for each goal clip (by clip id), since goals come from play-by-play.
-export type GameVideo = { recaps: VideoItem[]; condensed: VideoItem[]; highlights: VideoItem[]; goalThumbs?: Record<string, string> };
+// tsn: TSN's interviews and analysis for the game (added in src/lib/media.ts).
+export type GameVideo = {
+  recaps: VideoItem[];
+  condensed: VideoItem[];
+  highlights: VideoItem[];
+  goalThumbs?: Record<string, string>;
+  tsn?: TsnVideo[];
+};
 
 type ForgeItem = {
   slug: string;

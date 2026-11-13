@@ -15,11 +15,25 @@ import { Thumb } from "../media/Thumb";
 // - Tablet: the same, with the playlist in two columns.
 // - Desktop: player on the left, playlist on the right.
 // The player only loads on the first play, so opening the tab costs nothing.
-// Clips play one at a time; with "Play the next clip automatically" ticked, each clip runs
+// Clips play one at a time; with "Play the next clip automatically" ticked, each NHL clip runs
 // on into the next one in the list (with the up-next card), the way "Watch all goals" did.
+// TSN videos play in TSN's own embedded player (Bell Media's, ads and all) in the same spot.
+// That player doesn't tell us when a video ends, so auto-play skips over TSN videos.
 
-type Section = "full" | "goals" | "highlights";
-type Entry = { clipId: number; section: Section; title: string; sub: string; thumb?: string | null; url?: string; team?: string; ott?: boolean; badge?: string };
+type Section = "full" | "tsn" | "goals" | "highlights";
+// NHL clips are keyed by their positive clip id; TSN videos by their negated content id.
+type Entry = {
+  clipId: number;
+  section: Section;
+  title: string;
+  sub: string;
+  thumb?: string | null;
+  url?: string;
+  team?: string;
+  ott?: boolean;
+  badge?: string;
+  embedUrl?: string;
+};
 type Filter = "all" | "ott" | "opp";
 
 function length(sec: number | null) {
@@ -28,7 +42,13 @@ function length(sec: number | null) {
   return `${m}:${String(Math.round(sec % 60)).padStart(2, "0")}`;
 }
 
-const SECTION_TITLES: Record<Section, string> = { full: "Full game", goals: "Goals in order", highlights: "Other highlights" };
+const SECTION_TITLES: Record<Section, string> = {
+  full: "Full game",
+  tsn: "TSN: interviews & analysis",
+  goals: "Goals in order",
+  highlights: "Other highlights",
+};
+const NOW_LABEL: Record<Section, string> = { full: "Full game", tsn: "TSN", goals: "Goals", highlights: "Highlights" };
 
 const Play = ({ size = 16 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5l11 7-11 7z" /></svg>
@@ -52,7 +72,8 @@ export function VideoTab({
 }) {
   const [filter, setFilter] = useState<Filter>("all");
   const [currentId, setCurrentId] = useState<number | null>(null);
-  const [playing, setPlaying] = useState<{ start: number } | null>(null);
+  // The NHL player, once started (`n` remounts it, e.g. after watching a TSN video).
+  const [playing, setPlaying] = useState<{ start: number; n: number } | null>(null);
   const [autoNext, setAutoNext] = useState(true);
   const [failed, setFailed] = useState(false);
   const [handled, setHandled] = useState(0);
@@ -94,7 +115,17 @@ export function VideoTab({
       url: v.url,
       badge: length(v.seconds),
     }));
-    return [...full, ...goalEntries, ...hl];
+    const tsn: Entry[] = (video?.tsn ?? []).map((v) => ({
+      clipId: -Number(v.id),
+      section: "tsn",
+      title: v.title,
+      sub: `${length(v.seconds)}${v.seconds ? " · " : ""}TSN`,
+      thumb: v.thumb,
+      url: v.url,
+      badge: length(v.seconds),
+      embedUrl: v.embedUrl,
+    }));
+    return [...full, ...tsn, ...goalEntries, ...hl];
   }, [video, goals, goalOk]);
 
   const waiting = goals.filter((g) => !g.clipId && goalOk(g));
@@ -103,18 +134,24 @@ export function VideoTab({
   // What the poster offers before anything plays: the first full-game video, else the latest goal.
   const suggested = entries.find((e) => e.section === "full") ?? [...entries].reverse().find((e) => e.section === "goals") ?? entries[0] ?? null;
   const shown = current ?? suggested;
-  // With the box ticked, whatever is next in the list plays next (after the up-next card).
-  const next = pos >= 0 ? entries[pos + 1] : undefined;
-  const advances = autoNext && !!current && !!next;
+  // The NHL player steps through NHL clips only.
+  const nhl = useMemo(() => entries.filter((e) => !e.embedUrl), [entries]);
+  const nhlPos = current && !current.embedUrl ? nhl.findIndex((e) => e.clipId === current.clipId) : -1;
+  // With the box ticked, the next NHL clip in the list plays next (after the up-next card).
+  const next = nhlPos >= 0 ? nhl[nhlPos + 1] : undefined;
+  const advances = autoNext && nhlPos >= 0 && !!next;
+  const tsnNow = current?.embedUrl ? current : null;
 
   const play = (clipId: number) => {
-    const i = entries.findIndex((e) => e.clipId === clipId);
-    if (i < 0) return;
+    const e = entries.find((x) => x.clipId === clipId);
+    if (!e) return;
     setFailed(false);
     setCurrentId(clipId);
-    // Already showing the player: switch clips straight from the tap (keeps iPhone happy).
-    if (playing && player.current) player.current.goTo(i);
-    else setPlaying({ start: i });
+    if (e.embedUrl) return; // shown in TSN's player
+    const i = nhl.findIndex((x) => x.clipId === clipId);
+    // Already showing the NHL player: switch clips straight from the tap (keeps iPhone happy).
+    if (playing && player.current && !tsnNow) player.current.goTo(i);
+    else setPlaying({ start: i, n: (playing?.n ?? 0) + 1 });
   };
 
   // Alerts ask for a clip by id (state adjusted during render, not in an effect). If the
@@ -124,13 +161,13 @@ export function VideoTab({
     setWanted(pending.clipId);
   }
   if (wanted != null) {
-    const i = entries.findIndex((e) => e.clipId === wanted);
+    const i = nhl.findIndex((e) => e.clipId === wanted);
     if (i >= 0) {
       setWanted(null);
       setFailed(false);
       setCurrentId(wanted);
-      if (playing) setJump({ index: i, n: (jump?.n ?? 0) + 1 });
-      else setPlaying({ start: i });
+      if (playing && !tsnNow) setJump({ index: i, n: (jump?.n ?? 0) + 1 });
+      else setPlaying({ start: i, n: (playing?.n ?? 0) + 1 });
     } else if (filter !== "all") {
       setFilter("all");
     } else {
@@ -141,7 +178,7 @@ export function VideoTab({
     if (jump) player.current?.goTo(jump.index);
   }, [jump]);
 
-  const items = useMemo(() => entries.map((e) => ({ clipId: e.clipId, title: e.team ? `${e.team} · ${e.title}` : e.title, sub: e.sub })), [entries]);
+  const items = useMemo(() => nhl.map((e) => ({ clipId: e.clipId, title: e.team ? `${e.team} · ${e.title}` : e.title, sub: e.sub })), [nhl]);
   const onIndex = useCallback((i: number) => {
     setCurrentId(items[i]?.clipId ?? null);
     setFailed(false);
@@ -150,7 +187,7 @@ export function VideoTab({
   const onError = useCallback(() => setFailed(true), []);
 
   const goalCount = (f: Filter) => goals.filter((g) => (f === "all" ? true : f === "ott" ? g.team === "OTT" : g.team !== "OTT")).length;
-  const sections: Section[] = ["full", "goals", "highlights"];
+  const sections: Section[] = ["full", "tsn", "goals", "highlights"];
   const firstGoal = entries.find((e) => e.section === "goals");
 
   if (entries.length === 0 && waiting.length === 0) {
@@ -168,10 +205,20 @@ export function VideoTab({
     <div className="px-4 pt-4 lg:grid lg:grid-cols-[minmax(0,1fr)_400px] lg:items-start lg:gap-6">
       {/* Player: pinned to the top of the screen on phones and tablets, and at the top of its column on desktop. */}
       <div className="sticky top-[env(safe-area-inset-top)] z-10 -mx-4 bg-ground pb-3 md:mx-0 lg:top-4">
-        <div className={`relative w-full overflow-hidden bg-black md:rounded-2xl md:border md:border-line ${playing ? "" : "aspect-video"}`}>
-          {playing ? (
+        <div className={`relative w-full overflow-hidden bg-black md:rounded-2xl md:border md:border-line ${playing && !tsnNow ? "" : "aspect-video"}`}>
+          {tsnNow ? (
+            <iframe
+              key={tsnNow.clipId}
+              src={tsnNow.embedUrl}
+              title={`${tsnNow.title} (TSN video)`}
+              allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+              allowFullScreen
+              className="absolute inset-0 size-full border-0"
+            />
+          ) : playing ? (
             <div>
               <ClipPlayer
+                key={playing.n}
                 ref={player}
                 items={items}
                 start={playing.start}
@@ -204,7 +251,7 @@ export function VideoTab({
           <div className="flex items-start gap-3 px-4 pt-2.5 md:px-0">
             <div className="min-w-0 flex-1">
               <div className="text-[11px] font-bold uppercase tracking-widest text-gold-text">
-                {current ? `Now playing · ${SECTION_TITLES[current.section].replace(" in order", "")}` : "Ready to play"}
+                {current ? `Now playing · ${NOW_LABEL[current.section]}` : "Ready to play"}
               </div>
               <div className="truncate font-display text-xl font-extrabold leading-tight tracking-wide lg:text-[28px]">
                 {shown.team ? `${shown.team} · ` : ""}
@@ -212,13 +259,13 @@ export function VideoTab({
               </div>
               <div className="text-xs text-muted">
                 {/* The source becomes a link while a clip plays, so it isn't named twice. */}
-                {current?.url ? shown.sub.replace(/(^| · )NHL\.com$/, "") : shown.sub}
+                {current?.url ? shown.sub.replace(/(^| · )(NHL\.com|TSN)$/, "") : shown.sub}
                 {failed && <span className="text-sens-text"> · Wouldn&apos;t load here.</span>}
                 {current?.url && (
                   <>
-                    {current.url && shown.sub.replace(/(^| · )NHL\.com$/, "") ? " · " : ""}
+                    {shown.sub.replace(/(^| · )(NHL\.com|TSN)$/, "") ? " · " : ""}
                     <a href={current.url} target="_blank" rel="noopener noreferrer" className="underline">
-                      {failed ? "Open on NHL.com" : "NHL.com"}
+                      {current.embedUrl ? "TSN" : failed ? "Open on NHL.com" : "NHL.com"}
                     </a>
                   </>
                 )}
@@ -306,6 +353,7 @@ export function VideoTab({
                         {e.team && (
                           <span className={`absolute top-1 left-1 rounded px-1 text-[10px] font-bold ${e.ott ? "bg-gold text-ground" : "bg-line-strong text-ink"}`}>{e.team}</span>
                         )}
+                        {e.embedUrl && <span className="absolute top-1 left-1 rounded bg-sens px-1 text-[10px] font-bold text-white">TSN</span>}
                         {e.badge && <span className="absolute right-1 bottom-1 rounded bg-black/70 px-1 text-[10px] font-bold text-white">{e.badge}</span>}
                         {on && (
                           <span className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/45 text-[10px] font-bold tracking-widest text-white">PLAYING</span>
