@@ -11,6 +11,10 @@ import { periodLabel } from "@/lib/format";
 import { Section } from "../ui";
 import { GameSections } from "./GameSections";
 import { BroadcastLinks } from "../BroadcastLinks";
+import { GameTabButtons } from "./GameTabs";
+import type { GameTab } from "./GameTabs";
+import { VideoTab } from "../video/VideoTab";
+import type { GameVideo } from "@/lib/video";
 
 type Payload = { game: LiveGame; rivals: RivalGame[]; radio?: RadioEpisode[] };
 
@@ -20,8 +24,21 @@ const PRE_POLL_MS = 60_000;
 const REPLAY_STEP = 60;
 const REPLAY_TICK_MS = 3_000;
 const GAME_END = 3900;
+const VIDEO_POLL_MS = 60_000;
 
-export function LiveCompanion({ gameId, initial, replay }: { gameId: number; initial: Payload | null; replay: boolean }) {
+export function LiveCompanion({
+  gameId,
+  initial,
+  replay,
+  initialTab = "summary",
+}: {
+  gameId: number;
+  initial: Payload | null;
+  replay: boolean;
+  initialTab?: GameTab;
+}) {
+  const [tab, setTab] = useState<GameTab>(initialTab);
+  const [video, setVideo] = useState<GameVideo | null>(null);
   const [data, setData] = useState<Payload | null>(initial);
   const [error, setError] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<number | null>(null);
@@ -84,6 +101,41 @@ export function LiveCompanion({ gameId, initial, replay }: { gameId: number; ini
     const id = setTimeout(() => setT((x) => Math.min(GAME_END, x + REPLAY_STEP)), REPLAY_TICK_MS);
     return () => clearTimeout(id);
   }, [replay, paused, t]);
+
+  // Video tab: load the game's video list when the tab opens, then refresh every minute
+  // while the game is on (recaps and highlights keep posting). Not in replay mode, where
+  // the full post-game list would spoil the game.
+  useEffect(() => {
+    if (replay || tab !== "video") return;
+    let cancelled = false;
+    let id: ReturnType<typeof setTimeout> | null = null;
+    const fetchVideo = async () => {
+      try {
+        const res = await fetch(`/api/game/${gameId}/video`, { cache: "no-store" });
+        if (res.ok && !cancelled) setVideo((await res.json()) as GameVideo);
+      } catch {
+        /* keep what we have */
+      }
+      if (!cancelled && !latest.current?.game.isFinal) id = setTimeout(fetchVideo, VIDEO_POLL_MS);
+    };
+    id = setTimeout(fetchVideo, 0);
+    return () => {
+      cancelled = true;
+      if (id) clearTimeout(id);
+    };
+  }, [replay, tab, gameId]);
+
+  const changeTab = (t: GameTab) => {
+    setTab(t);
+    try {
+      const url = new URL(window.location.href);
+      if (t === "summary") url.searchParams.delete("tab");
+      else url.searchParams.set("tab", t);
+      window.history.replaceState(null, "", url);
+    } catch {
+      /* not important */
+    }
+  };
 
   // "Updated 12 s ago" ticker.
   useEffect(() => {
@@ -175,28 +227,52 @@ export function LiveCompanion({ gameId, initial, replay }: { gameId: number; ini
         )}
       </section>
 
-      <GameSections game={game} />
+      <GameTabButtons active={tab} onChange={changeTab} />
 
-      {!game.isPre && (
-        <Section title="Radio call" aside="TSN 1200">
-          <RadioArchive episodes={radio} live={!game.isFinal} />
-        </Section>
-      )}
-
-      {rivals.length > 0 && (
-        <Section title="Out of town scoreboard">
-          <div className="flex flex-col gap-2">
-            {rivals.map((r) => (
-              <div key={r.id} className="flex items-center justify-between rounded-xl border border-line bg-surface px-3.5 py-3">
-                <span className="font-display text-[19px] font-bold tracking-wide">
-                  {r.awayScore != null ? `${r.away} ${r.awayScore} – ${r.homeScore} ${r.home}` : `${r.away} at ${r.home}`}
-                </span>
-                <span className="text-[13px] text-muted">{r.status}</span>
+      {tab === "summary" && (
+        <>
+          <GameSections game={game} />
+          {rivals.length > 0 && (
+            <Section title="Out of town scoreboard">
+              <div className="flex flex-col gap-2">
+                {rivals.map((r) => (
+                  <div key={r.id} className="flex items-center justify-between rounded-xl border border-line bg-surface px-3.5 py-3">
+                    <span className="font-display text-[19px] font-bold tracking-wide">
+                      {r.awayScore != null ? `${r.away} ${r.awayScore} – ${r.homeScore} ${r.home}` : `${r.away} at ${r.home}`}
+                    </span>
+                    <span className="text-[13px] text-muted">{r.status}</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </Section>
+          )}
+        </>
+      )}
+
+      {tab === "video" &&
+        (game.isPre ? (
+          <p className="mx-4 mt-6 rounded-2xl border border-line bg-surface p-4 text-sm text-muted">Video shows up here once the game starts.</p>
+        ) : (
+          <VideoTab
+            video={replay ? null : video}
+            goals={game.goals}
+            isFinal={game.isFinal}
+            note={replay ? "Recaps and highlights are hidden in replay mode so they don't spoil the game." : undefined}
+          />
+        ))}
+
+      {tab === "radio" && (
+        <Section title="Radio call" aside="TSN 1200">
+          {game.isPre ? (
+            <p className="rounded-2xl border border-line bg-surface p-4 text-sm text-muted">
+              Listen live with the TSN 1200 bar below. The radio call for each period shows up here once it&apos;s over.
+            </p>
+          ) : (
+            <RadioArchive episodes={radio} live={!game.isFinal} />
+          )}
         </Section>
       )}
+
       {showLiveBar && (
         <>
           <div className="h-20" aria-hidden="true" />
