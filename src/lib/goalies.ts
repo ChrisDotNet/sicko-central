@@ -3,7 +3,6 @@
 // teams with the expected starter listed first among the goalies, and a "Status report"
 // that says when a starter has been announced ("Ullmark will start"). The NHL itself only
 // names starters at puck drop; after that the game feed has them.
-// (Daily Faceoff tracks this too, but its site blocks requests from servers.)
 // Never throws: no preview yet means no card.
 import { cacheLife } from "next/cache";
 

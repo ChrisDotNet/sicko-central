@@ -13,7 +13,7 @@ the next game better to watch?
 
 ## Bugs
 
-- ~~**Streaming links go to the wrong place**~~ Fixed 2026-11-13: TSN and SN chips open the game's own TSN+ / Sportsnet+ event page (`src/lib/streams.ts`); the fallbacks now go to each service's live page instead of a 404. RDS and TVA Sports still open their front pages.
+- ~~**Streaming links go to the wrong place**~~ Fixed 2026-11-13: TSN and SN chips open the game's own TSN+ / Sportsnet+ event page (`src/lib/streams.ts`); the fallbacks now go to each service's live page instead of a 404. RDS chips open the game's RDS event page; TVA Sports chips open the channel's live stream (TVA has no per-game pages).
 
 ## Suggested order
 
@@ -27,7 +27,7 @@ the next game better to watch?
 6a. ~~Starting goalies on game day~~ Done 2026-11-13 (NHL.com game preview)
 
 **Tier 2: around the game**
-6. Player birthdays (mostly feeds the game-day facts)
+6. ~~Player birthdays~~ Done 2026-11-13 (game-day facts, home banner, player page)
 7. ~~Ticket links~~ Done 2026-11-13 (Gametime + Ticketmaster on the Next game card, every game). Gametime affiliate links when on a paid plan
 8. ~~All Sens news, not just game days~~ Done 2026-11-13 (home page section, /news page, News in desktop header)
 
@@ -72,7 +72,7 @@ full screen like an app. Push alerts while the app is closed ("Sens score!") nee
 that watches the game and sends them; Vercel Hobby can only run a scheduled job once a day,
 so that needs a paid plan or an outside service. Alerts while the page is open already work.
 
-### Player birthdays — Partly done: in game-day facts. Home/player page greeting still open · Effort: S
+### Player birthdays — **Done** (2026-11-13)
 The roster feed has every player's birth date. Show "Happy birthday" on the home page and the
 player page, and include it in game-day facts when it falls on a game day (Pinto's OT winner
 on his birthday is the example). No new source needed.

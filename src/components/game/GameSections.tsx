@@ -35,7 +35,7 @@ export function GameSections({
   aside?: ReactNode;
   // Game-day facts: shown before puck drop and at intermissions.
   facts?: Fact[];
-  // Starting goalies (Daily Faceoff): shown before puck drop.
+  // Starting goalies (NHL.com game preview): shown before puck drop.
   goalies?: Goalies | null;
   // Whether the live radio bar is on the page (the intermission card links to it).
   radio?: boolean;

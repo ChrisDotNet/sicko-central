@@ -5,10 +5,12 @@
 const RULES: Array<{ test: RegExp; href: string; service: string }> = [
   { test: /^TSN/i, href: "https://www.tsn.ca/live/", service: "TSN+" },
   { test: /^(SN|SPORTSNET)/i, href: "https://watch.sportsnet.ca/", service: "Sportsnet+" },
-  { test: /^RDS/i, href: "https://www.rds.ca/", service: "RDS" },
+  { test: /^RDS/i, href: "https://www.rds.ca/en-direct/", service: "RDS" },
   { test: /^(CBC|HNIC)/i, href: "https://gem.cbc.ca/", service: "CBC Gem" },
   { test: /^CITY/i, href: "https://www.citytv.com/", service: "Citytv+" },
-  { test: /^TVA/i, href: "https://www.tvasports.ca/", service: "TVA Sports" },
+  // TVA Sports streams each channel live (no page per game): TVAS2 on its own page.
+  { test: /^TVAS?2$/i, href: "https://www.tvasports.ca/en-direct-2", service: "TVA Sports 2" },
+  { test: /^TVA/i, href: "https://www.tvasports.ca/en-direct-1", service: "TVA Sports" },
   { test: /^(PRIME|AMAZON)/i, href: "https://www.primevideo.com/", service: "Prime Video" },
 ];
 

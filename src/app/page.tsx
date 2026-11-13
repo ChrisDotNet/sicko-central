@@ -4,7 +4,8 @@ import { StandingsTable } from "@/components/StandingsTable";
 import { GameSummaryButton } from "@/components/GameSummaryButton";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { formatDay, formatTime, savePct } from "@/lib/format";
-import { getClubStats, getSchedule, getScoresNow, getStandings, name } from "@/lib/nhl";
+import { getClubStats, getRoster, getSchedule, getScoresNow, getStandings, name } from "@/lib/nhl";
+import { BirthdayBanner } from "@/components/Birthdays";
 import { scoreLine, splitSchedule } from "@/lib/schedule";
 import { OTT } from "@/lib/teams";
 import { getStartingGoalies } from "@/lib/goalies";
@@ -36,12 +37,16 @@ export default async function HomePage() {
   const { all, live, last, next } = splitSchedule(schedule.games);
   const comingUp = all.filter((g) => g.state === "upcoming" && g.id !== next?.id).slice(0, 4);
   const tonight = next != null && scores?.currentDate === next.gameDate;
-  const [goalies, facts, gametime, streamEvents] = await Promise.all([
+  const [goalies, facts, gametime, streamEvents, roster] = await Promise.all([
     tonight && next ? getStartingGoalies(String(next.id), next.opp) : null,
     next ? getGameFacts(next.gameDate, next.opp).catch(() => []) : [],
     next ? getGametimeEvents() : {},
     getStreamEvents(),
+    getRoster().catch(() => null),
   ]);
+  const birthdays = [...(roster?.forwards ?? []), ...(roster?.defensemen ?? []), ...(roster?.goalies ?? [])]
+    .filter((p) => p.birthDate)
+    .map((p) => ({ id: p.id, name: `${name(p.firstName)} ${name(p.lastName)}`, birthDate: p.birthDate!, number: p.sweaterNumber }));
   const fact = pickFacts(facts, [], 1)[0]?.text ?? null;
   const oppRow = next ? (standings.find((r) => name(r.teamAbbrev) === next.opp) ?? null) : null;
   const rawNext = next ? schedule.games.find((g) => g.id === next.id) : undefined;
@@ -88,6 +93,8 @@ export default async function HomePage() {
           </Link>
         </section>
       )}
+
+      <BirthdayBanner players={birthdays} />
 
       <div className="flex flex-col md:grid md:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         {ottRow && (
