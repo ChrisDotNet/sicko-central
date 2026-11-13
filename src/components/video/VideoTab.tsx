@@ -211,11 +211,12 @@ export function VideoTab({
                 {shown.title}
               </div>
               <div className="text-xs text-muted">
-                {shown.sub}
+                {/* The source becomes a link while a clip plays, so it isn't named twice. */}
+                {current?.url ? shown.sub.replace(/(^| · )NHL\.com$/, "") : shown.sub}
                 {failed && <span className="text-sens-text"> · Wouldn&apos;t load here.</span>}
                 {current?.url && (
                   <>
-                    {" · "}
+                    {current.url && shown.sub.replace(/(^| · )NHL\.com$/, "") ? " · " : ""}
                     <a href={current.url} target="_blank" rel="noopener noreferrer" className="underline">
                       {failed ? "Open on NHL.com" : "NHL.com"}
                     </a>

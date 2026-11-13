@@ -79,3 +79,11 @@ body {
     opacity: 0;
   }
 }
+
+/* The NHL's Brightcove player shows the clip's title and description over the video
+   (often the same text twice). The page already names the clip, so hide the overlay. */
+.video-js .vjs-title-bar,
+.video-js .vjs-dock-text,
+.video-js .vjs-dock-shelf {
+  display: none !important;
+}
