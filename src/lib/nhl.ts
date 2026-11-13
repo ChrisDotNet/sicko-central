@@ -46,6 +46,7 @@ export type ScheduleGame = {
   gameOutcome?: { lastPeriodType: string };
   threeMinRecap?: string;
   condensedGame?: string;
+  ticketsLink?: string; // Ticketmaster event page
 };
 
 export type Schedule = { currentSeason: number; games: ScheduleGame[] };

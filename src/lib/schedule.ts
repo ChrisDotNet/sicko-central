@@ -16,6 +16,7 @@ export type GameSummary = {
   lastPeriodType?: string;
   broadcasts: string[];
   venue: string;
+  ticketsLink?: string;
 };
 
 export function summarize(g: ScheduleGame): GameSummary {
@@ -46,6 +47,7 @@ export function summarize(g: ScheduleGame): GameSummary {
     lastPeriodType: g.gameOutcome?.lastPeriodType,
     broadcasts: [...new Set((g.tvBroadcasts ?? []).filter((b) => b.countryCode === "CA").map((b) => b.network))],
     venue: g.venue?.default ?? "",
+    ticketsLink: g.ticketsLink,
   };
 }
 

@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { Card, Chevron, ErrorNote, Kicker, Page, ResultBadge, Section, TeamBar } from "@/components/ui";
+import { Card, Chevron, ErrorNote, Kicker, Page, ResultBadge, Section } from "@/components/ui";
 import { StandingsTable } from "@/components/StandingsTable";
-import { BroadcastLinks } from "@/components/BroadcastLinks";
 import { GameSummaryButton } from "@/components/GameSummaryButton";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { formatDay, formatTime, savePct } from "@/lib/format";
@@ -10,6 +9,10 @@ import { scoreLine, splitSchedule } from "@/lib/schedule";
 import { OTT } from "@/lib/teams";
 import { getStartingGoalies } from "@/lib/goalies";
 import { getSensNews } from "@/lib/sens-news";
+import { getGameFacts } from "@/lib/facts";
+import { pickFacts } from "@/lib/facts-shared";
+import { getGametimeEvents, ticketLinks } from "@/lib/tickets";
+import { NextGameCard, seriesFor } from "@/components/NextGameCard";
 import { SensNewsList } from "@/components/news/SensNewsList";
 
 function ordinal(n: number) {
@@ -32,7 +35,16 @@ export default async function HomePage() {
   const { all, live, last, next } = splitSchedule(schedule.games);
   const comingUp = all.filter((g) => g.state === "upcoming" && g.id !== next?.id).slice(0, 4);
   const tonight = next != null && scores?.currentDate === next.gameDate;
-  const goalies = tonight && next ? await getStartingGoalies(String(next.id), next.opp) : null;
+  const [goalies, facts, gametime] = await Promise.all([
+    tonight && next ? getStartingGoalies(String(next.id), next.opp) : null,
+    next ? getGameFacts(next.gameDate, next.opp).catch(() => []) : [],
+    next ? getGametimeEvents() : {},
+  ]);
+  const fact = pickFacts(facts, [], 1)[0]?.text ?? null;
+  const oppRow = next ? (standings.find((r) => name(r.teamAbbrev) === next.opp) ?? null) : null;
+  const rawNext = next ? schedule.games.find((g) => g.id === next.id) : undefined;
+  const oppTeam = rawNext ? (rawNext.homeTeam.abbrev === OTT ? rawNext.awayTeam : rawNext.homeTeam) : undefined;
+  const oppName = oppTeam?.commonName?.default ?? next?.opp ?? "";
   const ottRow = standings.find((r) => name(r.teamAbbrev) === OTT);
   const division = ottRow
     ? standings.filter((r) => r.divisionAbbrev === ottRow.divisionAbbrev).sort((a, b) => a.divisionSequence - b.divisionSequence)
@@ -98,46 +110,17 @@ export default async function HomePage() {
         )}
 
         <section className="flex flex-col gap-2.5 px-4 pt-4 md:col-start-1 md:row-span-2 md:row-start-1 md:[&>*]:flex-1">
-          {next && tonight && (
-            <div className="rounded-2xl border border-gold-line bg-gold-ground p-4 md:flex md:flex-col md:justify-center md:p-6">
-              <Link href="/live" className="flex min-h-11 items-center justify-between">
-                <div className="flex flex-col gap-1">
-                  <Kicker>Tonight</Kicker>
-                  <span className="font-display text-2xl font-extrabold leading-none tracking-wide md:text-5xl">
-                    {next.home ? "vs" : "at"} {next.opp} · {formatTime(next.startTimeUTC)}
-                  </span>
-                  <span className="text-sm text-muted">{next.venue}</span>
-                  {goalies?.ott && (
-                    <span className="text-sm text-ink-2">
-                      In goal: {goalies.ott.name} ({goalies.ott.status.toLowerCase()})
-                      {goalies.opp ? ` · ${goalies.opp.name} (${goalies.opp.status.toLowerCase()})` : ""}
-                    </span>
-                  )}
-                </div>
-                <span className="flex items-center gap-1 text-sm font-semibold">
-                  Game centre <Chevron />
-                </span>
-              </Link>
-              <BroadcastLinks networks={next.broadcasts} className="mt-3" />
-            </div>
-          )}
-          {next && !tonight && (
-            <Card className="p-4 md:flex md:flex-col md:justify-center md:p-6">
-              <Kicker>Next game</Kicker>
-              <div className="mt-2 flex items-center justify-between">
-                <div className="flex flex-col gap-1">
-                  <span className="font-display text-2xl font-extrabold leading-none tracking-wide md:text-5xl">
-                    {next.home ? "vs" : "at"} {next.opp}
-                  </span>
-                  <span className="text-sm text-ink-2">
-                    {formatDay(next.startTimeUTC).long} · {formatTime(next.startTimeUTC)}
-                  </span>
-                  <span className="text-sm text-muted">{next.venue}</span>
-                </div>
-                <TeamBar abbrev={next.opp} className="h-11 w-2.5" />
-              </div>
-              <BroadcastLinks networks={next.broadcasts} className="mt-3" />
-            </Card>
+          {next && (
+            <NextGameCard
+              next={next}
+              tonight={tonight}
+              oppName={oppName}
+              row={oppRow}
+              series={seriesFor(next, all)}
+              fact={fact}
+              goalies={goalies}
+              tickets={ticketLinks(next.startTimeUTC, next.ticketsLink, gametime)}
+            />
           )}
         </section>
         {last && last.result && (

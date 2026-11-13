@@ -34,7 +34,7 @@ the next game better to watch?
 
 **Tier 2: around the game**
 6. Player birthdays (mostly feeds the game-day facts)
-7. Ticket links for home games
+7. ~~Ticket links~~ Done 2026-11-13 (Gametime + Ticketmaster on the Next game card, every game). Gametime affiliate links when on a paid plan
 8. ~~All Sens news, not just game days~~ Done 2026-11-13 (home page section, /news page, News in desktop header)
 
 **Tier 3: reference (good for the off-season, not the mission)**
@@ -110,7 +110,7 @@ rule: full articles open on the outlet's site.
 - **HockeyDB:** no API, and its pages are its own compiled work; copying them isn't a good
   idea. Link out at most.
 
-### Ticket links (Ticketmaster, Gametime) — Value: medium · Effort: S
+### Ticket links (Ticketmaster, Gametime) — **Done** (2026-11-13; plain links, affiliate later)
 Ticketmaster's Discovery API is open with a free key (5,000 calls a day) and can find the event
 page for each Sens home game; add a "Tickets" link on upcoming games. Gametime has an affiliate
 programme, but affiliate links are commercial use, which Vercel Hobby doesn't allow; plain
