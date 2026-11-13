@@ -15,8 +15,8 @@ import { Thumb } from "../media/Thumb";
 // - Tablet: the same, with the playlist in two columns.
 // - Desktop: player on the left, playlist on the right.
 // The player only loads on the first play, so opening the tab costs nothing.
-// Clips play one at a time; with "Play the next clip" on, goals and highlights run on into
-// the next one in their section (with the up-next card), the way "Watch all goals" did.
+// Clips play one at a time; with "Play the next clip automatically" ticked, each clip runs
+// on into the next one in the list (with the up-next card), the way "Watch all goals" did.
 
 type Section = "full" | "goals" | "highlights";
 type Entry = { clipId: number; section: Section; title: string; sub: string; thumb?: string | null; url?: string; team?: string; ott?: boolean; badge?: string };
@@ -103,9 +103,9 @@ export function VideoTab({
   // What the poster offers before anything plays: the first full-game video, else the latest goal.
   const suggested = entries.find((e) => e.section === "full") ?? [...entries].reverse().find((e) => e.section === "goals") ?? entries[0] ?? null;
   const shown = current ?? suggested;
-  // Run on only within goals or highlights, never from a recap into the condensed game.
+  // With the box ticked, whatever is next in the list plays next (after the up-next card).
   const next = pos >= 0 ? entries[pos + 1] : undefined;
-  const advances = autoNext && !!current && current.section !== "full" && next?.section === current.section;
+  const advances = autoNext && !!current && !!next;
 
   const play = (clipId: number) => {
     const i = entries.findIndex((e) => e.clipId === clipId);

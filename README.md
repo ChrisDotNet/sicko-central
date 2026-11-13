@@ -37,7 +37,7 @@ The menu's **Game** tab (the `/live` page) reflects today's game through `/api/s
 Each game's Media tab has three parts:
 
 - **News**, under Pregame and Postgame headings: NHL.com stories tagged with the game id, plus TSN and Sportsnet stories about the Sens from the 24 h before puck drop to 20 h after (`src/lib/news.ts`). Only headlines and the short summary from each outlet's RSS feed are shown; full articles open on the outlet's site.
-- **Video**: recaps, condensed game, every goal and other highlights from NHL.com (`src/lib/video.ts`), as a watch page: one player (pinned at the top on phones, beside the playlist on desktop) and a playlist with an All / Sens / opponent goal filter. Goals and highlights run on into the next clip with the up-next card. The player loads on first play. The pop-up player is still used for the Summary tab's goal list.
+- **Video**: recaps, condensed game, every goal and other highlights from NHL.com (`src/lib/video.ts`), as a watch page: one player (pinned at the top on phones, beside the playlist on desktop) and a playlist with an All / Sens / opponent goal filter. With "Play the next clip automatically" ticked, each clip runs on into the next one in the list, with the up-next card. The player loads on first play. The pop-up player is still used for the Summary tab's goal list.
 - **Thumbnails**: each outlet's own image from its feed or content API, loaded by the browser straight from the outlet (`Thumb`), never copied or passed through Vercel's image optimizer. TSN's are requested at 480 px.
 - **Audio**: TSN 1200's radio call from its podcast feed (`src/lib/radio.ts`).
 
