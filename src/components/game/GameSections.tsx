@@ -11,6 +11,8 @@ import { IntermissionCard } from "./IntermissionCard";
 import { YourPlayers } from "./YourPlayers";
 import { GameFacts } from "./GameFacts";
 import type { Fact } from "@/lib/facts-shared";
+import type { StartingGoalies as Goalies } from "@/lib/goalies";
+import { StartingGoalies } from "./StartingGoalies";
 
 // One set of sections, three arrangements:
 // - Phone: one column in the order below (`order-*`).
@@ -26,12 +28,15 @@ export function GameSections({
   game,
   aside,
   facts,
+  goalies,
   radio = false,
 }: {
   game: LiveGame;
   aside?: ReactNode;
   // Game-day facts: shown before puck drop and at intermissions.
   facts?: Fact[];
+  // Starting goalies (Daily Faceoff): shown before puck drop.
+  goalies?: Goalies | null;
   // Whether the live radio bar is on the page (the intermission card links to it).
   radio?: boolean;
 }) {
@@ -43,6 +48,9 @@ export function GameSections({
         <section className="order-1 px-4 pt-4">
           {intermission ? <IntermissionCard game={game} radio={radio} /> : <RightNow ctx={contextFor(game)} />}
         </section>
+        {game.isPre && goalies !== undefined && !game.replay && (
+          <StartingGoalies initial={goalies} gameDate={game.gameDate} oppAbbrev={game.opp.abbrev} className="order-1" />
+        )}
         <YourPlayers skaters={game.skaters} className="order-1" />
         {facts && facts.length > 0 && (game.isPre || intermission) && <GameFacts facts={facts} skaters={game.skaters} className="order-1" />}
         {started && (

@@ -20,6 +20,8 @@ the next game better to watch?
 4. ~~Intermission card~~ Done 2026-11-13
 5. ~~Install to home screen~~ Done 2026-11-13. Next: push notifications (pre-game reminder, then goal alerts) via Upstash QStash
 
+6a. ~~Starting goalies on game day~~ Done 2026-11-13 (Daily Faceoff)
+
 **Tier 2: around the game**
 6. Player birthdays (mostly feeds the game-day facts)
 7. Ticket links for home games

@@ -8,6 +8,7 @@ import { formatDay, formatTime, savePct } from "@/lib/format";
 import { getClubStats, getSchedule, getScoresNow, getStandings, name } from "@/lib/nhl";
 import { scoreLine, splitSchedule } from "@/lib/schedule";
 import { OTT } from "@/lib/teams";
+import { getStartingGoalies } from "@/lib/goalies";
 
 function ordinal(n: number) {
   const s = ["th", "st", "nd", "rd"];
@@ -28,6 +29,7 @@ export default async function HomePage() {
   const { all, live, last, next } = splitSchedule(schedule.games);
   const comingUp = all.filter((g) => g.state === "upcoming" && g.id !== next?.id).slice(0, 4);
   const tonight = next != null && scores?.currentDate === next.gameDate;
+  const goalies = tonight && next ? await getStartingGoalies(next.gameDate) : null;
   const ottRow = standings.find((r) => name(r.teamAbbrev) === OTT);
   const division = ottRow
     ? standings.filter((r) => r.divisionAbbrev === ottRow.divisionAbbrev).sort((a, b) => a.divisionSequence - b.divisionSequence)
@@ -102,6 +104,12 @@ export default async function HomePage() {
                     {next.home ? "vs" : "at"} {next.opp} · {formatTime(next.startTimeUTC)}
                   </span>
                   <span className="text-sm text-muted">{next.venue}</span>
+                  {goalies?.ott && (
+                    <span className="text-sm text-ink-2">
+                      In goal: {goalies.ott.name} ({goalies.ott.status.toLowerCase()})
+                      {goalies.opp ? ` · ${goalies.opp.name} (${goalies.opp.status.toLowerCase()})` : ""}
+                    </span>
+                  )}
                 </div>
                 <span className="flex items-center gap-1 text-sm font-semibold">
                   Game centre <Chevron />

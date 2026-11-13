@@ -22,6 +22,7 @@ import { strengthTag } from "./GoalReplays";
 import { Latest } from "./Latest";
 import { ScreenAwake } from "./ScreenAwake";
 import type { Fact } from "@/lib/facts-shared";
+import type { StartingGoalies as StartingGoaliesData } from "@/lib/goalies";
 import { getFavourites } from "@/lib/favourites";
 import { latestItems } from "./latest-items";
 
@@ -43,6 +44,7 @@ export function LiveCompanion({
   initialTab = "summary",
   initialSegment = "news",
   facts,
+  goalies,
 }: {
   gameId: number;
   initial: Payload | null;
@@ -50,6 +52,7 @@ export function LiveCompanion({
   initialTab?: GameTab;
   initialSegment?: MediaSegment;
   facts?: Fact[];
+  goalies?: StartingGoaliesData | null;
 }) {
   const [tab, setTab] = useState<GameTab>(initialTab);
   const [media, setMedia] = useState<GameMedia | null>(null);
@@ -372,6 +375,7 @@ export function LiveCompanion({
         <GameSections
           game={game}
           facts={facts}
+          goalies={goalies}
           radio={showLiveBar}
           aside={
             <>
