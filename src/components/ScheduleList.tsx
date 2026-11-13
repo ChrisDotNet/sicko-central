@@ -107,7 +107,7 @@ export function ScheduleList({ games, focusDate }: { games: GameSummary[]; focus
                   </span>
                 </span>
                 {g.state === "upcoming" && g.broadcasts.length > 0 ? (
-                  <BroadcastLinks networks={g.broadcasts} size="sm" />
+                  <BroadcastLinks networks={g.broadcasts} links={g.streams} size="sm" />
                 ) : (
                   <span className="truncate text-xs leading-none text-muted">{sub}</span>
                 )}

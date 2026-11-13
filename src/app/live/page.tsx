@@ -12,6 +12,7 @@ import { atlanticGames } from "@/lib/rivals";
 import { getRadioForGame } from "@/lib/radio";
 import { getGameFacts } from "@/lib/facts";
 import { getStartingGoalies } from "@/lib/goalies";
+import { getStreamEvents, streamLinks } from "@/lib/streams";
 import { scoreLine, splitSchedule } from "@/lib/schedule";
 import { OTT } from "@/lib/teams";
 
@@ -36,18 +37,21 @@ async function LiveContent({ searchParams }: { searchParams: Promise<Record<stri
     const id = String(today.id);
     const [pbp, box] = await Promise.all([getPlayByPlay(id).catch(() => null), getBoxScore(id)]);
     const game = pbp ? buildGame(pbp, box) : null;
-    const [radio, facts, goalies] = game
+    const [radio, facts, goalies, streamEvents] = game
       ? await Promise.all([
           getRadioForGame(game.startTimeUTC),
           getGameFacts(game.gameDate, game.opp.abbrev),
           game.isPre ? getStartingGoalies(id, game.opp.abbrev) : null,
+          getStreamEvents(),
         ])
-      : [[], [], null];
+      : [[], [], null, null];
+    const streams = game && streamEvents ? streamLinks(game.startTimeUTC, game.broadcasts, streamEvents) : undefined;
     const initial = game ? { game, rivals: scores ? atlanticGames(scores, today.id) : [], radio } : null;
-    return <LiveCompanion key={id} gameId={today.id} initial={initial} replay={false} initialTab={tab} initialSegment={segment} facts={facts} goalies={goalies} />;
+    return <LiveCompanion key={id} gameId={today.id} initial={initial} replay={false} initialTab={tab} initialSegment={segment} facts={facts} goalies={goalies} streams={streams} />;
   }
 
   const { next, last } = schedule ? splitSchedule(schedule.games) : { next: null, last: null };
+  const nextStreams = next ? streamLinks(next.startTimeUTC, next.broadcasts, await getStreamEvents()) : undefined;
   return (
     <div className="flex flex-col gap-2.5 px-4 pt-5">
       <h1 className="font-display text-3xl font-extrabold uppercase tracking-wider">No game today</h1>
@@ -61,7 +65,7 @@ async function LiveContent({ searchParams }: { searchParams: Promise<Record<stri
           <div className="text-sm text-ink-2">
             {formatDay(next.startTimeUTC).long} · {formatTime(next.startTimeUTC)}
           </div>
-          <BroadcastLinks networks={next.broadcasts} className="mt-3" />
+          <BroadcastLinks networks={next.broadcasts} links={nextStreams} className="mt-3" />
         </Card>
       )}
       {last && (

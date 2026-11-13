@@ -45,6 +45,7 @@ export function LiveCompanion({
   initialSegment = "news",
   facts,
   goalies,
+  streams,
 }: {
   gameId: number;
   initial: Payload | null;
@@ -53,6 +54,8 @@ export function LiveCompanion({
   initialSegment?: MediaSegment;
   facts?: Fact[];
   goalies?: StartingGoaliesData | null;
+  // Network -> this game's own streaming page (TSN+, Sportsnet+).
+  streams?: Record<string, string>;
 }) {
   const [tab, setTab] = useState<GameTab>(initialTab);
   const [media, setMedia] = useState<GameMedia | null>(null);
@@ -363,7 +366,7 @@ export function LiveCompanion({
         )}
         {(game.isPre || game.isLive) && (game.broadcasts.length > 0 || game.isLive) && (
           <div className="mt-2 flex flex-wrap items-center justify-center gap-2 lg:justify-start">
-            {game.broadcasts.length > 0 && <BroadcastLinks networks={game.broadcasts} />}
+            {game.broadcasts.length > 0 && <BroadcastLinks networks={game.broadcasts} links={streams} />}
             <ScreenAwake active={game.isLive} />
           </div>
         )}

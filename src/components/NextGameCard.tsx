@@ -160,7 +160,7 @@ export function NextGameCard({
         icon={<TvIcon />}
         items={next.broadcasts.map((n) => {
           const w = watchLink(n);
-          return { label: n, note: w?.service ?? "No link", href: w?.href ?? null };
+          return { label: n, note: w?.service ?? "No link", href: next.streams?.[n] ?? w?.href ?? null };
         })}
       />
       <LinkMenu

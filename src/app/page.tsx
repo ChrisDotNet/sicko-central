@@ -12,6 +12,7 @@ import { getSensNews } from "@/lib/sens-news";
 import { getGameFacts } from "@/lib/facts";
 import { pickFacts } from "@/lib/facts-shared";
 import { getGametimeEvents, ticketLinks } from "@/lib/tickets";
+import { getStreamEvents, streamLinks } from "@/lib/streams";
 import { NextGameCard, seriesFor } from "@/components/NextGameCard";
 import { SensNewsList } from "@/components/news/SensNewsList";
 
@@ -35,10 +36,11 @@ export default async function HomePage() {
   const { all, live, last, next } = splitSchedule(schedule.games);
   const comingUp = all.filter((g) => g.state === "upcoming" && g.id !== next?.id).slice(0, 4);
   const tonight = next != null && scores?.currentDate === next.gameDate;
-  const [goalies, facts, gametime] = await Promise.all([
+  const [goalies, facts, gametime, streamEvents] = await Promise.all([
     tonight && next ? getStartingGoalies(String(next.id), next.opp) : null,
     next ? getGameFacts(next.gameDate, next.opp).catch(() => []) : [],
     next ? getGametimeEvents() : {},
+    getStreamEvents(),
   ]);
   const fact = pickFacts(facts, [], 1)[0]?.text ?? null;
   const oppRow = next ? (standings.find((r) => name(r.teamAbbrev) === next.opp) ?? null) : null;
@@ -112,7 +114,7 @@ export default async function HomePage() {
         <section className="flex flex-col gap-2.5 px-4 pt-4 md:col-start-1 md:row-span-2 md:row-start-1 md:[&>*]:flex-1">
           {next && (
             <NextGameCard
-              next={next}
+              next={{ ...next, streams: streamLinks(next.startTimeUTC, next.broadcasts, streamEvents) }}
               tonight={tonight}
               oppName={oppName}
               row={oppRow}

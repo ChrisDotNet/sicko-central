@@ -5,8 +5,11 @@ export function BroadcastLinks({
   networks,
   className = "",
   size = "md",
+  links,
 }: {
   networks: string[];
+  // Network -> the game's own page on the streaming service, where known.
+  links?: Record<string, string>;
   className?: string;
   size?: "md" | "sm";
 }) {
@@ -19,7 +22,7 @@ export function BroadcastLinks({
         return link ? (
           <a
             key={n}
-            href={link.href}
+            href={links?.[n] ?? link.href}
             target="_blank"
             rel="noopener noreferrer"
             aria-label={`Watch on ${n} (opens ${link.service})`}

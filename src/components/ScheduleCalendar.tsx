@@ -57,7 +57,7 @@ export function ScheduleCalendar({ games, visible }: { games: GameSummary[]; vis
                     {g.result && <ResultBadge result={g.result} />}
                     <span className="text-sm font-bold tabular">{g.state === "upcoming" ? formatTime(g.startTimeUTC) : scoreLine(g)}</span>
                   </span>
-                  {g.state === "upcoming" && g.broadcasts.length > 0 && <BroadcastLinks networks={g.broadcasts} size="sm" />}
+                  {g.state === "upcoming" && g.broadcasts.length > 0 && <BroadcastLinks networks={g.broadcasts} links={g.streams} size="sm" />}
                 </>
               );
               const base = `flex min-h-[112px] flex-col gap-1.5 border-r border-line p-2.5 last:border-r-0 ${
