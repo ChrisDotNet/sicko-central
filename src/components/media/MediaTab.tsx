@@ -16,6 +16,10 @@ const Note = ({ children }: { children: React.ReactNode }) => (
   <p className="rounded-2xl border border-line bg-surface p-4 text-sm text-muted">{children}</p>
 );
 
+function hasPregameVideo(v: GameVideo | null): boolean {
+  return !!v && (v.senstv?.length ?? 0) + (v.tsn?.length ?? 0) + (v.sportsnet?.length ?? 0) > 0;
+}
+
 // Stories posted this soon after puck drop count as in-game (the same rule as the Video tab);
 // recaps are always postgame.
 const IN_GAME_MS = 2.5 * 3600_000;
@@ -134,9 +138,10 @@ export function MediaTab({
       )}
 
       {segment === "video" &&
-        (isPre ? (
+        // Before puck drop the tab still shows pregame video (Sens TV media, TSN, Sportsnet).
+        (isPre && !hasPregameVideo(video) ? (
           <Section>
-            <Note>Video shows up here once the game starts.</Note>
+            <Note>Pregame interviews show up here on game day; highlights and replays once the game starts.</Note>
           </Section>
         ) : (
           <VideoTab
