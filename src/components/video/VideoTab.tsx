@@ -4,26 +4,21 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Goal } from "@/lib/game";
 import type { GameVideo, VideoItem } from "@/lib/video";
 import { periodLabel } from "@/lib/format";
-import { unlockSfx } from "@/lib/sfx";
 import { strengthTag } from "../game/GoalReplays";
 import { ClipPlayer, preloadClipPlayer } from "../game/ClipPlayer";
 import type { ClipPlayerHandle } from "../game/ClipPlayer";
 import { Thumb } from "../media/Thumb";
 import { YouTubePlayer, preloadYouTube } from "./YouTubePlayer";
-import { playSlapshot } from "@/lib/sfx";
 
 // The Video tab as a watch page: one player and a playlist, on every screen size.
 // - Phone: the player sits at the top and stays there while the playlist scrolls under it.
 // - Tablet: the same, with the playlist in two columns.
 // - Desktop: player on the left, playlist on the right.
 // The player only loads on the first play, so opening the tab costs nothing.
-// Clips play one at a time; with "Play the next clip automatically" ticked, each NHL clip runs
-// on into the next one in the list (with the up-next card), the way "Watch all goals" did.
-// Sens TV videos (the club's YouTube) play in YouTube's player in the same spot; it says when
-// a video ends, so auto-play carries on through them, with our own up-next card between
-// players. TSN and Sportsnet videos play in their own embedded players (ads and all); those
-// don't tell us when a video ends, so auto-play skips over them. (TSN's player library can't
-// run in our page instead: Bell's video licences only work on its own sites.)
+// One video at a time: tap an item, or step with the back and forward buttons. There's no
+// auto-play: TSN's and Sportsnet's players don't say when a video ends, so it could never
+// work across every source. NHL clips play in the NHL's player, Sens TV in YouTube's, TSN and
+// Sportsnet in their own embedded players (ads and all), all in the same spot.
 
 type Section = "full" | "senstv" | "tsn" | "goals" | "highlights" | "sportsnet";
 // NHL clips are keyed by their positive clip id; TSN and Sportsnet videos by their negated id;
@@ -98,7 +93,6 @@ export function VideoTab({
   const [currentId, setCurrentId] = useState<number | null>(null);
   // The NHL player, once started (`n` remounts it, e.g. after watching a TSN video).
   const [playing, setPlaying] = useState<{ start: number; n: number } | null>(null);
-  const [autoNext, setAutoNext] = useState(true);
   const [failed, setFailed] = useState(false);
   const [handled, setHandled] = useState(0);
   const [wanted, setWanted] = useState<number | null>(null);
@@ -202,22 +196,12 @@ export function VideoTab({
   const suggested = entries.find((e) => e.section === "full") ?? [...entries].reverse().find((e) => e.section === "goals") ?? entries[0] ?? null;
   const shown = current ?? suggested;
   // The NHL player steps through NHL clips only.
-  const isNhl = (e: Entry) => !e.embedUrl && !e.ytId && !e.external;
   const nhl = useMemo(() => entries.filter((e) => !e.embedUrl && !e.ytId && !e.external), [entries]);
-  const nhlPos = current && isNhl(current) ? nhl.findIndex((e) => e.clipId === current.clipId) : -1;
-  // With the box ticked, the next playable video in the list plays next: NHL clips and Sens TV
-  // (TSN and Sportsnet are skipped; their players don't say when a video ends).
-  const autoTarget = pos >= 0 ? entries.slice(pos + 1).find((e) => !e.embedUrl && !e.external) : undefined;
-  const next = autoTarget;
-  // NHL to NHL: the NHL player moves on itself (with its up-next card).
-  const advances = autoNext && nhlPos >= 0 && !!autoTarget && nhl[nhlPos + 1]?.clipId === autoTarget.clipId;
   const tsnNow = current?.embedUrl ? current : null; // TSN or Sportsnet frame
   const ytNow = current?.ytId ? current : null;
   const otherPlayer = !!(tsnNow || ytNow);
   // A Sens TV run (`n` restarts YouTube's player, even for the same video).
   const [ytRun, setYtRun] = useState(0);
-  // Between players (NHL <-> Sens TV), our own up-next card counts down before the next video.
-  const [handoff, setHandoff] = useState<{ clipId: number; left: number } | null>(null);
 
   const play = (clipId: number) => {
     const e = entries.find((x) => x.clipId === clipId);
@@ -227,7 +211,6 @@ export function VideoTab({
       return;
     }
     setFailed(false);
-    setHandoff(null);
     setCurrentId(clipId);
     if (e.ytId) {
       setYtRun((n) => n + 1);
@@ -239,29 +222,6 @@ export function VideoTab({
     if (playing && player.current && !otherPlayer) player.current.goTo(i);
     else setPlaying({ start: i, n: (playing?.n ?? 0) + 1 });
   };
-
-  // Latest values for the player callbacks, which outlive renders.
-  const latest = useRef({ autoNext, autoTarget, advances, play });
-  useEffect(() => {
-    latest.current = { autoNext, autoTarget, advances, play };
-  });
-  // A video finished without the NHL player moving on: hand over to the next one, if any.
-  const handOver = useCallback(() => {
-    const { autoNext: on, autoTarget: t } = latest.current;
-    if (on && t) {
-      playSlapshot();
-      setHandoff({ clipId: t.clipId, left: 5 });
-    }
-  }, []);
-  useEffect(() => {
-    if (!handoff) return;
-    const id = setTimeout(() => {
-      if (handoff.left <= 1) latest.current.play(handoff.clipId);
-      else setHandoff({ ...handoff, left: handoff.left - 1 });
-    }, 1000);
-    return () => clearTimeout(id);
-  }, [handoff]);
-  const handoffEntry = handoff ? entries.find((e) => e.clipId === handoff.clipId) : undefined;
 
   // Alerts ask for a clip by id (state adjusted during render, not in an effect).
   if (pending && pending.n !== handled) {
@@ -289,14 +249,9 @@ export function VideoTab({
     setCurrentId(items[i]?.clipId ?? null);
     setFailed(false);
   }, [items]);
-  // The NHL player is done: either its clip ended with no NHL clip next (hand over), or the
-  // viewer pressed "Stop here" on its own up-next card (stop).
-  const onDone = useCallback(() => {
-    if (!latest.current.advances) handOver();
-  }, [handOver]);
+  const noop = useCallback(() => {}, []);
   const onError = useCallback(() => setFailed(true), []);
 
-  const firstGoal = entries.find((e) => e.section === "goals");
 
   if (entries.length === 0 && waiting.length === 0) {
     return (
@@ -315,7 +270,7 @@ export function VideoTab({
       <div className="sticky top-[env(safe-area-inset-top)] z-10 -mx-4 bg-ground pb-3 md:mx-0 lg:top-4">
         <div className={`relative w-full overflow-hidden bg-black md:rounded-2xl md:border md:border-line ${playing && !otherPlayer ? "" : "aspect-video"}`}>
           {ytNow?.ytId ? (
-            <YouTubePlayer key={`${ytNow.ytId}-${ytRun}`} videoId={ytNow.ytId} onEnded={handOver} onError={onError} />
+            <YouTubePlayer key={`${ytNow.ytId}-${ytRun}`} videoId={ytNow.ytId} onEnded={noop} onError={onError} />
           ) : tsnNow ? (
             <iframe
               key={tsnNow.clipId}
@@ -333,9 +288,9 @@ export function VideoTab({
                 ref={player}
                 items={items}
                 start={playing.start}
-                autoAdvance={advances}
+                autoAdvance={false}
                 onIndex={onIndex}
-                onDone={onDone}
+                onDone={noop}
                 onError={onError}
               />
             </div>
@@ -356,31 +311,6 @@ export function VideoTab({
                 </span>
               </button>
             )
-          )}
-          {handoffEntry && handoff && (
-            // Our own up-next card when moving between players.
-            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-black/85 p-4 text-center text-white">
-              <span aria-hidden="true" className="h-0.5 w-12 rounded-full bg-gold" />
-              <span className="text-xs font-bold uppercase tracking-widest text-gold-text">Up next in {handoff.left}</span>
-              <span className="line-clamp-2 max-w-md font-display text-xl font-extrabold leading-tight tracking-wide md:text-2xl">
-                {handoffEntry.team ? `${handoffEntry.team} · ` : ""}
-                {handoffEntry.title}
-              </span>
-              <span className="text-sm text-white/70">{handoffEntry.sub}</span>
-              <div className="mt-1 flex gap-2">
-                <button
-                  type="button"
-                  onPointerDown={handoffEntry.ytId ? preloadYouTube : preloadClipPlayer}
-                  onClick={() => play(handoffEntry.clipId)}
-                  className="min-h-11 rounded-xl bg-sens px-4 text-sm font-bold text-white"
-                >
-                  Play now
-                </button>
-                <button type="button" onClick={() => setHandoff(null)} className="min-h-11 rounded-xl border border-white/40 px-4 text-sm font-semibold text-white">
-                  Stop here
-                </button>
-              </div>
-            </div>
           )}
         </div>
         {shown && (
@@ -417,18 +347,6 @@ export function VideoTab({
             </div>
           </div>
         )}
-        <label className="flex min-h-9 items-center gap-2.5 px-4 pt-1 text-xs text-muted md:px-0">
-          <input type="checkbox" checked={autoNext} onChange={(e) => setAutoNext(e.target.checked)} className="size-4 accent-[#c52032]" />
-          <span>
-            Play the next clip automatically
-            {advances && next ? (
-              <>
-                {" · up next: "}
-                <b className="font-semibold text-ink">{next.title}</b>
-              </>
-            ) : null}
-          </span>
-        </label>
       </div>
 
       {/* Playlist */}
@@ -448,20 +366,6 @@ export function VideoTab({
             <section key={sec} className="pt-2">
               <div className="flex items-center justify-between gap-2 px-1.5 pb-1.5">
                 <h3 className="text-[11px] font-bold uppercase tracking-widest text-muted">{SECTION_TITLES[sec]}</h3>
-                {sec === "goals" && firstGoal && list.length > 1 && (
-                  <button
-                    type="button"
-                    onPointerDown={preloadClipPlayer}
-                    onClick={() => {
-                      unlockSfx();
-                      setAutoNext(true);
-                      play(firstGoal.clipId);
-                    }}
-                    className="flex min-h-9 items-center gap-1.5 rounded-lg bg-sens px-3 text-xs font-bold text-white"
-                  >
-                    <Play size={12} /> Play all · about {Math.max(1, Math.round((list.length * 40) / 60))} min
-                  </button>
-                )}
               </div>
               <div className="grid gap-1 md:grid-cols-2 lg:grid-cols-1">
                 {list.map(({ e }) => {
@@ -524,14 +428,6 @@ export function VideoTab({
             </div>
           );
         })}
-        {autoNext && playing && (
-          <p className="px-1.5 pt-3 text-[10px] text-muted">
-            Slapshot sound between clips: &ldquo;Hockey Puck Slap&rdquo; by jameb32, SoundBible.com,{" "}
-            <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noopener noreferrer" className="underline">
-              CC BY 3.0
-            </a>
-          </p>
-        )}
       </aside>
     </div>
   );
