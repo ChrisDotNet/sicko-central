@@ -40,6 +40,9 @@ the next game better to watch?
 **Just for fun**
 13. "Leafs Suck": enjoying the Toronto Maple Leafs' misfortunes (shape to be decided)
 
+**Business**
+14. Monetizing the app, starting with affiliate links; no bolted-on ad banners
+
 ## Items
 
 ### Animate the Game ("Live") tab during a game — **Done** (2026-11-13)
@@ -155,3 +158,42 @@ Options, smallest first:
 - **Schadenfreude facts:** a fourth "Did you know" on Sens game days when the Leafs lost the
   night before ("The Leafs have lost 4 straight").
 - **Home page strip:** "Leafs: L, 2–5 vs BOS last night" in small type, only after a loss.
+
+### Monetizing — Value: covers costs, maybe more · Effort: S (affiliate links) to M (supporters)
+Chris's direction: affiliate links first; no typical ads bolted to the bottom of the screen.
+Anything here needs to fit inside the app's own design and never get in the way on game night.
+
+**Before any of it (the prerequisites)**
+- **Hosting:** Vercel's free Hobby plan doesn't allow commercial use, and affiliate income
+  counts. Pro is about $28 CAD a month, so income has to clear that first.
+- **NHL and team marks:** the app already uses tricodes and team colours, no logos; keep it
+  that way, and don't sell anything carrying NHL or Senators marks. Making money from a
+  site built on the NHL's unofficial data feeds and on others' video embeds raises the
+  stakes if a rights holder objects; worth a read of each source's terms before launch.
+- **Paperwork:** affiliate income is business income (HST once over the small-supplier
+  threshold); run it through Digiteam or keep it separate, Chris's call.
+
+**Affiliate links (fit the existing menus)**
+- **Gametime:** already in the Tickets menu; swap in an affiliate link once approved (Impact
+  or FlexOffers; commissions reported between about 2.4% and 7%; approval wants real traffic).
+- **Ticketmaster:** has an affiliate programme; same Tickets menu.
+- **Fanatics / NHL Shop:** jerseys and gear, affiliate through the usual networks; a small
+  "Get the jersey" link on player pages (the player's own jersey) fits naturally.
+- **Streaming:** if TSN+ or Sportsnet+ offer referral links, the Streaming menu is the spot.
+- **Sportsbooks: not recommended.** Ontario's regulated betting affiliates pay the most, but
+  they need age-gating and registration and change what kind of site this is.
+
+**Instead of ads**
+- **One sponsor per feature, in the app's own style:** "Intermission card presented by
+  [an Ottawa sports bar]": a single line and a small card, sold directly to a local business
+  that wants Sens fans on game night. No ad networks, no tracking.
+- **Watch-party listings:** bars near Canadian Tire Centre or downtown pay a small amount to
+  be listed as a game-night spot, shown on the Game tab before puck drop.
+- **Sicko Supporters:** a voluntary tip (Stripe or Buy Me a Coffee) with perks that don't
+  lock anything core: alternate app icons, a supporter badge, early access to new features.
+- **A game-day email or recap newsletter** with one sponsor slot, if the audience grows.
+- **Sicko Central's own merch:** print-on-demand gear with the app's name and siren mark
+  (never NHL or Senators marks).
+
+**Suggested order:** affiliate links in the menus that already exist (no design change),
+then Supporters, then one local sponsor once there's an audience to show them.
