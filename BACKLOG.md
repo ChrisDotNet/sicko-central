@@ -2,7 +2,7 @@
 
 Chris's list, with how each could be done, what it's worth and what stands in the way.
 Value and effort are relative to each other (S = an afternoon-sized change, M = a few
-sessions, L = a project of its own). Updated 2026-11-13. Value is judged against the mission.
+sessions, L = a project of its own). Updated 2026-11-14. Value is judged against the mission.
 
 ## The mission (the filter for everything below)
 
@@ -30,6 +30,8 @@ the next game better to watch?
 6. ~~Player birthdays~~ Done 2026-11-13 (game-day facts, home banner, player page)
 7. ~~Ticket links~~ Done 2026-11-13 (Gametime + Ticketmaster on the Next game card, every game). Gametime affiliate links when on a paid plan
 8. ~~All Sens news, not just game days~~ Done 2026-11-13 (home page section, /news page, News in desktop header)
+
+8b. Stats tab with a Sens lens; the "tale of the tape" for tonight's opponent is the part that serves the mission
 
 **Tier 3: reference (good for the off-season, not the mission)**
 9. Full career on the player page
@@ -99,6 +101,52 @@ The NHL.com, TSN and Sportsnet feeds are already read and filtered for the Sens;
 stories near a game are kept. Add a News view (home page section plus its own page) with
 every Sens story, saved the same way so it outlasts the feeds. Same headline-and-summary
 rule: full articles open on the outlet's site.
+
+### Stats tab, through a Sens lens — Value: medium (high for the matchup piece) · Effort: M
+Not another league-wide stats table (NHL.com and every app already have those). Every
+number answers "how are the Sens doing, and compared to whom?": Ottawa's figure, its rank of
+32 and the league average, with top-10 and bottom-10 marked. All of it comes from the NHL's
+own free APIs, checked 2026-11-14 with this season's data; no new keys or accounts. Cache
+hourly, more often on game nights.
+
+**Where it lives:** the bottom menu is full at five, so a Standings | Stats switch on the
+Standings page, and "Stats" in the desktop header.
+
+**Proposed sections:**
+1. **Tale of the tape (the mission piece):** the Sens against tonight's opponent, side by
+   side: PP%, PK%, goals for and against per game, shots, faceoffs, 5-on-5 shot share, last 10,
+   and each team's rank of 32. Shown pre-game on the Game page and on the Next game card's
+   game day, as well as on the Stats tab. (`api.nhle.com/stats/rest/en/team/summary`,
+   `realtime`, `percentages`)
+2. **Where the Sens rank:** a grid of rank tiles (PP, PK, scoring, keeping it out, shots,
+   faceoffs, 5-on-5 shot share, PDO). Answers "is the power play actually bad?" in one look.
+3. **How games go:** record when leading or trailing after one and after two (blown leads,
+   comebacks), goals for and against by period (is the third period a problem?), one-goal
+   games, OT and shootout record, record when outshooting or outshot, home and road.
+   (`leadingtrailing`, `goalsbyperiod`, `outshootoutshotby` endpoints, plus standings)
+4. **Playoff race:** points pace over 82, gap to third in the Atlantic and to the last wild
+   card, games in hand, and the points pace the current eighth-place team is on. A small line
+   for the Leafs' points too, for morale.
+5. **Sens leaders, in league context:** each leader with their NHL rank ("Stützle, 24 points,
+   18th in the NHL"), rookies against the rookie class, and milestones coming up (some of this
+   already feeds "Did you know"). (`skater-stats-leaders`, `club-stats`)
+6. **NHL EDGE tracking:** puck- and player-tracking numbers with league ranks: top skating
+   speed, hardest shot, offensive-zone time (the Sens rank 3rd today), and where their shots
+   come from against the league (a rink map: crease shots rank 3rd). Player versions give
+   percentiles: fastest Sen, hardest shot, most distance skated. (`v1/edge/team-detail/9/…`,
+   `v1/edge/skater-detail/<id>/…`; both checked)
+7. **Goalies:** Ullmark and Ersson side by side: save percentage, goals against, starts, record.
+   EDGE has a goalie view too (save percentage by shot location); not yet checked.
+8. **Trends:** last-10 rolling goals for and against, and power-play form, as small charts.
+   Game-by-game numbers come from the same stats API; to confirm before building.
+
+**Left out on purpose:** expected goals and goals saved above expected. The NHL doesn't publish
+them; MoneyPuck and Natural Stat Trick do, but using their data would need their permission.
+Line combinations from shift data: only reliable after the game, so it suits the player page
+more than a stats tab.
+
+**Suggested build:** the tale of the tape and the rank tiles first (S–M; same few endpoints,
+and they make the next game better to watch), the rest after.
 
 ### Player career drill-down — Value: high · Effort: S (NHL data) / M (with Elite Prospects)
 - **NHL API (free, already used):** the player feed includes every league a player has played
