@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { LiveGame } from "@/lib/game";
 import type { RivalGame } from "@/lib/rivals";
 import type { RadioEpisode } from "@/lib/radio";
-import { LiveRadioBar } from "../radio/LiveRadioBar";
+import { setRadioOffer } from "@/lib/radio-store";
 import { periodLabel } from "@/lib/format";
 import { Section } from "../ui";
 import { GameSections } from "./GameSections";
@@ -300,6 +300,21 @@ export function LiveCompanion({
     return () => clearInterval(id);
   }, [replay]);
 
+  // Offer the TSN 1200 bar (it lives in the root layout) while the game is on.
+  const g0 = data?.game;
+  const offer =
+    !g0 || replay || !(g0.isPre || g0.isLive || (g0.isFinal && !(media?.radio.length ? media.radio : (data?.radio ?? [])).some((e) => e.kind === "postgame")))
+      ? null
+      : g0.isPre
+        ? "Pre-game coverage before puck drop"
+        : g0.isLive
+          ? "The radio call, live"
+          : "Post-game show";
+  useEffect(() => {
+    setRadioOffer(offer);
+  }, [offer]);
+  useEffect(() => () => setRadioOffer(null), []);
+
   // Media tab badge: news, video and audio not seen yet on this phone.
   const unseen = useUnseen(gameId, replay ? [] : mediaKeys(media, data?.game.goals ?? []), tab === "media");
 
@@ -316,7 +331,6 @@ export function LiveCompanion({
   const radio = !replay && media?.radio.length ? media.radio : (data.radio ?? []);
   const hasPostgame = radio.some((e) => e.kind === "postgame");
   const showLiveBar = !replay && (game.isPre || game.isLive || (game.isFinal && !hasPostgame));
-  const barLabel = game.isPre ? "Pre-game coverage before puck drop" : game.isLive ? "The radio call, live" : "Post-game show";
   const ago = updatedAt && now ? Math.max(0, Math.round((now - updatedAt) / 1000)) : null;
 
   return (
@@ -454,12 +468,7 @@ export function LiveCompanion({
         />
       )}
 
-      {showLiveBar && (
-        <>
-          <div className="h-20 lg:hidden" aria-hidden="true" />
-          <LiveRadioBar label={barLabel} />
-        </>
-      )}
+
     </>
   );
 }

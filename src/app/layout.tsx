@@ -3,6 +3,7 @@ import { Barlow_Condensed, Inter } from "next/font/google";
 import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
 import { NotificationProvider } from "@/components/notify/NotificationProvider";
+import { LiveRadioBar } from "@/components/radio/LiveRadioBar";
 import "./globals.css";
 
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
@@ -36,7 +37,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <NotificationProvider>
           <div className="flex min-h-dvh flex-col">
             <Header />
-            <main className="flex-1 pb-28 lg:pb-12">{children}</main>
+            <main className="flex-1 pb-28 lg:pb-12">
+              {children}
+              <LiveRadioBar />
+            </main>
             <BottomNav />
           </div>
         </NotificationProvider>
