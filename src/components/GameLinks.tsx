@@ -6,12 +6,26 @@ import { LinkMenu, TicketIcon, TvIcon } from "./LinkMenu";
 // game's own page where we found one) and Tickets (Gametime, then Ticketmaster).
 // Used on the home page's next-game card and the schedule.
 
-export function StreamingMenu({ networks, streams, size = "md" }: { networks: string[]; streams?: Record<string, string>; size?: "md" | "sm" }) {
+export function StreamingMenu({
+  networks,
+  streams,
+  size = "md",
+  align = "left",
+  iconOnlyBelowLg = false,
+}: {
+  networks: string[];
+  streams?: Record<string, string>;
+  size?: "md" | "sm";
+  align?: "left" | "right";
+  iconOnlyBelowLg?: boolean;
+}) {
   return (
     <LinkMenu
       label="Streaming"
       icon={<TvIcon />}
       size={size}
+      align={align}
+      iconOnlyBelowLg={iconOnlyBelowLg}
       items={networks.map((n) => {
         const w = watchLink(n);
         return { label: n, note: w?.service ?? "No link", href: streams?.[n] ?? w?.href ?? null };
@@ -20,7 +34,17 @@ export function StreamingMenu({ networks, streams, size = "md" }: { networks: st
   );
 }
 
-export function TicketsMenu({ tickets, size = "md", align = "right" }: { tickets: TicketLinks; size?: "md" | "sm"; align?: "left" | "right" }) {
+export function TicketsMenu({
+  tickets,
+  size = "md",
+  align = "right",
+  iconOnlyBelowLg = false,
+}: {
+  tickets: TicketLinks;
+  size?: "md" | "sm";
+  align?: "left" | "right";
+  iconOnlyBelowLg?: boolean;
+}) {
   return (
     <LinkMenu
       label="Tickets"
@@ -28,6 +52,7 @@ export function TicketsMenu({ tickets, size = "md", align = "right" }: { tickets
       align={align}
       tone="gold"
       size={size}
+      iconOnlyBelowLg={iconOnlyBelowLg}
       items={[
         { label: "Gametime", note: "Resale", href: tickets.gametime },
         ...(tickets.ticketmaster ? [{ label: "Ticketmaster", note: "Official", href: tickets.ticketmaster }] : []),

@@ -58,9 +58,11 @@ export function ScheduleCalendar({ games, visible }: { games: GameSummary[]; vis
                     <span className="text-sm font-bold tabular">{g.state === "upcoming" ? formatTime(g.startTimeUTC) : scoreLine(g)}</span>
                   </span>
                   {g.state === "upcoming" && (
+                    // Tablets: icon-only buttons; desktop: labelled. Stacked either way. Menus in
+                    // the right half of the week open leftward so they stay on screen.
                     <span className="flex flex-col items-start gap-1">
-                      {g.broadcasts.length > 0 && <StreamingMenu networks={g.broadcasts} streams={g.streams} size="sm" />}
-                      {g.tickets && <TicketsMenu tickets={g.tickets} size="sm" align="left" />}
+                      {g.broadcasts.length > 0 && <StreamingMenu networks={g.broadcasts} streams={g.streams} size="sm" align={i >= 4 ? "right" : "left"} iconOnlyBelowLg />}
+                      {g.tickets && <TicketsMenu tickets={g.tickets} size="sm" align={i >= 4 ? "right" : "left"} iconOnlyBelowLg />}
                     </span>
                   )}
                 </>

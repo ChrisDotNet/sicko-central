@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Notifications" };
 
 export default function NotificationsPage() {
   return (
-    <Page width="narrow">
+    <Page width="wide">
       <NotificationSettings />
     </Page>
   );

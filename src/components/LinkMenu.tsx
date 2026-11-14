@@ -14,6 +14,7 @@ export function LinkMenu({
   align = "left",
   tone = "plain",
   size = "md",
+  iconOnlyBelowLg = false,
 }: {
   label: string;
   icon: ReactNode;
@@ -21,6 +22,8 @@ export function LinkMenu({
   align?: "left" | "right";
   tone?: "plain" | "gold";
   size?: "md" | "sm";
+  // Narrow spots (the tablet calendar): just the icon until desktop widths.
+  iconOnlyBelowLg?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   // Opens upward when there isn't room below (near the bottom bar on phones).
@@ -69,7 +72,7 @@ export function LinkMenu({
         className={`inline-flex items-center gap-1.5 rounded-lg border font-bold ${size === "sm" ? "min-h-8 px-2.5 text-xs" : "min-h-9 px-3 text-sm"} ${colours}`}
       >
         {icon}
-        {label}
+        {iconOnlyBelowLg ? <span className="sr-only lg:not-sr-only">{label}</span> : label}
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={open ? "rotate-180" : ""}>
           <path d="M6 9l6 6 6-6" />
         </svg>

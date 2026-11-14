@@ -78,6 +78,7 @@ export function NotificationSettings() {
   const row = "flex min-h-[52px] items-center gap-3 border-b border-line px-3.5 py-2.5 last:border-0";
   return (
     <div className="flex flex-col gap-1 px-4 pt-5 pb-8">
+      {/* Desktop: game-night alerts on the left; content, off-day, fun, quiet hours and sounds on the right. */}
       <h1 className="font-display text-3xl font-extrabold uppercase tracking-wider">Notifications</h1>
       <p className="text-sm text-muted">On this phone. Choose what Sicko Central sends you, even when it&apos;s closed.</p>
 
@@ -123,8 +124,10 @@ export function NotificationSettings() {
         </div>
       )}
 
+      <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-8">
+      <div>
       {prefs &&
-        GROUPS.map((g) => (
+        GROUPS.filter((g) => g.key === "game").map((g) => (
           <section key={g.key} className="pt-4">
             <h2 className="px-1 pb-2 font-display text-xl font-bold uppercase tracking-wider">{g.title}</h2>
             <div className={`overflow-hidden rounded-2xl border border-line bg-surface ${enabled ? "" : "opacity-60"}`}>
@@ -152,6 +155,25 @@ export function NotificationSettings() {
           </section>
         ))}
 
+      </div>
+      <div>
+      {prefs &&
+        GROUPS.filter((g) => g.key !== "game").map((g) => (
+          <section key={g.key} className="pt-4">
+            <h2 className="px-1 pb-2 font-display text-xl font-bold uppercase tracking-wider">{g.title}</h2>
+            <div className={`overflow-hidden rounded-2xl border border-line bg-surface ${enabled ? "" : "opacity-60"}`}>
+              {CATEGORIES.filter((c) => c.group === g.key).map((c) => (
+                <div key={c.key} className={row}>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[15px] font-semibold">{c.title}</div>
+                    {c.sub && <div className="text-xs text-muted">{c.sub}</div>}
+                  </div>
+                  <Switch on={prefs.on.includes(c.key)} label={c.title} onChange={(v) => toggle(c.key, v)} />
+                </div>
+              ))}
+            </div>
+          </section>
+        ))}
       {prefs && (
         <section className="pt-4">
           <h2 className="px-1 pb-2 font-display text-xl font-bold uppercase tracking-wider">Quiet hours</h2>
@@ -179,6 +201,8 @@ export function NotificationSettings() {
           </div>
         </div>
       </section>
+      </div>
+      </div>
     </div>
   );
 }
