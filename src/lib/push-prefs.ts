@@ -19,7 +19,7 @@ export const CATEGORIES = [
   { key: "bday", group: "off", title: "Player birthdays", sub: "Morning of", on: false },
   { key: "digest", group: "off", title: "Morning news digest", sub: "New Sens stories since yesterday, once a day", on: false },
   // Just for fun
-  { key: "leafs", group: "fun", title: "Leafs lose", sub: "At the final whistle of every Toronto Maple Leafs loss, any night. Late ones come with breakfast if quiet hours are on.", on: false },
+  { key: "leafs", group: "fun", title: "Leafs lose", sub: "At the final whistle of every Toronto Maple Leafs loss, any night, with sound. Late ones come with breakfast if quiet hours are on.", on: true },
 ] as const;
 
 export type Category = (typeof CATEGORIES)[number]["key"];
@@ -53,7 +53,7 @@ export function cleanPrefs(p: unknown): Prefs {
 
 // These arrive without a sound (they still show on the lock screen). Goals, the final, the
 // pre-game reminder and the starting goalie make a sound.
-export const SILENT_CATEGORIES = new Set<Category>(["period", "replay", "recap", "pressers", "radio", "news", "bday", "digest", "leafs"]);
+export const SILENT_CATEGORIES = new Set<Category>(["period", "replay", "recap", "pressers", "radio", "news", "bday", "digest"]);
 // Goal alerts get their own buzz on Android (iPhone ignores vibration patterns).
 export const GOAL_CATEGORIES = new Set<Category>(["sens", "against", "fav"]);
 
