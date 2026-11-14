@@ -12,7 +12,7 @@ export function GoalLight({ size = 30 }: { size?: number }) {
       </g>
       <path d="M16 46V35a16 16 0 0 1 32 0v11z" fill="#E23A4C" />
       <path d="M23 34a9 9 0 0 1 9-9" fill="none" stroke="#FFD0D5" strokeWidth="3" strokeLinecap="round" />
-      <rect x="11" y="46" width="42" height="9" rx="3" fill="#F4F4F5" />
+      <rect x="11" y="46" width="42" height="9" rx="3" fill="var(--ink)" />
     </svg>
   );
 }

@@ -118,7 +118,7 @@ export function IntermissionCard({ game, radio }: { game: LiveGame; radio: boole
           {inPeriod.map((g) => {
             const idx = ready.indexOf(g);
             return (
-              <div key={g.id} className={`flex items-center gap-2.5 rounded-xl bg-ground px-3 py-2 ${fav(g) ? "shadow-[inset_3px_0_0_#c2912c]" : ""}`}>
+              <div key={g.id} className={`flex items-center gap-2.5 rounded-xl bg-ground px-3 py-2 ${fav(g) ? "shadow-[inset_3px_0_0_var(--gold)]" : ""}`}>
                 <span className={`rounded px-1.5 py-px text-[11px] font-bold ${g.team === "OTT" ? "bg-gold text-ground" : "bg-line-strong text-ink"}`}>{g.teamAbbrev}</span>
                 <span className="flex min-w-0 flex-1 flex-col">
                   <span className="truncate text-sm font-bold">
@@ -190,7 +190,7 @@ export function IntermissionCard({ game, radio }: { game: LiveGame; radio: boole
         <button
           type="button"
           onClick={openLiveRadio}
-          className="mt-4 flex min-h-11 w-full items-center gap-3 rounded-xl border border-[#5c1a22] bg-[#1f0e11] px-3 text-left"
+          className="mt-4 flex min-h-11 w-full items-center gap-3 rounded-xl border border-sens-line bg-sens-ground px-3 text-left"
         >
           <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-sens-bright text-white">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5l11 7-11 7z" /></svg>

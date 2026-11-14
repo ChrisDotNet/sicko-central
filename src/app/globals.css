@@ -1,35 +1,140 @@
 @import "tailwindcss";
 
-/* Sicko Central palette: Senators red, black and gold on a dark ground. */
+/* Sicko Central palette: Senators red, black and gold. Dark by default; light when the
+   device asks for it (Settings › Appearance: System) or when chosen outright. The theme is a
+   data-theme attribute on <html>, set before first paint by a small script in the layout. */
+:root {
+  --ground: #0d0d0e;
+  --surface: #17171a;
+  --surface-2: #202024;
+  --sunk: #131316;
+  --chrome: #111113;
+  --line: #26262b;
+  --line-strong: #3f3f46;
+  --ink: #f4f4f5;
+  --ink-2: #d4d4d8;
+  --muted: #a1a1aa;
+  --faint: #71717a;
+  --sens: #c52032;
+  --sens-bright: #e23a4c;
+  --sens-text: #f05a69;
+  --sens-ground: #1f0e11;
+  --sens-row: #2a0f14;
+  --sens-line: #5c1a22;
+  --gold: #c2912c;
+  --gold-bright: #d9ae45;
+  --gold-text: #e2b64e;
+  --gold-ground: #1f1a0e;
+  --gold-line: #5c4513;
+  --good-ground: #12324a;
+  --good-text: #7cc4f5;
+  --bad-ground: #4a2510;
+  --bad-text: #f7a15e;
+  --win-ground: #1e3a2a;
+  --win-text: #6ee7a1;
+  --loss-ground: #3a1e22;
+  --loss-text: #fca5ae;
+  --otl-ground: #2e2a1a;
+  --otl-text: #e2c46e;
+  --ok-ground: rgb(16 185 129 / 0.15);
+  --ok-line: rgb(16 185 129 / 0.4);
+  --ok-text: #6ee7b7;
+  --rink: #1c2026;
+  --rink-line: #3f3f46;
+  color-scheme: dark;
+}
+
+/* Light: the same reds and golds, deepened so they read on white. */
+:root[data-theme="light"] {
+  --ground: #f2f2f4;
+  --surface: #ffffff;
+  --surface-2: #e9e9ed;
+  --sunk: #f6f6f8;
+  --chrome: #ffffff;
+  --line: #e2e2e7;
+  --line-strong: #c6c6cd;
+  --ink: #141416;
+  --ink-2: #3a3a41;
+  --muted: #5d5d66;
+  --faint: #9a9aa3;
+  --sens: #c52032;
+  --sens-bright: #d42638;
+  --sens-text: #b3172a;
+  --sens-ground: #fdeef0;
+  --sens-row: #fbe4e7;
+  --sens-line: #f0b4bc;
+  --gold: #a87a1c;
+  --gold-bright: #b8891f;
+  --gold-text: #845f0c;
+  --gold-ground: #fdf6e3;
+  --gold-line: #e6cf95;
+  --good-ground: #e1effa;
+  --good-text: #0b5a8f;
+  --bad-ground: #fdebdc;
+  --bad-text: #9c440a;
+  --win-ground: #dcf5e6;
+  --win-text: #11683a;
+  --loss-ground: #fde4e7;
+  --loss-text: #a3172a;
+  --otl-ground: #faf1d6;
+  --otl-text: #7a5a08;
+  --ok-ground: #dcf5e9;
+  --ok-line: #8fd9b6;
+  --ok-text: #0f6b45;
+  --rink: #eef2f6;
+  --rink-line: #b9c2cc;
+  color-scheme: light;
+}
+
 @theme inline {
-  --color-ground: #0d0d0e;
-  --color-surface: #17171a;
-  --color-surface-2: #202024;
-  --color-line: #26262b;
-  --color-line-strong: #3f3f46;
-  --color-ink: #f4f4f5;
-  --color-ink-2: #d4d4d8;
-  --color-muted: #a1a1aa;
-  --color-sens: #c52032;
-  --color-sens-bright: #e23a4c;
-  --color-sens-text: #f05a69;
-  --color-gold: #c2912c;
-  --color-gold-bright: #d9ae45;
-  --color-gold-text: #e2b64e;
-  --color-gold-ground: #1f1a0e;
-  --color-gold-line: #5c4513;
+  --color-ground: var(--ground);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-sunk: var(--sunk);
+  --color-chrome: var(--chrome);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-sens: var(--sens);
+  --color-sens-bright: var(--sens-bright);
+  --color-sens-text: var(--sens-text);
+  --color-sens-ground: var(--sens-ground);
+  --color-sens-row: var(--sens-row);
+  --color-sens-line: var(--sens-line);
+  --color-gold: var(--gold);
+  --color-gold-bright: var(--gold-bright);
+  --color-gold-text: var(--gold-text);
+  --color-gold-ground: var(--gold-ground);
+  --color-gold-line: var(--gold-line);
+  --color-good-ground: var(--good-ground);
+  --color-good-text: var(--good-text);
+  --color-bad-ground: var(--bad-ground);
+  --color-bad-text: var(--bad-text);
+  --color-win-ground: var(--win-ground);
+  --color-win-text: var(--win-text);
+  --color-loss-ground: var(--loss-ground);
+  --color-loss-text: var(--loss-text);
+  --color-otl-ground: var(--otl-ground);
+  --color-otl-text: var(--otl-text);
+  --color-ok-ground: var(--ok-ground);
+  --color-ok-line: var(--ok-line);
+  --color-ok-text: var(--ok-text);
+  --color-rink: var(--rink);
+  --color-rink-line: var(--rink-line);
   --font-sans: var(--font-inter), system-ui, sans-serif;
   --font-display: var(--font-barlow), var(--font-inter), sans-serif;
 }
 
 html {
-  background: #0d0d0e;
-  color-scheme: dark;
+  background: var(--ground);
 }
 
 body {
-  background: #0d0d0e;
-  color: #f4f4f5;
+  background: var(--ground);
+  color: var(--ink);
 }
 
 .tabular {

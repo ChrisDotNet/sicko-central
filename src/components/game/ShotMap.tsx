@@ -31,42 +31,42 @@ export function ShotMap({ shots, oppAbbrev, periods, initialPeriod = 0 }: { shot
       </div>
       <div className="rounded-2xl border border-line bg-surface p-3">
         <svg viewBox="0 0 200 85" width="100%" role="img" aria-label={`Shot locations: Ottawa ${ott.length} shots attacking right, ${oppAbbrev} ${opp.length} attacking left`} className="block">
-          <rect x="0.5" y="0.5" width="199" height="84" rx="28" fill="#1C2026" stroke="#3F3F46" strokeWidth="0.8" />
-          <polygon points="189,31 158,35 158,50 189,54" fill="#E23A4C" fillOpacity="0.12" stroke="#E23A4C" strokeOpacity="0.5" strokeWidth="0.4" strokeDasharray="1.5 1" />
-          <polygon points="11,31 42,35 42,50 11,54" fill="#FFFFFF" fillOpacity="0.04" stroke="#71717A" strokeOpacity="0.6" strokeWidth="0.4" strokeDasharray="1.5 1" />
-          <line x1="11" y1="4" x2="11" y2="81" stroke="#C52032" strokeWidth="0.5" strokeOpacity="0.8" />
-          <line x1="189" y1="4" x2="189" y2="81" stroke="#C52032" strokeWidth="0.5" strokeOpacity="0.8" />
+          <rect x="0.5" y="0.5" width="199" height="84" rx="28" fill="var(--rink)" stroke="var(--line-strong)" strokeWidth="0.8" />
+          <polygon points="189,31 158,35 158,50 189,54" fill="var(--sens-bright)" fillOpacity="0.12" stroke="var(--sens-bright)" strokeOpacity="0.5" strokeWidth="0.4" strokeDasharray="1.5 1" />
+          <polygon points="11,31 42,35 42,50 11,54" fill="var(--ink)" fillOpacity="0.04" stroke="var(--faint)" strokeOpacity="0.6" strokeWidth="0.4" strokeDasharray="1.5 1" />
+          <line x1="11" y1="4" x2="11" y2="81" stroke="var(--sens)" strokeWidth="0.5" strokeOpacity="0.8" />
+          <line x1="189" y1="4" x2="189" y2="81" stroke="var(--sens)" strokeWidth="0.5" strokeOpacity="0.8" />
           <line x1="75" y1="0.5" x2="75" y2="84.5" stroke="#4A6FA5" strokeWidth="1.2" />
           <line x1="125" y1="0.5" x2="125" y2="84.5" stroke="#4A6FA5" strokeWidth="1.2" />
-          <line x1="100" y1="0.5" x2="100" y2="84.5" stroke="#C52032" strokeWidth="1" strokeOpacity="0.7" />
+          <line x1="100" y1="0.5" x2="100" y2="84.5" stroke="var(--sens)" strokeWidth="1" strokeOpacity="0.7" />
           <circle cx="100" cy="42.5" r="15" fill="none" stroke="#4A6FA5" strokeWidth="0.5" />
           {[[31, 20.5], [31, 64.5], [169, 20.5], [169, 64.5]].map(([cx, cy]) => (
-            <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="15" fill="none" stroke="#C52032" strokeWidth="0.4" strokeOpacity="0.55" />
+            <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="15" fill="none" stroke="var(--sens)" strokeWidth="0.4" strokeOpacity="0.55" />
           ))}
           <path d="M189 38.5 h-4.5 a4 4 0 0 0 0 8 h4.5 z" fill="#4A6FA5" fillOpacity="0.35" />
           <path d="M11 38.5 h4.5 a4 4 0 0 1 0 8 h-4.5 z" fill="#4A6FA5" fillOpacity="0.35" />
-          <rect x="189" y="39.5" width="3.3" height="6" fill="none" stroke="#D4D4D8" strokeWidth="0.5" />
-          <rect x="7.7" y="39.5" width="3.3" height="6" fill="none" stroke="#D4D4D8" strokeWidth="0.5" />
+          <rect x="189" y="39.5" width="3.3" height="6" fill="none" stroke="var(--ink-2)" strokeWidth="0.5" />
+          <rect x="7.7" y="39.5" width="3.3" height="6" fill="none" stroke="var(--ink-2)" strokeWidth="0.5" />
           {opp.map((s, i) =>
             s.goal ? (
-              <circle key={`o${i}`} cx={s.x} cy={s.y} r="3.4" fill="#E4E4E7" stroke="#0D0D0E" strokeWidth="0.8" />
+              <circle key={`o${i}`} cx={s.x} cy={s.y} r="3.4" fill="var(--ink-2)" stroke="var(--ground)" strokeWidth="0.8" />
             ) : (
-              <circle key={`o${i}`} cx={s.x} cy={s.y} r="2.2" fill="none" stroke="#B4B4BC" strokeWidth="0.9" />
+              <circle key={`o${i}`} cx={s.x} cy={s.y} r="2.2" fill="none" stroke="var(--muted)" strokeWidth="0.9" />
             ),
           )}
           {ott.map((s, i) =>
             s.goal ? (
-              <circle key={`s${i}`} cx={s.x} cy={s.y} r="3.4" fill="#D9AE45" stroke="#0D0D0E" strokeWidth="0.8" />
+              <circle key={`s${i}`} cx={s.x} cy={s.y} r="3.4" fill="var(--gold-bright)" stroke="var(--ground)" strokeWidth="0.8" />
             ) : (
-              <circle key={`s${i}`} cx={s.x} cy={s.y} r="2.2" fill="#E23A4C" />
+              <circle key={`s${i}`} cx={s.x} cy={s.y} r="2.2" fill="var(--sens-bright)" />
             ),
           )}
         </svg>
         <div className="mt-2.5 flex flex-wrap gap-x-3.5 gap-y-1.5 text-xs text-muted">
           <span className="flex items-center gap-1.5"><span className="size-[9px] rounded-full bg-sens-bright" />OTT shot</span>
           <span className="flex items-center gap-1.5"><span className="size-3 rounded-full bg-gold-bright" />OTT goal</span>
-          <span className="flex items-center gap-1.5"><span className="size-[9px] rounded-full border-[1.5px] border-[#B4B4BC]" />{oppAbbrev} shot</span>
-          <span className="flex items-center gap-1.5"><span className="size-3 rounded-full bg-[#E4E4E7]" />{oppAbbrev} goal</span>
+          <span className="flex items-center gap-1.5"><span className="size-[9px] rounded-full border-[1.5px] border-muted" />{oppAbbrev} shot</span>
+          <span className="flex items-center gap-1.5"><span className="size-3 rounded-full bg-ink-2" />{oppAbbrev} goal</span>
           <span className="flex items-center gap-1.5"><span className="h-[9px] w-3.5 border border-dashed border-sens-bright" />High-danger zone</span>
         </div>
       </div>

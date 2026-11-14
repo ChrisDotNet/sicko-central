@@ -350,7 +350,7 @@ export function VideoTab({
       </div>
 
       {/* Playlist */}
-      <aside aria-label="Playlist" className="pt-2 lg:rounded-2xl lg:border lg:border-line lg:bg-[#121214] lg:p-2">
+      <aside aria-label="Playlist" className="pt-2 lg:rounded-2xl lg:border lg:border-line lg:bg-sunk lg:p-2">
         {note && <p className="mx-0 mb-3 rounded-xl border border-line bg-surface p-3 text-sm text-muted">{note}</p>}
         {PHASES.map((phase) => {
           const inPhase = entries.filter((e) => e.phase === phase);

@@ -4,6 +4,7 @@ import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
 import { NotificationProvider } from "@/components/notify/NotificationProvider";
 import { LiveRadioBar } from "@/components/radio/LiveRadioBar";
+import { THEME_SCRIPT } from "@/lib/theme-script";
 import "./globals.css";
 
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0d0d0e",
+  themeColor: "#0d0d0e", // updated to the light ground by THEME_SCRIPT in light mode
   width: "device-width",
   initialScale: 1,
   // Lets the page use the full screen on notched phones; the header and bottom bar pad
@@ -32,7 +33,10 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${inter.variable} ${barlow.variable} antialiased`}>
+    <html lang="en" className={`${inter.variable} ${barlow.variable} antialiased`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
       <body className="min-h-dvh font-sans">
         <NotificationProvider>
           <div className="flex min-h-dvh flex-col">

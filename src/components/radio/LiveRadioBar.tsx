@@ -73,7 +73,7 @@ export function LiveRadioBar() {
         className="fixed inset-x-0 bottom-[var(--nav-h)] z-10 mx-auto max-w-xl md:max-w-4xl lg:inset-x-auto lg:bottom-6 lg:right-[max(2.5rem,calc((100vw-1360px)/2+2.5rem))] lg:mx-0 lg:w-[320px] lg:max-w-none"
       >
         <div
-          className={`flex items-center gap-3 border-t border-line-strong bg-[#151518] px-3.5 py-1.5 transition-shadow lg:rounded-2xl lg:border ${
+          className={`flex items-center gap-3 border-t border-line-strong bg-sunk px-3.5 py-1.5 transition-shadow lg:rounded-2xl lg:border ${
             flash ? "shadow-[0_0_0_2px_var(--color-sens-bright)]" : ""
           }`}
         >

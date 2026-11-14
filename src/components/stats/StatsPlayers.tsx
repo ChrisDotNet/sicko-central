@@ -19,15 +19,15 @@ const AREA_BOX: Record<string, { x: number; y: number; w: number; h: number; lab
   "Center Point": { x: 120, y: 196, w: 100, h: 38, label: "Centre point" },
   "R Point": { x: 230, y: 196, w: 92, h: 38, label: "R point" },
 };
-const FILL = { top: ["#12324A", "#7CC4F5"], mid: ["#26262B", "#C9C9CF"], bottom: ["#4A2510", "#F7A15E"] } as const;
+const FILL = { top: ["var(--good-ground)", "var(--good-text)"], mid: ["var(--line)", "var(--ink-2)"], bottom: ["var(--bad-ground)", "var(--bad-text)"] } as const;
 const bandOf = (r: number) => (r <= 10 ? "top" : r > 22 ? "bottom" : "mid");
 
 function ShotMapAreas({ areas }: { areas: ShotArea[] }) {
   return (
     <svg viewBox="0 0 340 244" className="h-auto w-full" role="img" aria-label="Where the Sens shoot from, ranked against the league">
-      <rect x="2" y="2" width="336" height="240" rx="40" fill="#131316" stroke="#3F3F46" />
-      <line x1="2" y1="30" x2="338" y2="30" stroke="#C52032" strokeWidth="2" />
-      <rect x="152" y="32" width="36" height="10" rx="2" fill="none" stroke="#A1A1AA" />
+      <rect x="2" y="2" width="336" height="240" rx="40" fill="var(--sunk)" stroke="var(--line-strong)" />
+      <line x1="2" y1="30" x2="338" y2="30" stroke="var(--sens)" strokeWidth="2" />
+      <rect x="152" y="32" width="36" height="10" rx="2" fill="none" stroke="var(--muted)" />
       {areas.map((a) => {
         const b = AREA_BOX[a.area];
         if (!b) return null;
@@ -35,7 +35,7 @@ function ShotMapAreas({ areas }: { areas: ShotArea[] }) {
         return (
           <g key={a.area}>
             <rect x={b.x} y={b.y} width={b.w} height={b.h} rx="6" fill={bg} stroke={fg} strokeOpacity="0.6" />
-            <text x={b.x + b.w / 2} y={b.y + b.h / 2 - 3} textAnchor="middle" fill="#F4F4F5" fontSize="11" fontWeight="700">
+            <text x={b.x + b.w / 2} y={b.y + b.h / 2 - 3} textAnchor="middle" fill="var(--ink)" fontSize="11" fontWeight="700">
               {b.label}
             </text>
             <text x={b.x + b.w / 2} y={b.y + b.h / 2 + 12} textAnchor="middle" fill={fg} fontSize="10">
@@ -107,7 +107,7 @@ export function StatsPlayers({ page, form }: { page: StatsPage; form: SensForm |
                     <b className="tabular-nums">{p.value}</b>
                   </div>
                   <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-line" aria-hidden="true">
-                    <div className="h-1.5 rounded-full bg-[#7CC4F5]" style={{ width: `${p.percentile}%` }} />
+                    <div className="h-1.5 rounded-full bg-good-text" style={{ width: `${p.percentile}%` }} />
                   </div>
                 </li>
               ))}
@@ -158,14 +158,14 @@ export function StatsPlayers({ page, form }: { page: StatsPage; form: SensForm |
                   <div key={i} className="flex flex-1 flex-col items-center gap-1">
                     <div className="flex h-[72px] items-end gap-0.5" aria-hidden="true">
                       <span className="block w-2 rounded-sm bg-sens-bright" style={{ height: `${(g.f / maxG) * 72}px` }} />
-                      <span className="block w-2 rounded-sm bg-[#71717A]" style={{ height: `${(g.a / maxG) * 72}px` }} />
+                      <span className="block w-2 rounded-sm bg-faint" style={{ height: `${(g.a / maxG) * 72}px` }} />
                     </div>
                     <span className="text-[10px] text-muted">{g.opp}</span>
                   </div>
                 ))}
               </div>
               <p className="mt-2 text-xs text-muted">
-                <span className="text-sens-bright">■</span> Sens <span className="ml-1 text-[#71717A]">■</span> opponent · {tenF} for, {tenA} against
+                <span className="text-sens-bright">■</span> Sens <span className="ml-1 text-faint">■</span> opponent · {tenF} for, {tenA} against
               </p>
               <ul className="sr-only">
                 {form.last10.map((g, i) => (

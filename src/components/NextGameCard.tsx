@@ -73,7 +73,7 @@ function Snapshot({ opp, oppName, row, series, tone }: { opp: string; oppName: s
               {series.of > 0 && <span className="font-medium text-muted"> · game {series.game} of {series.of}</span>}
             </div>
             <div className="text-xs text-muted">
-              Last: <span className={`font-bold ${last.result === "W" ? "text-emerald-400" : "text-sens-text"}`}>{last.result}</span>{" "}
+              Last: <span className={`font-bold ${last.result === "W" ? "text-win-text" : "text-sens-text"}`}>{last.result}</span>{" "}
               {last.ottScore}–{last.oppScore}
               {last.lastPeriodType && last.lastPeriodType !== "REG" ? ` ${last.lastPeriodType}` : ""} {last.home ? "vs" : "at"} {opp},{" "}
               {formatDay(last.startTimeUTC).long.replace(/^\w+, /, "")}
@@ -128,7 +128,7 @@ function MiniTape({ rows, opp, tone }: { rows: TapeRow[]; opp: string; tone: "pl
 }
 
 const CHIP: Record<string, string> = {
-  Confirmed: "border-emerald-500/40 bg-emerald-500/15 text-emerald-300",
+  Confirmed: "border-ok-line bg-ok-ground text-ok-text",
   Likely: "border-gold-line bg-gold-ground text-gold-text",
   Projected: "border-line-strong text-muted",
 };

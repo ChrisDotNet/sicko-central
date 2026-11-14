@@ -142,7 +142,7 @@ export async function sendTest(endpoint: string): Promise<"sent" | "not-found" |
   try {
     await webpush.sendNotification(
       JSON.parse(rows[0].sub) as Subscription,
-      JSON.stringify({ title: "SENS GOAL! (test)", body: "Notifications are working on this phone. 🚨", url: "/notifications", tag: "test" }),
+      JSON.stringify({ title: "SENS GOAL! (test)", body: "Notifications are working on this phone. 🚨", url: "/settings#notifications", tag: "test" }),
       { TTL: 300, urgency: "high" },
     );
     return "sent";

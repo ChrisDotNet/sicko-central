@@ -42,7 +42,7 @@ function Links({ path, status }: { path: string | null; status: GameStatus }) {
             href={item.href}
             aria-current={active ? "page" : undefined}
             className={`flex min-h-11 items-center gap-1.5 px-3.5 text-sm font-semibold ${
-              active ? "text-ink shadow-[inset_0_-2px_0_#e23a4c]" : "text-muted hover:text-ink"
+              active ? "text-ink shadow-[inset_0_-2px_0_var(--sens-bright)]" : "text-muted hover:text-ink"
             }`}
           >
             {game && status.state === "pre" && <span aria-hidden="true" className="size-1.5 rounded-full bg-gold-bright" />}

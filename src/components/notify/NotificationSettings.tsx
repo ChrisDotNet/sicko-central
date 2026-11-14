@@ -77,9 +77,9 @@ export function NotificationSettings() {
 
   const row = "flex min-h-[52px] items-center gap-3 border-b border-line px-3.5 py-2.5 last:border-0";
   return (
-    <div className="flex flex-col gap-1 px-4 pt-5 pb-8">
+    <div id="notifications" className="flex scroll-mt-4 flex-col gap-1 px-4 pt-8 pb-8">
       {/* Desktop: game-night alerts on the left; content, off-day, fun, quiet hours and sounds on the right. */}
-      <h1 className="font-display text-3xl font-extrabold uppercase tracking-wider">Notifications</h1>
+      <h2 className="px-1 font-display text-2xl font-bold uppercase tracking-wider">Notifications</h2>
       <p className="text-sm text-muted">On this phone. Choose what Sicko Central sends you, even when it&apos;s closed.</p>
 
       {support === "ios-install" && (

@@ -423,7 +423,7 @@ export function LiveCompanion({
                       return (
                         <div
                           key={r.id}
-                          className={`flex items-center justify-between gap-2 rounded-xl border px-3.5 py-3 ${bad ? "border-sens bg-[#2a1216]" : "border-line bg-surface"}`}
+                          className={`flex items-center justify-between gap-2 rounded-xl border px-3.5 py-3 ${bad ? "border-sens bg-sens-row" : "border-line bg-surface"}`}
                         >
                           <span className="flex min-w-0 flex-col">
                             {toronto && (

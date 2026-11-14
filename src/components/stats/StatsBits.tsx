@@ -4,9 +4,9 @@ import { band, ordinal } from "@/lib/team-stats-shared";
 // Shared pieces for the Stats tab.
 
 const BAND = {
-  top: "bg-[#12324A] text-[#7CC4F5]",
+  top: "bg-good-ground text-good-text",
   mid: "bg-line text-ink-2",
-  bottom: "bg-[#4A2510] text-[#F7A15E]",
+  bottom: "bg-bad-ground text-bad-text",
 } as const;
 
 // "5th" in blue (top 10), grey, or orange (bottom 10).

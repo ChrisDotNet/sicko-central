@@ -1,13 +1,6 @@
-import type { Metadata } from "next";
-import { Page } from "@/components/ui";
-import { NotificationSettings } from "@/components/notify/NotificationSettings";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = { title: "Notifications" };
-
+// Notification settings moved into Settings.
 export default function NotificationsPage() {
-  return (
-    <Page width="wide">
-      <NotificationSettings />
-    </Page>
-  );
+  redirect("/settings#notifications");
 }

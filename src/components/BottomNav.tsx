@@ -42,7 +42,7 @@ export const NAV_ITEMS = [
       </>
     ),
   },
-  { href: "/standings", label: "Standings", icon: <path d="M5 20V10M12 20V4M19 20v-7" /> },
+  { href: "/standings", label: "Stats", icon: <path d="M5 20V10M12 20V4M19 20v-7" /> },
 ];
 
 export function isActive(path: string, href: string) {
@@ -85,7 +85,7 @@ function NavLinks({ path, status }: { path: string | null; status: GameStatus })
             >
               {item.icon}
             </svg>
-            {today && <span aria-hidden="true" className="absolute -top-0.5 -right-1.5 size-2 rounded-full bg-gold-bright ring-2 ring-[#111113]" />}
+            {today && <span aria-hidden="true" className="absolute -top-0.5 -right-1.5 size-2 rounded-full bg-gold-bright ring-2 ring-chrome" />}
             </span>
             {live ? "LIVE" : item.label}
             {today && <span className="sr-only"> (game today)</span>}
@@ -105,7 +105,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Main"
-      className="fixed inset-x-0 bottom-0 z-20 mx-auto max-w-xl border-t border-line bg-[#111113]/95 backdrop-blur md:max-w-4xl lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-20 mx-auto max-w-xl border-t border-line bg-chrome/95 backdrop-blur md:max-w-4xl lg:hidden"
     >
       <Suspense fallback={<NavLinks path={null} status={{ state: "none" }} />}>
         <ActiveNav />

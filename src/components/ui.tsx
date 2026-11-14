@@ -69,9 +69,9 @@ export function TextLink({ href, children }: { href: string; children: ReactNode
 
 export function ResultBadge({ result }: { result: "W" | "L" | "OTL" | "LIVE" }) {
   const styles = {
-    W: "bg-[#1E3A2A] text-[#6EE7A1]",
-    L: "bg-[#3A1E22] text-[#FCA5AE]",
-    OTL: "bg-[#2E2A1A] text-[#E2C46E]",
+    W: "bg-win-ground text-win-text",
+    L: "bg-loss-ground text-loss-text",
+    OTL: "bg-otl-ground text-otl-text",
     LIVE: "bg-sens text-white",
   } as const;
   return <span className={`rounded px-1.5 py-0.5 text-xs font-extrabold ${styles[result]}`}>{result}</span>;

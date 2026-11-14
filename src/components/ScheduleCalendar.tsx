@@ -68,8 +68,8 @@ export function ScheduleCalendar({ games, visible }: { games: GameSummary[]; vis
                 </>
               );
               const base = `flex min-h-[112px] flex-col gap-1.5 border-r border-line p-2.5 last:border-r-0 ${
-                day ? (g ? (g.home ? "bg-[#1b1416]" : "bg-surface") : "bg-ground") : "bg-[#0a0a0b]"
-              } ${g?.state === "live" ? "shadow-[inset_0_0_0_2px_#c52032]" : ""} ${dim ? "opacity-30" : ""}`;
+                day ? (g ? (g.home ? "bg-sens-ground" : "bg-surface") : "bg-ground") : "bg-sunk"
+              } ${g?.state === "live" ? "shadow-[inset_0_0_0_2px_var(--sens)]" : ""} ${dim ? "opacity-30" : ""}`;
               return (
                 <div role="gridcell" key={i} className={base}>
                   {day && <span className={`text-xs font-semibold ${g ? "text-ink-2" : "text-muted"}`}>{day}</span>}

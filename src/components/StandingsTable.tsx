@@ -39,7 +39,7 @@ export function StandingsTable({ rows, showRank = true, extraFrom = "md" }: { ro
             return (
               <tr
                 key={abbrev}
-                className={`border-b border-line last:border-0 ${ott ? "bg-[#2A1215] shadow-[inset_3px_0_0_#C52032]" : ""}`}
+                className={`border-b border-line last:border-0 ${ott ? "bg-sens-row shadow-[inset_3px_0_0_var(--sens)]" : ""}`}
               >
                 {showRank && <td className="py-2.5 pl-3.5 text-muted">{i + 1}</td>}
                 <td className="py-2.5 pl-1 font-bold">{abbrev}</td>

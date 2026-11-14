@@ -31,7 +31,7 @@ export function SkatersTable({ skaters, limit = 8, note }: { skaters: Skater[]; 
         {shown.map((k) => {
           const fav = favs.has(k.id);
           return (
-          <div key={k.id} className={`flex items-center border-b border-line pl-1 last:border-0 ${fav ? "bg-gold-ground shadow-[inset_3px_0_0_#c2912c]" : ""}`}>
+          <div key={k.id} className={`flex items-center border-b border-line pl-1 last:border-0 ${fav ? "bg-gold-ground shadow-[inset_3px_0_0_var(--gold)]" : ""}`}>
           <StarButton id={k.id} name={k.name} />
           <Link href={`/player/${k.id}`} className={`grid min-h-11 flex-1 ${COLS} items-center py-2.5 pr-3.5 text-sm tabular hover:bg-surface-2`}>
             <span className="truncate font-semibold">{k.name}</span>

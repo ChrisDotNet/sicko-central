@@ -13,7 +13,7 @@ export function TaleOfTape({ lens, goalies, className = "" }: { lens: SeasonLens
   return (
     <Section className={className} title="Tale of the tape" aside="Rank of 32">
       <div className="overflow-hidden rounded-2xl border border-line bg-surface">
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 border-b border-line bg-[#131316] px-3.5 py-2.5">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 border-b border-line bg-sunk px-3.5 py-2.5">
           <div>
             <div className="font-display text-xl font-extrabold tracking-wide" style={{ color: teamColor(ott.abbrev) }}>
               {ott.abbrev}

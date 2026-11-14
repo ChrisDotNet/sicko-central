@@ -39,26 +39,26 @@ export function GameFlow({ game }: { game: LiveGame }) {
   return (
     <div className="rounded-2xl border border-line bg-surface px-3 pt-3.5 pb-2.5">
       <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label={`Shot attempts: Ottawa ${ottEnd}, ${game.opp.abbrev} ${oppEnd}`} className="block">
-        <line x1={left} y1={bottom} x2={W} y2={bottom} stroke="#3F3F46" />
-        <line x1={left} y1={py(yMax / 2)} x2={W} y2={py(yMax / 2)} stroke="#26262B" />
+        <line x1={left} y1={bottom} x2={W} y2={bottom} stroke="var(--line-strong)" />
+        <line x1={left} y1={py(yMax / 2)} x2={W} y2={py(yMax / 2)} stroke="var(--line)" />
         {periodMarks.map((t) => (
-          <line key={t} x1={px(t)} y1={top} x2={px(t)} y2={bottom} stroke="#2C2C31" strokeDasharray="3 3" />
+          <line key={t} x1={px(t)} y1={top} x2={px(t)} y2={bottom} stroke="var(--line)" strokeDasharray="3 3" />
         ))}
-        <text x={left - 5} y={bottom + 3} fontSize="9" fill="#A1A1AA" textAnchor="end">0</text>
-        <text x={left - 5} y={py(yMax / 2) + 3} fontSize="9" fill="#A1A1AA" textAnchor="end">{yMax / 2}</text>
+        <text x={left - 5} y={bottom + 3} fontSize="9" fill="var(--muted)" textAnchor="end">0</text>
+        <text x={left - 5} y={py(yMax / 2) + 3} fontSize="9" fill="var(--muted)" textAnchor="end">{yMax / 2}</text>
         {labels.map((l) => (
-          <text key={l.l} x={px(l.t)} y={H - 4} fontSize="9" fill="#A1A1AA" textAnchor="middle">{l.l}</text>
+          <text key={l.l} x={px(l.t)} y={H - 4} fontSize="9" fill="var(--muted)" textAnchor="middle">{l.l}</text>
         ))}
-        <path d={steps(game.flow.opp)} fill="none" stroke="#A1A1AA" strokeWidth="2" strokeDasharray="5 3" />
-        <path d={steps(game.flow.ott)} fill="none" stroke="#E23A4C" strokeWidth="2.5" />
+        <path d={steps(game.flow.opp)} fill="none" stroke="var(--muted)" strokeWidth="2" strokeDasharray="5 3" />
+        <path d={steps(game.flow.ott)} fill="none" stroke="var(--sens-bright)" strokeWidth="2.5" />
         {game.goals.map((g) => {
           const pts = g.team === "OTT" ? game.flow.ott : game.flow.opp;
           return (
-            <circle key={g.id} cx={px(g.elapsed)} cy={py(countAt(pts, g.elapsed))} r="4" fill={g.team === "OTT" ? "#D9AE45" : "#E4E4E7"} stroke="#17171A" strokeWidth="1.5" />
+            <circle key={g.id} cx={px(g.elapsed)} cy={py(countAt(pts, g.elapsed))} r="4" fill={g.team === "OTT" ? "var(--gold-bright)" : "var(--ink-2)"} stroke="var(--surface)" strokeWidth="1.5" />
           );
         })}
-        <text x={Math.min(px(game.elapsed) + 4, W - 16)} y={endY(ottEnd, oppEnd)} fontSize="10" fontWeight="700" fill="#F05A69">{ottEnd}</text>
-        <text x={Math.min(px(game.elapsed) + 4, W - 16)} y={endY(oppEnd, ottEnd + 0.5)} fontSize="10" fontWeight="700" fill="#D4D4D8">{oppEnd}</text>
+        <text x={Math.min(px(game.elapsed) + 4, W - 16)} y={endY(ottEnd, oppEnd)} fontSize="10" fontWeight="700" fill="var(--sens-text)">{ottEnd}</text>
+        <text x={Math.min(px(game.elapsed) + 4, W - 16)} y={endY(oppEnd, ottEnd + 0.5)} fontSize="10" fontWeight="700" fill="var(--ink-2)">{oppEnd}</text>
       </svg>
       <div className="mt-1.5 flex flex-wrap gap-x-3.5 gap-y-1.5 text-xs text-muted">
         <span className="flex items-center gap-1.5"><span className="h-[3px] w-4 bg-sens-bright" />OTT</span>

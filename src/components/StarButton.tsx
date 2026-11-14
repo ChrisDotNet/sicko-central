@@ -26,7 +26,7 @@ export function StarButton({ id, name, size = "sm" }: { id: number; name: string
       aria-pressed={on}
       aria-label={on ? `Stop following ${name}` : `Follow ${name}`}
       onClick={() => toggleFavourite(id)}
-      className={`flex size-10 shrink-0 items-center justify-center text-lg leading-none ${on ? "text-gold-text" : "text-[#71717a] hover:text-ink-2"}`}
+      className={`flex size-10 shrink-0 items-center justify-center text-lg leading-none ${on ? "text-gold-text" : "text-faint hover:text-ink-2"}`}
     >
       <span aria-hidden="true">{on ? "★" : "☆"}</span>
     </button>

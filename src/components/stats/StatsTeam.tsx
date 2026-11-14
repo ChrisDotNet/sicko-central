@@ -52,7 +52,7 @@ export function StatsTeam({ ott, form, race }: { ott: TeamLens; form: SensForm |
             ))}
           </div>
           {best && worst && (
-            <p className="mt-2.5 rounded-xl border border-line bg-[#131316] px-3.5 py-2.5 text-[13px] leading-snug text-ink-2">
+            <p className="mt-2.5 rounded-xl border border-line bg-sunk px-3.5 py-2.5 text-[13px] leading-snug text-ink-2">
               <b className="text-ink">Best:</b> {best.label.toLowerCase()} ({ordinal(best.r!.rank)}). <b className="text-ink">Worst:</b> {worst.label.toLowerCase()} ({ordinal(worst.r!.rank)}).
             </p>
           )}
@@ -85,7 +85,7 @@ export function StatsTeam({ ott, form, race }: { ott: TeamLens; form: SensForm |
             <div className="flex items-baseline justify-between text-[11px] font-bold uppercase tracking-widest text-muted">
               <span>Goals by period</span>
               <span className="font-semibold normal-case tracking-normal">
-                <span className="text-sens-bright">■</span> for <span className="ml-1.5 text-[#71717A]">■</span> against
+                <span className="text-sens-bright">■</span> for <span className="ml-1.5 text-faint">■</span> against
               </span>
             </div>
             <ul className="mt-2.5 flex flex-col gap-2.5">
@@ -94,7 +94,7 @@ export function StatsTeam({ ott, form, race }: { ott: TeamLens; form: SensForm |
                   <b>{p.label}</b>
                   <span className="flex flex-col gap-1" aria-hidden="true">
                     <span className="block h-2 rounded-sm bg-sens-bright" style={{ width: `${(p.f / maxGoals) * 100}%` }} />
-                    <span className="block h-2 rounded-sm bg-[#71717A]" style={{ width: `${(p.a / maxGoals) * 100}%` }} />
+                    <span className="block h-2 rounded-sm bg-faint" style={{ width: `${(p.a / maxGoals) * 100}%` }} />
                   </span>
                   <b className="text-right tabular-nums">
                     {p.f}–{p.a}
@@ -166,7 +166,7 @@ export function StatsTeam({ ott, form, race }: { ott: TeamLens; form: SensForm |
                 </thead>
                 <tbody>
                   {race.table.map((t, i) => (
-                    <tr key={t.abbrev} className={`border-t ${i === 3 ? "border-dashed border-line-strong" : "border-line"} ${t.abbrev === "OTT" ? "bg-[#2A0F14]" : ""}`}>
+                    <tr key={t.abbrev} className={`border-t ${i === 3 ? "border-dashed border-line-strong" : "border-line"} ${t.abbrev === "OTT" ? "bg-sens-row" : ""}`}>
                       <td className="px-3.5 py-2">
                         <span className="mr-2 inline-block h-3 w-1.5 rounded-sm align-middle" style={{ background: teamColor(t.abbrev) }} aria-hidden="true" />
                         {i + 1} {t.abbrev}
@@ -181,7 +181,7 @@ export function StatsTeam({ ott, form, race }: { ott: TeamLens; form: SensForm |
                 </tbody>
               </table>
               {race.leafs && (
-                <div className="flex items-center gap-2.5 border-t border-line bg-[#131316] px-3.5 py-2.5 text-[13px] text-ink-2">
+                <div className="flex items-center gap-2.5 border-t border-line bg-sunk px-3.5 py-2.5 text-[13px] text-ink-2">
                   <span className="h-5 w-2 shrink-0 rounded-sm" style={{ background: teamColor("TOR") }} aria-hidden="true" />
                   <span>
                     Leafs: {race.leafs.points} points,{" "}

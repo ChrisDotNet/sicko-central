@@ -2,7 +2,7 @@ import type { Context } from "@/lib/context";
 
 const TONES = {
   gold: { box: "border-gold-line bg-gold-ground", kicker: "text-gold-text" },
-  red: { box: "border-[#5C1A22] bg-[#1F0E11]", kicker: "text-sens-text" },
+  red: { box: "border-sens-line bg-sens-ground", kicker: "text-sens-text" },
   neutral: { box: "border-line-strong bg-surface", kicker: "text-ink-2" },
 } as const;
 

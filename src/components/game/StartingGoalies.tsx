@@ -8,7 +8,7 @@ import { TeamBar } from "../ui";
 const REFRESH_MS = 5 * 60_000;
 
 const CHIP: Record<GoalieStatus, string> = {
-  Confirmed: "border-emerald-500/40 bg-emerald-500/15 text-emerald-300",
+  Confirmed: "border-ok-line bg-ok-ground text-ok-text",
   Likely: "border-gold-line bg-gold-ground text-gold-text",
   Projected: "border-line-strong text-muted",
 };

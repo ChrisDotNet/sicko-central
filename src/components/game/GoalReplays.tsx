@@ -62,7 +62,7 @@ export function GoalReplays({ goals, thumbs }: { goals: Goal[]; thumbs?: Record<
           return (
             <div
               key={g.id}
-              className={`grid items-center gap-3 border-b border-line px-3.5 py-2.5 last:border-0 ${favScorer || favAssist ? "bg-gold-ground shadow-[inset_3px_0_0_#c2912c]" : ""} ${
+              className={`grid items-center gap-3 border-b border-line px-3.5 py-2.5 last:border-0 ${favScorer || favAssist ? "bg-gold-ground shadow-[inset_3px_0_0_var(--gold)]" : ""} ${
                 thumbs ? "grid-cols-[auto_minmax(0,1fr)_44px] pl-2.5" : "grid-cols-[minmax(0,1fr)_44px]"
               }`}
             >

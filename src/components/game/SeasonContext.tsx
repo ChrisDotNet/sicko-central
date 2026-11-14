@@ -15,7 +15,7 @@ export function SeasonContext({ game, lens, className = "" }: { game: LiveGame; 
           <li key={l.tag} className="flex items-start gap-2.5 border-b border-line px-3.5 py-2.5 text-[13px] leading-snug text-ink-2 last:border-b-0">
             <span
               className={`mt-px shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider ${
-                l.tone === "blue" ? "bg-[#12324A] text-[#7CC4F5]" : "bg-line text-ink-2"
+                l.tone === "blue" ? "bg-good-ground text-good-text" : "bg-line text-ink-2"
               }`}
             >
               {l.tag}
