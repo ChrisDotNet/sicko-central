@@ -13,7 +13,7 @@ import { getGameFacts } from "@/lib/facts";
 import { getStartingGoalies } from "@/lib/goalies";
 import { getStreamEvents, streamLinks } from "@/lib/streams";
 import { getGametimeEvents, ticketLinks } from "@/lib/tickets";
-import { StreamingMenu, TicketsMenu } from "@/components/GameLinks";
+import { WatchMenu, TicketsMenu } from "@/components/GameLinks";
 import { scoreLine, splitSchedule } from "@/lib/schedule";
 import { OTT } from "@/lib/teams";
 
@@ -38,20 +38,15 @@ async function LiveContent({ searchParams }: { searchParams: Promise<Record<stri
     const id = String(today.id);
     const [pbp, box] = await Promise.all([getPlayByPlay(id).catch(() => null), getBoxScore(id)]);
     const game = pbp ? buildGame(pbp, box) : null;
-    const [radio, facts, goalies, streamEvents, gametime] = game
+    const [radio, facts, goalies] = game
       ? await Promise.all([
           getRadioForGame(game.startTimeUTC),
           getGameFacts(game.gameDate, game.opp.abbrev),
           game.isPre ? getStartingGoalies(id, game.opp.abbrev) : null,
-          getStreamEvents(),
-          getGametimeEvents(),
         ])
-      : [[], [], null, null, {}];
-    const scheduled = schedule?.games.find((g) => g.id === today.id);
-    const tickets = game && !game.isFinal ? ticketLinks(game.startTimeUTC, scheduled?.ticketsLink, gametime) : undefined;
-    const streams = game && streamEvents ? streamLinks(game.startTimeUTC, game.broadcasts, streamEvents) : undefined;
+      : [[], [], null];
     const initial = game ? { game, rivals: scores ? atlanticGames(scores, today.id) : [], radio } : null;
-    return <LiveCompanion key={id} gameId={today.id} initial={initial} replay={false} initialTab={tab} initialSegment={segment} facts={facts} goalies={goalies} streams={streams} tickets={tickets} />;
+    return <LiveCompanion key={id} gameId={today.id} initial={initial} replay={false} initialTab={tab} initialSegment={segment} facts={facts} goalies={goalies} />;
   }
 
   const { next, last } = schedule ? splitSchedule(schedule.games) : { next: null, last: null };
@@ -71,7 +66,7 @@ async function LiveContent({ searchParams }: { searchParams: Promise<Record<stri
             {formatDay(next.startTimeUTC).long} · {formatTime(next.startTimeUTC)}
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            {next.broadcasts.length > 0 && <StreamingMenu networks={next.broadcasts} streams={nextStreams} />}
+            {next.broadcasts.length > 0 && <WatchMenu networks={next.broadcasts} streams={nextStreams} />}
             <TicketsMenu tickets={ticketLinks(next.startTimeUTC, next.ticketsLink, gametime)} align="left" />
           </div>
         </Card>

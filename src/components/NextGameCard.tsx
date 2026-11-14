@@ -6,7 +6,7 @@ import type { TicketLinks } from "@/lib/tickets";
 import { formatDay, formatTime } from "@/lib/format";
 import { OTT } from "@/lib/teams";
 import { Countdown } from "./Countdown";
-import { StreamingMenu, TicketsMenu } from "./GameLinks";
+import { WatchMenu, TicketsMenu } from "./GameLinks";
 import { Chevron, Kicker, TeamBar } from "./ui";
 
 // The home page's next-game card: what you need to know before the game.
@@ -154,7 +154,7 @@ export function NextGameCard({
   const tone = tonight ? "gold" : "plain";
   const footer = (
     <div className={`flex items-center justify-between gap-2 border-t px-3.5 py-2.5 md:px-5 ${tonight ? "border-gold-line" : "border-line"}`}>
-      <StreamingMenu networks={next.broadcasts} streams={next.streams} />
+      <WatchMenu networks={next.broadcasts} streams={next.streams} />
       <TicketsMenu tickets={tickets} />
     </div>
   );

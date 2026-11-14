@@ -2,11 +2,11 @@ import { watchLink } from "@/lib/broadcast";
 import type { TicketLinks } from "@/lib/tickets";
 import { LinkMenu, TicketIcon, TvIcon } from "./LinkMenu";
 
-// The standard pair of menus for an upcoming game: Streaming (each network, opening the
-// game's own page where we found one) and Tickets (Gametime, then Ticketmaster).
-// Used on the home page's next-game card and the schedule.
+// The standard pair of menus for an upcoming game: Watch (each network, opening the
+// game's own streaming page where we found one) and Tickets (Gametime, then Ticketmaster).
+// Used on the home page's next-game card, the schedule and the no-game Game page.
 
-export function StreamingMenu({
+export function WatchMenu({
   networks,
   streams,
   size = "md",
@@ -21,7 +21,7 @@ export function StreamingMenu({
 }) {
   return (
     <LinkMenu
-      label="Streaming"
+      label="Watch"
       icon={<TvIcon />}
       size={size}
       align={align}

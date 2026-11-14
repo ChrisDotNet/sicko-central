@@ -3,7 +3,7 @@ import { formatTime } from "@/lib/format";
 import type { GameSummary } from "@/lib/schedule";
 import { scoreLine } from "@/lib/schedule";
 import { ResultBadge, TeamBar } from "./ui";
-import { StreamingMenu, TicketsMenu } from "./GameLinks";
+import { WatchMenu, TicketsMenu } from "./GameLinks";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -61,7 +61,7 @@ export function ScheduleCalendar({ games, visible }: { games: GameSummary[]; vis
                     // Tablets: icon-only buttons; desktop: labelled. Stacked either way. Menus in
                     // the right half of the week open leftward so they stay on screen.
                     <span className="flex flex-col items-start gap-1">
-                      {g.broadcasts.length > 0 && <StreamingMenu networks={g.broadcasts} streams={g.streams} size="sm" align={i >= 4 ? "right" : "left"} iconOnlyBelowLg />}
+                      {g.broadcasts.length > 0 && <WatchMenu networks={g.broadcasts} streams={g.streams} size="sm" align={i >= 4 ? "right" : "left"} iconOnlyBelowLg />}
                       {g.tickets && <TicketsMenu tickets={g.tickets} size="sm" align={i >= 4 ? "right" : "left"} iconOnlyBelowLg />}
                     </span>
                   )}

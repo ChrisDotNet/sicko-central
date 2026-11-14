@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 
 export type MenuLink = { label: string; note?: string; href: string | null };
 
-// A button that opens a small list of outside links (the next-game card's Streaming and
+// A button that opens a small list of outside links (the next-game card's Watch and
 // Tickets). Closes on a second tap, a tap anywhere else, or Escape.
 export function LinkMenu({
   label,
