@@ -27,6 +27,16 @@ import type { StartingGoalies as StartingGoaliesData } from "@/lib/goalies";
 import { getFavourites } from "@/lib/favourites";
 import { latestItems } from "./latest-items";
 
+// Leafs Watch: what the out-of-town scoreboard says about Toronto's game.
+const LEAFS_LINE: Record<string, string> = {
+  pre: "",
+  losing: " · Leafs trail 😈",
+  lost: " · Leafs lose! 😈",
+  tied: " · tied",
+  winning: " · Leafs lead, for now",
+  won: " · Leafs won. Ugh.",
+};
+
 type Payload = { game: LiveGame; rivals: RivalGame[]; radio?: RadioEpisode[] };
 
 const LIVE_POLL_MS = 15_000;
@@ -390,14 +400,28 @@ export function LiveCompanion({
               {rivals.length > 0 && (
                 <Section title="Out of town scoreboard">
                   <div className="flex flex-col gap-2 md:grid md:grid-cols-3 lg:flex">
-                    {rivals.map((r) => (
-                      <div key={r.id} className="flex items-center justify-between rounded-xl border border-line bg-surface px-3.5 py-3">
-                        <span className="font-display text-[19px] font-bold tracking-wide">
-                          {r.awayScore != null ? `${r.away} ${r.awayScore} – ${r.homeScore} ${r.home}` : `${r.away} at ${r.home}`}
-                        </span>
-                        <span className="text-[13px] text-muted">{r.status}</span>
-                      </div>
-                    ))}
+                    {rivals.map((r) => {
+                      const toronto = r.away === "TOR" || r.home === "TOR";
+                      const bad = r.leafs === "losing" || r.leafs === "lost";
+                      return (
+                        <div
+                          key={r.id}
+                          className={`flex items-center justify-between gap-2 rounded-xl border px-3.5 py-3 ${bad ? "border-sens bg-[#2a1216]" : "border-line bg-surface"}`}
+                        >
+                          <span className="flex min-w-0 flex-col">
+                            {toronto && (
+                              <span className={`text-[10px] font-bold uppercase tracking-widest ${bad ? "text-sens-text" : "text-muted"}`}>
+                                Leafs Watch{LEAFS_LINE[r.leafs ?? "pre"]}
+                              </span>
+                            )}
+                            <span className="font-display text-[19px] font-bold tracking-wide">
+                              {r.awayScore != null ? `${r.away} ${r.awayScore} – ${r.homeScore} ${r.home}` : `${r.away} at ${r.home}`}
+                            </span>
+                          </span>
+                          <span className="shrink-0 text-[13px] text-muted">{r.status}</span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </Section>
               )}

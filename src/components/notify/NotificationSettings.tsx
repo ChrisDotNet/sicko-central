@@ -11,6 +11,7 @@ const GROUPS = [
   { key: "game", title: "Game night" },
   { key: "content", title: "New video, audio and news" },
   { key: "off", title: "Off days" },
+  { key: "fun", title: "Just for fun" },
 ] as const;
 
 function Switch({ on, label, onChange, disabled = false }: { on: boolean; label: string; onChange: (v: boolean) => void; disabled?: boolean }) {

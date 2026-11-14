@@ -15,7 +15,7 @@ export async function POST(req: Request) {
   } catch {
     return Response.json({ error: "Bad job" }, { status: 400 });
   }
-  if (!job || typeof job.gameId !== "number" || !["remind", "goalie", "game"].includes(job.kind)) {
+  if (!job || typeof job.gameId !== "number" || !["remind", "goalie", "game", "leafs"].includes(job.kind)) {
     return Response.json({ error: "Bad job" }, { status: 400 });
   }
   const result = await runJob(job);

@@ -18,6 +18,8 @@ export const CATEGORIES = [
   // Off days
   { key: "bday", group: "off", title: "Player birthdays", sub: "Morning of", on: false },
   { key: "digest", group: "off", title: "Morning news digest", sub: "New Sens stories since yesterday, once a day", on: false },
+  // Just for fun
+  { key: "leafs", group: "fun", title: "Leafs lose", sub: "At the final whistle of every Toronto Maple Leafs loss, any night. Late ones come with breakfast if quiet hours are on.", on: false },
 ] as const;
 
 export type Category = (typeof CATEGORIES)[number]["key"];
@@ -50,4 +52,4 @@ export function cleanPrefs(p: unknown): Prefs {
 }
 
 // Content and off-day alerts wait out quiet hours; game alerts never do.
-export const QUIET_CATEGORIES = new Set<Category>(["replay", "recap", "pressers", "radio", "news", "bday", "digest"]);
+export const QUIET_CATEGORIES = new Set<Category>(["replay", "recap", "pressers", "radio", "news", "bday", "digest", "leafs"]);

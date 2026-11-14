@@ -315,6 +315,27 @@ export async function getSchedule(): Promise<Schedule | null> {
   return safe<Schedule>("/club-schedule-season/OTT/now");
 }
 
+// Another club's season schedule (the Leafs, for Leafs Watch).
+export async function getTeamSchedule(abbrev: string): Promise<Schedule | null> {
+  "use cache";
+  cacheLife("frequent");
+  if (!/^[A-Z]{3}$/.test(abbrev)) return null;
+  return safe<Schedule>(`/club-schedule-season/${abbrev}/now`);
+}
+
+// Score and state of any game, straight from the feed (not cached): for final-score checks.
+export type GameSummary = {
+  id: number;
+  gameState: string;
+  awayTeam: { abbrev: string; score?: number };
+  homeTeam: { abbrev: string; score?: number };
+  gameOutcome?: { lastPeriodType?: string };
+  periodDescriptor?: { periodType?: string };
+};
+export async function getGameSummary(gameId: number): Promise<GameSummary | null> {
+  return safe<GameSummary>(`/gamecenter/${gameId}/landing`);
+}
+
 export async function getScoresNow(): Promise<Scores | null> {
   "use cache";
   cacheLife("frequent");

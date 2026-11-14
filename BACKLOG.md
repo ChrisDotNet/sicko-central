@@ -38,7 +38,7 @@ the next game better to watch?
 12. Player contracts (parked: no legitimate data source yet)
 
 **Just for fun**
-13. "Leafs Suck": enjoying the Toronto Maple Leafs' misfortunes (shape to be decided)
+13. "Leafs Suck": Leafs Watch on the scoreboard and the "Leafs lose" alert done 2026-11-14; the page, facts and home strip still open
 
 **Business**
 14. Monetizing the app, starting with affiliate links; no bolted-on ad banners

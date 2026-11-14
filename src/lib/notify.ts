@@ -16,9 +16,9 @@ import { buildGame } from "./game";
 import type { LiveGame } from "./game";
 import { getStartingGoalies } from "./goalies";
 import { collectGameMedia } from "./media";
-import { getBoxScore, getPlayByPlay, getRoster, getSchedule, name } from "./nhl";
+import { getBoxScore, getGameSummary, getPlayByPlay, getRoster, getSchedule, getTeamSchedule, name } from "./nhl";
 import type { ScheduleGame } from "./nhl";
-import { notify } from "./push";
+import { notify, quietNow } from "./push";
 import { publish } from "./qstash";
 import { getSensNews } from "./sens-news";
 import { getJson, setJson } from "./store";
@@ -31,7 +31,11 @@ const MAX_TICKS = 260; // about 3 h at one a minute plus 3 h at one every five
 const MAX_AFTER_START_MS = 8 * 3600_000;
 const POST_FINAL_MS = 3 * 3600_000;
 
-export type Job = { kind: "remind"; gameId: number; mins: 30 | 60 } | { kind: "goalie"; gameId: number } | { kind: "game"; gameId: number; token: string; n: number };
+export type Job =
+  | { kind: "remind"; gameId: number; mins: 30 | 60 }
+  | { kind: "goalie"; gameId: number }
+  | { kind: "game"; gameId: number; token: string; n: number }
+  | { kind: "leafs"; gameId: number; n: number };
 
 type GameState = {
   token: string;
@@ -72,14 +76,28 @@ function vsAt(g: ScheduleGame) {
 
 // ---- Planning (daily job) ----
 
+// Leafs Watch: on a Leafs game day, check for the final from about 2 h 15 min after their
+// puck drop, every 10 minutes, at most 12 times (a handful of QStash messages a game).
+const LEAFS_FIRST_CHECK_MS = 2.25 * 3600_000;
+const LEAFS_MAX_CHECKS = 12;
+
+async function planLeafs(today: string, now: number): Promise<number> {
+  const tor = await getTeamSchedule("TOR");
+  const g = (tor?.games ?? []).find((x) => x.gameDate === today && x.gameType >= 2);
+  if (!g) return 0;
+  const at = Math.max(now, Date.parse(g.startTimeUTC) + LEAFS_FIRST_CHECK_MS);
+  return (await publish({ url: TICK, body: { kind: "leafs", gameId: g.id, n: 0 } satisfies Job, at, dedupe: `leafs-${g.id}-0` })) ? 1 : 0;
+}
+
 export async function planToday(): Promise<{ game: number | null; booked: number }> {
   const schedule = await getSchedule();
   const today = ottawaDate();
+  const leafsBooked = await planLeafs(today, Date.now()).catch(() => 0);
   const g = (schedule?.games ?? []).find((x) => x.gameDate === today && x.gameType >= 2);
-  if (!g) return { game: null, booked: 0 };
+  if (!g) return { game: null, booked: leafsBooked };
   const start = Date.parse(g.startTimeUTC);
   const now = Date.now();
-  let booked = 0;
+  let booked = leafsBooked;
   const book = async (job: Job, at: number, dedupe: string) => {
     if (at < now - 60_000) return;
     if (await publish({ url: TICK, body: job, at, dedupe })) booked++;
@@ -100,6 +118,7 @@ export async function planToday(): Promise<{ game: number | null; booked: number
 export async function runJob(job: Job): Promise<string> {
   if (job.kind === "remind") return remind(job.gameId, job.mins);
   if (job.kind === "goalie") return goalieCheck(job.gameId);
+  if (job.kind === "leafs") return leafsCheck(job);
   return gameTick(job);
 }
 
@@ -159,6 +178,9 @@ async function gameTick(job: Extract<Job, { kind: "game" }>): Promise<string> {
   if (!g || !s) return "no game";
   if (s.token !== job.token) return "stale chain"; // replaced by a newer plan: stop
   if (s.ticks >= MAX_TICKS) return "tick limit";
+  // A Sens game's first tick also books the Leafs check if the Leafs play tonight (in case the
+  // morning plan missed it; the dedupe id keeps it to one).
+  if (job.n === 0) await planLeafs(ottawaDate(), Date.now()).catch(() => 0);
   s.ticks++;
   const start = Date.parse(g.startTimeUTC);
   const now = Date.now();
@@ -278,6 +300,40 @@ async function contentEvents(gameId: number, g: ScheduleGame, s: GameState, log:
   }
 }
 
+type LeafsState = { sent: boolean; held?: { title: string; body: string } };
+
+async function leafsCheck(job: Extract<Job, { kind: "leafs" }>): Promise<string> {
+  const key = `notify:leafs:${job.gameId}`;
+  const s = (await getJson<LeafsState>(key)) ?? { sent: false };
+  if (s.sent) return "already";
+  const g = await getGameSummary(job.gameId);
+  const final = g && ["FINAL", "OFF"].includes(g.gameState);
+  if (!g || !final) {
+    if (job.n + 1 >= LEAFS_MAX_CHECKS) return "gave up";
+    const n = job.n + 1;
+    await publish({ url: TICK, body: { ...job, n }, at: Date.now() + 10 * 60_000, dedupe: `leafs-${job.gameId}-${n}` });
+    return "not final";
+  }
+  const torHome = g.homeTeam.abbrev === "TOR";
+  const tor = (torHome ? g.homeTeam.score : g.awayTeam.score) ?? 0;
+  const opp = (torHome ? g.awayTeam.score : g.homeTeam.score) ?? 0;
+  const oppAbbrev = torHome ? g.awayTeam.abbrev : g.homeTeam.abbrev;
+  s.sent = true;
+  if (tor >= opp) {
+    await setJson(key, s);
+    return "leafs won";
+  }
+  const last = g.gameOutcome?.lastPeriodType ?? g.periodDescriptor?.periodType;
+  const ot = last && last !== "REG" ? ` (${last})` : "";
+  const title = "The Leafs lose! 😈";
+  const body = `TOR ${tor}–${opp} ${oppAbbrev}${ot}${torHome ? " at home" : ""}.`;
+  const sent = await notify("leafs", { title, body, url: "/live", tag: `leafs-${job.gameId}` });
+  // Phones in quiet hours get it with the morning alerts instead.
+  if (quietNow()) s.held = { title, body };
+  await setJson(key, s);
+  return `leafs lost ${sent}`;
+}
+
 // ---- Morning (daily job) ----
 
 export async function morning(): Promise<string> {
@@ -291,6 +347,15 @@ export async function morning(): Promise<string> {
   for (const p of bdays) {
     const age = Number(ottawaDate().slice(0, 4)) - Number(p.birthDate!.slice(0, 4));
     out.push(`bday ${await notify("bday", { title: `Happy birthday, ${name(p.firstName)} ${name(p.lastName)}!`, body: `${p.sweaterNumber != null ? `#${p.sweaterNumber} ` : ""}turns ${age} today`, url: `/player/${p.id}`, tag: `bday-${p.id}` })}`);
+  }
+  // Leafs losses that finished in quiet hours, for phones that had quiet hours on.
+  const tor = await getTeamSchedule("TOR").catch(() => null);
+  const yesterday = ottawaDate(new Date(Date.now() - 86400_000));
+  for (const g of (tor?.games ?? []).filter((x) => x.gameDate === yesterday || x.gameDate === ottawaDate())) {
+    const st = await getJson<LeafsState>(`notify:leafs:${g.id}`);
+    if (!st?.held) continue;
+    out.push(`leafs ${await notify("leafs", { title: `Overnight: ${st.held.title}`, body: st.held.body, url: "/", tag: `leafs-${g.id}-am` }, { extra: (p) => p.quiet })}`);
+    await setJson(`notify:leafs:${g.id}`, { ...st, held: undefined });
   }
   // Digest: Sens stories in the last 24 hours.
   const news = await getSensNews().catch(() => []);

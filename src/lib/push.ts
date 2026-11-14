@@ -78,7 +78,7 @@ export async function subscriberCount(): Promise<number> {
 export type Message = { title: string; body: string; url: string; tag: string };
 
 // Ottawa hour, for quiet hours (11 p.m.–8 a.m.).
-function quietNow(): boolean {
+export function quietNow(): boolean {
   const h = Number(new Intl.DateTimeFormat("en-CA", { hour: "numeric", hourCycle: "h23", timeZone: "America/Toronto" }).format(new Date()));
   return h >= 23 || h < 8;
 }

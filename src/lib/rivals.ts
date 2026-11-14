@@ -3,14 +3,23 @@ import { FINAL_STATES, LIVE_STATES } from "./nhl-shared";
 import { ATLANTIC } from "./teams";
 import { formatTime, periodLabel } from "./format";
 
-export type RivalGame = { id: number; away: string; home: string; awayScore?: number; homeScore?: number; status: string };
+export type RivalGame = {
+  id: number;
+  away: string;
+  home: string;
+  awayScore?: number;
+  homeScore?: number;
+  status: string;
+  // Leafs Watch: how Toronto's doing in this game, once it's started.
+  leafs?: "losing" | "lost" | "tied" | "winning" | "won";
+};
 
 type ScoreGame = Scores["games"][number] & {
   clock?: { timeRemaining?: string; inIntermission?: boolean };
   period?: number;
 };
 
-// Other Atlantic division games on today's NHL slate.
+// Other Atlantic division games on today's NHL slate, the Leafs' game first (Leafs Watch).
 export function atlanticGames(scores: Scores, excludeId?: number): RivalGame[] {
   return (scores.games as ScoreGame[])
     .filter((g) => g.id !== excludeId && g.awayTeam.abbrev !== "OTT" && g.homeTeam.abbrev !== "OTT")
@@ -27,7 +36,15 @@ export function atlanticGames(scores: Scores, excludeId?: number): RivalGame[] {
         status = t && t !== "REG" ? `Final/${t}` : "Final";
       }
       const started = !["FUT", "PRE"].includes(g.gameState);
+      let leafs: RivalGame["leafs"];
+      if (started && (g.awayTeam.abbrev === "TOR" || g.homeTeam.abbrev === "TOR")) {
+        const tor = g.awayTeam.abbrev === "TOR" ? g.awayTeam.score ?? 0 : g.homeTeam.score ?? 0;
+        const opp = g.awayTeam.abbrev === "TOR" ? g.homeTeam.score ?? 0 : g.awayTeam.score ?? 0;
+        const done = FINAL_STATES.includes(g.gameState);
+        leafs = tor < opp ? (done ? "lost" : "losing") : tor > opp ? (done ? "won" : "winning") : "tied";
+      }
       return {
+        leafs,
         id: g.id,
         away: g.awayTeam.abbrev,
         home: g.homeTeam.abbrev,
@@ -35,5 +52,6 @@ export function atlanticGames(scores: Scores, excludeId?: number): RivalGame[] {
         homeScore: started ? g.homeTeam.score : undefined,
         status,
       };
-    });
+    })
+    .sort((a, b) => Number(b.away === "TOR" || b.home === "TOR") - Number(a.away === "TOR" || a.home === "TOR"));
 }
