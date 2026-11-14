@@ -5,6 +5,7 @@ import { StandingsTabs } from "@/components/StandingsTabs";
 import { StatsPlayers } from "@/components/stats/StatsPlayers";
 import { StatsTeam } from "@/components/stats/StatsTeam";
 import { ErrorNote } from "@/components/ui";
+import { PageTitle } from "@/components/PageTitle";
 import { getStandings, name } from "@/lib/nhl";
 import { getRace, getSensForm, getStatsPage, getTeamLenses } from "@/lib/team-stats";
 import { OTT } from "@/lib/teams";
@@ -70,6 +71,7 @@ async function Content({ searchParams }: { searchParams: SP }) {
           <Switch view={players ? "players" : stats ? "team" : "standings"} />
         </div>
       </div>
+      {stats && <PageTitle title={`${players ? "Sens players" : "Sens team"} · Stats`} />}
       {stats ? <StatsContent players={players} /> : <StandingsContent />}
       {stats && <p className="px-4 pt-5 text-[11px] text-muted">From the NHL&apos;s stats and EDGE data. Updated through the day; ranks catch up a little after each final.</p>}
     </>

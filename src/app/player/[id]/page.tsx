@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { PlayerStats } from "@/components/PlayerStats";
 import { StarButton } from "@/components/StarButton";
+import { PageTitle } from "@/components/PageTitle";
 import { BirthdayBadge, PlayerBirthday } from "@/components/Birthdays";
 import { Card, ErrorNote, Section } from "@/components/ui";
 import { formatGameDate, heightLabel, pct, savePct, seasonLabel } from "@/lib/format";
@@ -154,6 +155,7 @@ async function PlayerDetail({ params }: { params: Promise<{ id: string }> }) {
                     {POSITIONS[p.position] ?? p.position}
                     {p.currentTeamAbbrev && p.currentTeamAbbrev !== "OTT" ? ` · ${p.currentTeamAbbrev}` : ""}
                   </span>
+                  <PageTitle title={`${full} · ${goalie ? "Goalie" : POSITIONS[p.position] ?? "Player"}`} />
                   <h1 className="font-display text-[34px] font-extrabold leading-none tracking-wide">{full}</h1>
                   <div className="mt-1 flex flex-wrap items-center gap-2">
                     <StarButton id={p.playerId} name={full} size="lg" />

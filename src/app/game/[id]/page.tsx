@@ -4,6 +4,7 @@ import { GameSections } from "@/components/game/GameSections";
 import { GameTabLinks, parseSegment, parseTab } from "@/components/game/GameTabs";
 import type { MediaSegment } from "@/components/game/GameTabs";
 import { MediaTab } from "@/components/media/MediaTab";
+import { PageTitle } from "@/components/PageTitle";
 import { BackButton } from "@/components/BackButton";
 import { Latest } from "@/components/game/Latest";
 import { latestItems } from "@/components/game/latest-items";
@@ -59,6 +60,7 @@ async function Recap({
         </div>
       </div>
       <GameTabLinks base={`/game/${id}`} active={tab} />
+      {tab === "summary" && <PageTitle title={`Final: OTT ${game.ott.score}–${game.opp.score} ${game.opp.abbrev}, ${formatDay(game.startTimeUTC).long} · Summary`} />}
       {tab === "summary" && <SummaryWithLatest id={id} game={game} />}
       {tab === "media" && <GameMedia id={id} game={game} segment={parseSegment(sp.show, sp.tab)} />}
     </>
@@ -83,6 +85,7 @@ async function GameMedia({ id, game, segment }: { id: string; game: LiveGame; se
       isPre={game.isPre}
       isFinal={game.isFinal}
       initialSegment={segment}
+      titlePrefix={`Final: OTT ${game.ott.score}–${game.opp.score} ${game.opp.abbrev}, ${formatDay(game.startTimeUTC).long} · Media`}
     />
   );
 }

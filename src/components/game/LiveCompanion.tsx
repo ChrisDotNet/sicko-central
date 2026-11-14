@@ -9,6 +9,7 @@ import { setRadioOffer } from "@/lib/radio-store";
 import { periodLabel } from "@/lib/format";
 import { Section } from "../ui";
 import { GameSections } from "./GameSections";
+import { PageTitle } from "../PageTitle";
 import { GameTabButtons } from "./GameTabs";
 import { mediaKeys, useUnseen } from "@/lib/unseen";
 import type { GameTab } from "./GameTabs";
@@ -332,8 +333,16 @@ export function LiveCompanion({
   const showLiveBar = !replay && (game.isPre || game.isLive || (game.isFinal && !hasPostgame));
   const ago = updatedAt && now ? Math.max(0, Math.round((now - updatedAt) / 1000)) : null;
 
+  // Browser tab: the score while it's on, so it reads at a glance from another tab.
+  const gameTitle = game.isPre
+    ? `OTT ${game.ott.isHome ? "vs" : "at"} ${game.opp.abbrev}`
+    : game.isLive && !replay
+      ? `OTT ${game.ott.score}–${game.opp.score} ${game.opp.abbrev} (${game.intermission ? `end of ${periodLabel(game.period)}` : periodLabel(game.period, game.periodType)})`
+      : `${game.isFinal ? "Final: " : ""}OTT ${game.ott.score}–${game.opp.score} ${game.opp.abbrev}`;
+
   return (
     <>
+      {tab === "summary" && <PageTitle title={`${gameTitle} · Summary`} />}
       {replay && (
         <section className="px-4 pt-3">
           <div className="flex flex-wrap items-center gap-2 rounded-xl border border-dashed border-gold-line bg-gold-ground px-3 py-2 text-xs text-gold-text">
@@ -464,6 +473,7 @@ export function LiveCompanion({
           initialSegment={initialSegment}
           pending={pending}
           videoNote={replay ? "Recaps and highlights are hidden in replay mode so they don't spoil the game." : undefined}
+          titlePrefix={`${gameTitle} · Media`}
         />
       )}
 

@@ -10,6 +10,7 @@ import { Section } from "../ui";
 import { RadioArchive } from "../radio/RadioArchive";
 import { VideoTab } from "../video/VideoTab";
 import { SEGMENTS } from "../game/GameTabs";
+import { PageTitle } from "../PageTitle";
 import type { MediaSegment } from "../game/GameTabs";
 
 const Note = ({ children }: { children: React.ReactNode }) => (
@@ -75,6 +76,7 @@ export function MediaTab({
   initialSegment = "news",
   pending,
   videoNote,
+  titlePrefix,
 }: {
   news: NewsItem[];
   video: GameVideo | null;
@@ -87,6 +89,8 @@ export function MediaTab({
   // A clip to open right away (from an alert): switches to Video. `n` changes per request.
   pending?: { clipId: number; n: number } | null;
   videoNote?: string;
+  // The game, for the browser tab's title ("OTT at PIT"); no title when absent.
+  titlePrefix?: string;
 }) {
   const [segment, setSegment] = useState<MediaSegment>(initialSegment);
   const [seenPending, setSeenPending] = useState(0);
@@ -113,6 +117,7 @@ export function MediaTab({
 
   return (
     <>
+      {titlePrefix && <PageTitle title={`${titlePrefix} · ${SEGMENTS.find((x) => x.id === segment)?.label ?? "Media"}`} />}
       <div role="tablist" aria-label="Media type" className="flex gap-2 px-4 pt-4 md:max-w-md">
         {SEGMENTS.map((s) => (
           <button

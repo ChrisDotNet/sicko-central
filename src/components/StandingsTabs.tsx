@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { StandingRow } from "@/lib/nhl";
 import { StandingsTable } from "./StandingsTable";
+import { PageTitle } from "./PageTitle";
 
 const VIEWS = ["Division", "Wild card", "League"] as const;
 type View = (typeof VIEWS)[number];
@@ -35,6 +36,7 @@ export function StandingsTabs({ rows, ottConference, ottDivision }: { rows: Stan
 
   return (
     <>
+      <PageTitle title={`Standings: ${view} · Stats`} />
       <div role="group" aria-label="Standings view" className="flex gap-1.5 px-4 pt-4 md:max-w-md">
         {VIEWS.map((v) => (
           <button

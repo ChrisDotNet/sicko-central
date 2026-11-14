@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { Section } from "@/components/ui";
+import { PageTitle } from "@/components/PageTitle";
 import { SensNewsList } from "@/components/news/SensNewsList";
 import { formatDay } from "@/lib/format";
 import type { NewsItem, Outlet } from "@/lib/news";
@@ -55,6 +56,7 @@ async function NewsContent({ searchParams }: { searchParams: Promise<Record<stri
 
   return (
     <>
+      <PageTitle title={outlet ? `${outlet} · News` : "News"} />
       <div className="px-4 pt-5">
         <h1 className="font-display text-3xl font-extrabold uppercase tracking-wider">Sens news</h1>
         <p className="mt-1 text-sm text-muted">Headlines and short summaries from NHL.com, TSN and Sportsnet, plus the club&apos;s YouTube videos (Sens TV). Full articles and videos open on their site.</p>
