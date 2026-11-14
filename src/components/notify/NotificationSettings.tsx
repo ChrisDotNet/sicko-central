@@ -3,7 +3,7 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import type { Category, Prefs } from "@/lib/push-prefs";
 import { CATEGORIES } from "@/lib/push-prefs";
-import { currentSubscription, disablePush, enablePush, loadPrefs, pushSupport, savePrefs } from "@/lib/push-client";
+import { currentSubscription, disablePush, enablePush, loadPrefs, pushSupport, savePrefs, sendTestPush } from "@/lib/push-client";
 import type { PushSupport } from "@/lib/push-client";
 import { alertSoundOn, setAlertSound, subscribeAlertSound } from "@/lib/sfx";
 
@@ -35,6 +35,7 @@ export function NotificationSettings() {
   const [prefs, setPrefs] = useState<Prefs | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [testMsg, setTestMsg] = useState<string | null>(null);
   const sound = useSyncExternalStore(subscribeAlertSound, alertSoundOn, () => true);
 
   useEffect(() => {
@@ -105,6 +106,21 @@ export function NotificationSettings() {
         )}
       </div>
       {error && <p className="mt-1 text-sm text-sens-text">{error}</p>}
+      {enabled && (
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={async () => {
+              setTestMsg("Sending…");
+              setTestMsg(await sendTestPush());
+            }}
+            className="min-h-10 rounded-xl border border-line-strong px-3.5 text-sm font-semibold"
+          >
+            Send a test notification
+          </button>
+          {testMsg && <span className="text-sm text-muted">{testMsg}</span>}
+        </div>
+      )}
 
       {prefs &&
         GROUPS.map((g) => (

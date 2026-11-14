@@ -123,3 +123,32 @@ export async function notify(category: Category, msg: Message, opts: { who?: num
   );
   return sent;
 }
+
+// One test notification to a single phone (the one asking), at most once a minute.
+const lastTest = new Map<string, number>();
+export async function sendTest(endpoint: string): Promise<"sent" | "not-found" | "too-soon" | "failed"> {
+  if (!pushEnabled || !sql) return "failed";
+  const last = lastTest.get(endpoint) ?? 0;
+  if (Date.now() - last < 60_000) return "too-soon";
+  let rows: Row[] = [];
+  try {
+    await ensureTable();
+    rows = (await sql`SELECT endpoint, sub, prefs FROM push_subs WHERE endpoint = ${endpoint}`) as Row[];
+  } catch {
+    return "failed";
+  }
+  if (!rows[0]) return "not-found";
+  lastTest.set(endpoint, Date.now());
+  try {
+    await webpush.sendNotification(
+      JSON.parse(rows[0].sub) as Subscription,
+      JSON.stringify({ title: "SENS GOAL! (test)", body: "Notifications are working on this phone. 🚨", url: "/notifications", tag: "test" }),
+      { TTL: 300, urgency: "high" },
+    );
+    return "sent";
+  } catch (e) {
+    const code = (e as { statusCode?: number }).statusCode;
+    if (code === 404 || code === 410) await removeSubscription(endpoint);
+    return "failed";
+  }
+}

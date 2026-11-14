@@ -98,3 +98,15 @@ export async function disablePush(): Promise<void> {
   await fetch("/api/push/subscribe", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ endpoint: sub.endpoint }) }).catch(() => {});
   await sub.unsubscribe().catch(() => {});
 }
+
+// Ask the server for a test notification to this phone. Returns a short status message.
+export async function sendTestPush(): Promise<string> {
+  const sub = await currentSubscription();
+  if (!sub) return "Turn notifications on first.";
+  const res = await fetch("/api/push/test", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ endpoint: sub.endpoint }) }).catch(() => null);
+  const result = (await res?.json().catch(() => null))?.result;
+  if (result === "sent") return "Sent. It should arrive in a few seconds.";
+  if (result === "too-soon") return "One test a minute. Try again shortly.";
+  if (result === "not-found") return "This phone isn't signed up on the server. Turn notifications off and on again.";
+  return "Couldn't send it. Try turning notifications off and on again.";
+}
