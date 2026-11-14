@@ -12,6 +12,7 @@ import { GameSections } from "./GameSections";
 import { StreamingMenu, TicketsMenu } from "../GameLinks";
 import type { TicketLinks } from "@/lib/tickets";
 import { GameTabButtons } from "./GameTabs";
+import { mediaKeys, useUnseen } from "@/lib/unseen";
 import type { GameTab } from "./GameTabs";
 import { MediaTab } from "../media/MediaTab";
 import type { MediaSegment } from "./GameTabs";
@@ -299,6 +300,9 @@ export function LiveCompanion({
     return () => clearInterval(id);
   }, [replay]);
 
+  // Media tab badge: news, video and audio not seen yet on this phone.
+  const unseen = useUnseen(gameId, replay ? [] : mediaKeys(media, data?.game.goals ?? []), tab === "media");
+
   if (!data) {
     return (
       <div className="mx-4 mt-6 rounded-2xl border border-line bg-surface p-4 text-sm text-ink-2">
@@ -387,7 +391,7 @@ export function LiveCompanion({
         )}
       </section>
 
-      <GameTabButtons active={tab} onChange={changeTab} />
+      <GameTabButtons active={tab} onChange={changeTab} badges={{ media: unseen }} />
 
       {tab === "summary" && (
         <GameSections
