@@ -62,7 +62,6 @@ export function MediaTab({
   initialSegment = "news",
   pending,
   videoNote,
-  oppAbbrev,
 }: {
   news: NewsItem[];
   video: GameVideo | null;
@@ -75,7 +74,6 @@ export function MediaTab({
   // A clip to open right away (from an alert): switches to Video. `n` changes per request.
   pending?: { clipId: number; n: number } | null;
   videoNote?: string;
-  oppAbbrev: string;
 }) {
   const [segment, setSegment] = useState<MediaSegment>(initialSegment);
   const [seenPending, setSeenPending] = useState(0);
@@ -138,7 +136,7 @@ export function MediaTab({
             isFinal={isFinal}
             pending={pending && pending.n > consumed ? pending : null}
             note={videoNote}
-            oppAbbrev={oppAbbrev}
+            startTimeUTC={startTimeUTC}
           />
         ))}
 

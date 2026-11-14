@@ -423,7 +423,6 @@ export function LiveCompanion({
           initialSegment={initialSegment}
           pending={pending}
           videoNote={replay ? "Recaps and highlights are hidden in replay mode so they don't spoil the game." : undefined}
-          oppAbbrev={game.opp.abbrev}
         />
       )}
 

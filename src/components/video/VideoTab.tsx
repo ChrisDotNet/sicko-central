@@ -41,9 +41,10 @@ type Entry = {
   embedUrl?: string;
   source?: "TSN" | "Sportsnet" | "YouTube";
   ytId?: string; // Sens TV: plays in YouTube's player
+  published?: string; // TSN, Sportsnet and Sens TV: when it was posted
+  phase?: Phase;
   external?: boolean; // opens on the source's site instead (and auto-play skips it)
 };
-type Filter = "all" | "ott" | "opp";
 
 function length(sec: number | null) {
   if (!sec) return "";
@@ -51,13 +52,25 @@ function length(sec: number | null) {
   return `${m}:${String(Math.round(sec % 60)).padStart(2, "0")}`;
 }
 
+type Phase = "pre" | "in" | "post";
+const PHASES: Phase[] = ["pre", "in", "post"];
+const PHASE_TITLES: Record<Phase, string> = { pre: "Pregame", in: "In game", post: "Postgame" };
+// Sources within each phase, in order.
+const PHASE_SECTIONS: Record<Phase, Section[]> = {
+  pre: ["senstv", "tsn", "sportsnet"],
+  in: ["goals", "highlights", "tsn", "sportsnet"],
+  post: ["full", "senstv", "tsn", "sportsnet"],
+};
+// Clips TSN or Sportsnet post within this long of puck drop count as in-game.
+const IN_GAME_MS = 2.5 * 3600_000;
+
 const SECTION_TITLES: Record<Section, string> = {
   full: "Full game",
-  senstv: "Sens TV: pressers & interviews",
-  tsn: "TSN: interviews & analysis",
+  senstv: "Sens TV",
+  tsn: "TSN",
   goals: "Goals in order",
   highlights: "Other highlights",
-  sportsnet: "Sportsnet: highlights & reaction",
+  sportsnet: "Sportsnet",
 };
 const NOW_LABEL: Record<Section, string> = { full: "Full game", senstv: "Sens TV", tsn: "TSN", goals: "Goals", highlights: "Highlights", sportsnet: "Sportsnet" };
 
@@ -71,7 +84,7 @@ export function VideoTab({
   isFinal,
   note,
   pending,
-  oppAbbrev,
+  startTimeUTC,
 }: {
   video: GameVideo | null;
   goals: Goal[];
@@ -79,9 +92,9 @@ export function VideoTab({
   note?: string;
   // A clip to play right away, e.g. from a "replay ready" alert. `n` changes on each request.
   pending?: { clipId: number; n: number } | null;
-  oppAbbrev: string;
+  // Puck drop: splits the playlist into pregame, in-game and postgame.
+  startTimeUTC: string;
 }) {
-  const [filter, setFilter] = useState<Filter>("all");
   const [currentId, setCurrentId] = useState<number | null>(null);
   // The NHL player, once started (`n` remounts it, e.g. after watching a TSN video).
   const [playing, setPlaying] = useState<{ start: number; n: number } | null>(null);
@@ -92,7 +105,6 @@ export function VideoTab({
   const [jump, setJump] = useState<{ index: number; n: number } | null>(null);
   const player = useRef<ClipPlayerHandle>(null);
 
-  const goalOk = useCallback((g: Goal) => filter === "all" || (filter === "ott" ? g.team === "OTT" : g.team !== "OTT"), [filter]);
 
   // One flat playlist (the player steps through it by position), in section order.
   const entries = useMemo<Entry[]>(() => {
@@ -106,7 +118,7 @@ export function VideoTab({
       badge: length(v.seconds),
     }));
     const goalEntries: Entry[] = goals
-      .filter((g) => g.clipId && goalOk(g))
+      .filter((g) => g.clipId)
       .map((g) => ({
         clipId: g.clipId as number,
         section: "goals",
@@ -136,6 +148,7 @@ export function VideoTab({
       badge: length(v.seconds),
       embedUrl: v.embedUrl,
       source: "TSN" as const,
+      published: v.published,
     }));
     const sn: Entry[] = (video?.sportsnet ?? []).map((v) => ({
       clipId: -Number(v.id),
@@ -147,6 +160,7 @@ export function VideoTab({
       badge: length(v.seconds),
       embedUrl: v.embedUrl,
       source: "Sportsnet" as const,
+      published: v.published,
     }));
     const tv: Entry[] = (video?.senstv ?? []).map((v, i) => ({
       clipId: -1e12 - i,
@@ -157,13 +171,31 @@ export function VideoTab({
       url: v.url,
       badge: length(v.seconds),
       source: "YouTube" as const,
+      published: v.published,
       // Videos the club doesn't let other sites play open on YouTube instead.
       ...(v.embeddable === false ? { external: true } : { ytId: v.id }),
     }));
-    return [...full, ...tv, ...tsn, ...goalEntries, ...hl, ...sn];
-  }, [video, goals, goalOk]);
+    // Playlist order: pregame, in game, postgame; by source within each, then by time.
+    const start = Date.parse(startTimeUTC);
+    const phaseOf = (e: Entry): Phase => {
+      if (e.section === "full") return "post";
+      if (e.section === "goals" || e.section === "highlights") return "in";
+      const t = e.published ? Date.parse(e.published) : NaN;
+      if (Number.isNaN(t) || Number.isNaN(start)) return "post";
+      if (t < start) return "pre";
+      // TSN and Sportsnet post the odd clip during the game; the club's videos come after it.
+      return e.section !== "senstv" && t < start + IN_GAME_MS ? "in" : "post";
+    };
+    const all = [...full, ...tv, ...tsn, ...goalEntries, ...hl, ...sn].map((e) => ({ ...e, phase: phaseOf(e) }));
+    const rank = (e: Entry) => PHASES.indexOf(e.phase!) * 10 + PHASE_SECTIONS[e.phase!].indexOf(e.section);
+    // Stable sort keeps goal order and NHL order; dated videos go oldest first.
+    return all
+      .map((e, i) => ({ e, i }))
+      .sort((a, b) => rank(a.e) - rank(b.e) || (a.e.published && b.e.published ? a.e.published.localeCompare(b.e.published) : a.i - b.i))
+      .map((x) => x.e);
+  }, [video, goals, startTimeUTC]);
 
-  const waiting = goals.filter((g) => !g.clipId && goalOk(g));
+  const waiting = goals.filter((g) => !g.clipId);
   const pos = currentId == null ? -1 : entries.findIndex((e) => e.clipId === currentId);
   const current = pos >= 0 ? entries[pos] : null;
   // What the poster offers before anything plays: the first full-game video, else the latest goal.
@@ -231,8 +263,7 @@ export function VideoTab({
   }, [handoff]);
   const handoffEntry = handoff ? entries.find((e) => e.clipId === handoff.clipId) : undefined;
 
-  // Alerts ask for a clip by id (state adjusted during render, not in an effect). If the
-  // team filter hides it, clear the filter first and pick it up on the next render.
+  // Alerts ask for a clip by id (state adjusted during render, not in an effect).
   if (pending && pending.n !== handled) {
     setHandled(pending.n);
     setWanted(pending.clipId);
@@ -245,8 +276,6 @@ export function VideoTab({
       setCurrentId(wanted);
       if (playing && !otherPlayer) setJump({ index: i, n: (jump?.n ?? 0) + 1 });
       else setPlaying({ start: i, n: (playing?.n ?? 0) + 1 });
-    } else if (filter !== "all") {
-      setFilter("all");
     } else {
       setWanted(null);
     }
@@ -267,8 +296,6 @@ export function VideoTab({
   }, [handOver]);
   const onError = useCallback(() => setFailed(true), []);
 
-  const goalCount = (f: Filter) => goals.filter((g) => (f === "all" ? true : f === "ott" ? g.team === "OTT" : g.team !== "OTT")).length;
-  const sections: Section[] = ["full", "senstv", "tsn", "goals", "highlights", "sportsnet"];
   const firstGoal = entries.find((e) => e.section === "goals");
 
   if (entries.length === 0 && waiting.length === 0) {
@@ -407,27 +434,18 @@ export function VideoTab({
       {/* Playlist */}
       <aside aria-label="Playlist" className="pt-2 lg:rounded-2xl lg:border lg:border-line lg:bg-[#121214] lg:p-2">
         {note && <p className="mx-0 mb-3 rounded-xl border border-line bg-surface p-3 text-sm text-muted">{note}</p>}
-        {goals.length > 0 && (
-          <div role="group" aria-label="Show goals by team" className="flex gap-1.5 pb-1 lg:p-1.5">
-            {(["all", "ott", "opp"] as Filter[]).map((f) => (
-              <button
-                key={f}
-                type="button"
-                aria-pressed={filter === f}
-                onClick={() => setFilter(f)}
-                className={`min-h-9 flex-1 rounded-full border text-xs font-semibold ${filter === f ? "border-ink bg-ink text-ground" : "border-line-strong text-ink-2"}`}
-              >
-                {f === "all" ? "All goals" : f === "ott" ? "Sens" : oppAbbrev} · {goalCount(f)}
-              </button>
-            ))}
-          </div>
-        )}
-        {sections.map((sec) => {
-          const list = entries.map((e, i) => ({ e, i })).filter((x) => x.e.section === sec);
+        {PHASES.map((phase) => {
+          const inPhase = entries.filter((e) => e.phase === phase);
+          if (inPhase.length === 0 && !(phase === "in" && waiting.length)) return null;
+          return (
+            <div key={phase} className="pt-4 first:pt-1">
+              <h2 className="px-1.5 font-display text-xl font-bold uppercase tracking-wider">{PHASE_TITLES[phase]}</h2>
+        {PHASE_SECTIONS[phase].map((sec) => {
+          const list = inPhase.map((e) => ({ e })).filter((x) => x.e.section === sec);
           const pendingGoals = sec === "goals" ? waiting : [];
           if (list.length === 0 && pendingGoals.length === 0) return null;
           return (
-            <section key={sec} className="pt-3">
+            <section key={sec} className="pt-2">
               <div className="flex items-center justify-between gap-2 px-1.5 pb-1.5">
                 <h3 className="text-[11px] font-bold uppercase tracking-widest text-muted">{SECTION_TITLES[sec]}</h3>
                 {sec === "goals" && firstGoal && list.length > 1 && (
@@ -463,8 +481,12 @@ export function VideoTab({
                           <span className={`absolute top-1 left-1 rounded px-1 text-[10px] font-bold ${e.ott ? "bg-gold text-ground" : "bg-line-strong text-ink"}`}>{e.team}</span>
                         )}
                         {e.source && (
-                          <span className={`absolute top-1 left-1 rounded px-1 text-[10px] font-bold text-white ${e.source === "TSN" ? "bg-sens" : "bg-[#1f4e99]"}`}>
-                            {e.source === "TSN" ? "TSN" : "SN"}
+                          <span
+                            className={`absolute top-1 left-1 rounded px-1 text-[10px] font-bold ${
+                              e.source === "TSN" ? "bg-sens text-white" : e.source === "Sportsnet" ? "bg-[#1f4e99] text-white" : "bg-gold text-ground"
+                            }`}
+                          >
+                            {e.source === "TSN" ? "TSN" : e.source === "Sportsnet" ? "SN" : "SENS TV"}
                           </span>
                         )}
                         {e.badge && <span className="absolute right-1 bottom-1 rounded bg-black/70 px-1 text-[10px] font-bold text-white">{e.badge}</span>}
@@ -497,6 +519,9 @@ export function VideoTab({
                 ))}
               </div>
             </section>
+          );
+        })}
+            </div>
           );
         })}
         {autoNext && playing && (

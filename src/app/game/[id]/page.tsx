@@ -83,7 +83,6 @@ async function GameMedia({ id, game, segment }: { id: string; game: LiveGame; se
       isPre={game.isPre}
       isFinal={game.isFinal}
       initialSegment={segment}
-      oppAbbrev={game.opp.abbrev}
     />
   );
 }
