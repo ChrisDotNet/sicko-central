@@ -9,6 +9,8 @@ import { BirthdayBanner } from "@/components/Birthdays";
 import { scoreLine, splitSchedule } from "@/lib/schedule";
 import { OTT } from "@/lib/teams";
 import { getStartingGoalies } from "@/lib/goalies";
+import { getSeasonLens } from "@/lib/team-stats";
+import { tapeRows } from "@/lib/team-stats-shared";
 import { getSensNews } from "@/lib/sens-news";
 import { getGameFacts } from "@/lib/facts";
 import { pickFacts } from "@/lib/facts-shared";
@@ -37,13 +39,21 @@ export default async function HomePage() {
   const { all, live, last, next } = splitSchedule(schedule.games);
   const comingUp = all.filter((g) => g.state === "upcoming" && g.id !== next?.id).slice(0, 4);
   const tonight = next != null && scores?.currentDate === next.gameDate;
-  const [goalies, facts, gametime, streamEvents, roster] = await Promise.all([
+  const [goalies, facts, gametime, streamEvents, roster, lens] = await Promise.all([
     tonight && next ? getStartingGoalies(String(next.id), next.opp) : null,
     next ? getGameFacts(next.gameDate, next.opp).catch(() => []) : [],
     next ? getGametimeEvents() : {},
     getStreamEvents(),
     getRoster().catch(() => null),
+    next ? getSeasonLens(next.opp) : null,
   ]);
+  // Three rows of the tale of the tape for the next-game card: special teams and goaltending.
+  const tape = lens
+    ? tapeRows(lens, goalies ? { ott: goalies.ott?.name, opp: goalies.opp?.name } : undefined).filter((r) =>
+        ["Power play", "Penalty kill"].includes(r.label) || r.label.startsWith("Goalie") || r.label === "Goals against / game",
+      )
+    : [];
+  const tape3 = [...tape.filter((r) => r.label !== "Goals against / game" || !tape.some((x) => x.label.startsWith("Goalie")))].slice(0, 3);
   const birthdays = [...(roster?.forwards ?? []), ...(roster?.defensemen ?? []), ...(roster?.goalies ?? [])]
     .filter((p) => p.birthDate)
     .map((p) => ({ id: p.id, name: `${name(p.firstName)} ${name(p.lastName)}`, birthDate: p.birthDate!, number: p.sweaterNumber }));
@@ -129,6 +139,7 @@ export default async function HomePage() {
               fact={fact}
               goalies={goalies}
               tickets={ticketLinks(next.startTimeUTC, next.ticketsLink, gametime)}
+              tape={tape3}
             />
           )}
         </section>

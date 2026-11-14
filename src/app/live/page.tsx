@@ -11,6 +11,7 @@ import { atlanticGames } from "@/lib/rivals";
 import { getRadioForGame } from "@/lib/radio";
 import { getGameFacts } from "@/lib/facts";
 import { getStartingGoalies } from "@/lib/goalies";
+import { getRace, getSeasonLens } from "@/lib/team-stats";
 import { getStreamEvents, streamLinks } from "@/lib/streams";
 import { getGametimeEvents, ticketLinks } from "@/lib/tickets";
 import { WatchMenu, TicketsMenu } from "@/components/GameLinks";
@@ -38,15 +39,17 @@ async function LiveContent({ searchParams }: { searchParams: Promise<Record<stri
     const id = String(today.id);
     const [pbp, box] = await Promise.all([getPlayByPlay(id).catch(() => null), getBoxScore(id)]);
     const game = pbp ? buildGame(pbp, box) : null;
-    const [radio, facts, goalies] = game
+    const [radio, facts, goalies, lens, race] = game
       ? await Promise.all([
           getRadioForGame(game.startTimeUTC),
           getGameFacts(game.gameDate, game.opp.abbrev),
-          game.isPre ? getStartingGoalies(id, game.opp.abbrev) : null,
+          getStartingGoalies(id, game.opp.abbrev),
+          getSeasonLens(game.opp.abbrev),
+          getRace(),
         ])
-      : [[], [], null];
+      : [[], [], null, null, null];
     const initial = game ? { game, rivals: scores ? atlanticGames(scores, today.id) : [], radio } : null;
-    return <LiveCompanion key={id} gameId={today.id} initial={initial} replay={false} initialTab={tab} initialSegment={segment} facts={facts} goalies={goalies} />;
+    return <LiveCompanion key={id} gameId={today.id} initial={initial} replay={false} initialTab={tab} initialSegment={segment} facts={facts} goalies={goalies} lens={lens} race={race} />;
   }
 
   const { next, last } = schedule ? splitSchedule(schedule.games) : { next: null, last: null };

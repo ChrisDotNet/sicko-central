@@ -31,7 +31,7 @@ the next game better to watch?
 7. ~~Ticket links~~ Done 2026-11-13 (Gametime + Ticketmaster on the Next game card, every game). Gametime affiliate links when on a paid plan
 8. ~~All Sens news, not just game days~~ Done 2026-11-13 (home page section, /news page, News in desktop header)
 
-8b. Stats tab with a Sens lens; the "tale of the tape" for tonight's opponent is the part that serves the mission
+8b. ~~Stats with a Sens lens~~ Done 2026-11-14: tale of the tape, in-game context lines and "what tonight changed" on the Game page; Standings | Stats (Team, Players); three tape rows on the Next game card
 
 **Tier 3: reference (good for the off-season, not the mission)**
 9. Full career on the player page
@@ -102,7 +102,7 @@ stories near a game are kept. Add a News view (home page section plus its own pa
 every Sens story, saved the same way so it outlasts the feeds. Same headline-and-summary
 rule: full articles open on the outlet's site.
 
-### Stats tab, through a Sens lens — Value: medium (high for the matchup piece) · Effort: M
+### Stats tab, through a Sens lens — **Done** (2026-11-14)
 Not another league-wide stats table (NHL.com and every app already have those). Every
 number answers "how are the Sens doing, and compared to whom?": Ottawa's figure, its rank of
 32 and the league average, with top-10 and bottom-10 marked. All of it comes from the NHL's

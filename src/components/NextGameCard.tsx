@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { StartingGoalies } from "@/lib/goalies";
+import type { TapeRow } from "@/lib/team-stats-shared";
 import type { StandingRow } from "@/lib/nhl";
 import type { GameSummary } from "@/lib/schedule";
 import type { TicketLinks } from "@/lib/tickets";
@@ -107,6 +108,25 @@ function Fact({ text, tone }: { text: string; tone: "plain" | "gold" }) {
   );
 }
 
+// Three rows of the Game page's tale of the tape: Sens against the opponent, rank of 32.
+function MiniTape({ rows, opp, tone }: { rows: TapeRow[]; opp: string; tone: "plain" | "gold" }) {
+  return (
+    <div className={`grid grid-cols-3 border-t ${tone === "gold" ? "border-gold-line" : "border-line"}`}>
+      {rows.map((r, i) => (
+        <div key={r.label} className={`px-3.5 py-2.5 md:px-5 ${i < rows.length - 1 ? `border-r ${tone === "gold" ? "border-gold-line" : "border-line"}` : ""}`}>
+          <div className="mb-1 truncate text-[11px] font-semibold uppercase tracking-wider text-muted">{r.label.replace(/ \(.*\)$/, "")}</div>
+          <div className={`text-[13px] ${r.ottRank <= r.oppRank ? "font-bold text-ink" : "text-ink-2"}`}>
+            OTT {r.ott} <span className="text-[11px] font-semibold text-muted">{ordinal(r.ottRank)}</span>
+          </div>
+          <div className={`text-[13px] ${r.oppRank < r.ottRank ? "font-bold text-ink" : "text-ink-2"}`}>
+            {opp} {r.opp} <span className="text-[11px] font-semibold text-muted">{ordinal(r.oppRank)}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 const CHIP: Record<string, string> = {
   Confirmed: "border-emerald-500/40 bg-emerald-500/15 text-emerald-300",
   Likely: "border-gold-line bg-gold-ground text-gold-text",
@@ -141,6 +161,7 @@ export function NextGameCard({
   fact,
   goalies,
   tickets,
+  tape = [],
 }: {
   next: GameSummary;
   tonight: boolean;
@@ -150,6 +171,7 @@ export function NextGameCard({
   fact: string | null;
   goalies: StartingGoalies | null;
   tickets: TicketLinks;
+  tape?: TapeRow[];
 }) {
   const tone = tonight ? "gold" : "plain";
   const footer = (
@@ -177,6 +199,7 @@ export function NextGameCard({
         <Countdown startTimeUTC={next.startTimeUTC} />
         {goalies && (goalies.ott || goalies.opp) && <Goalies goalies={goalies} opp={next.opp} />}
         <Snapshot opp={next.opp} oppName={oppName} row={row} series={series} tone={tone} />
+        {tape.length > 0 && <MiniTape rows={tape} opp={next.opp} tone={tone} />}
         {fact && <Fact text={fact} tone={tone} />}
         {footer}
       </div>
@@ -199,6 +222,7 @@ export function NextGameCard({
         <TeamBar abbrev={next.opp} className="mt-5 h-11 w-2.5" />
       </div>
       <Snapshot opp={next.opp} oppName={oppName} row={row} series={series} tone={tone} />
+      {tape.length > 0 && <MiniTape rows={tape} opp={next.opp} tone={tone} />}
       {fact && <Fact text={fact} tone={tone} />}
       {footer}
     </div>

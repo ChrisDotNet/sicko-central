@@ -23,6 +23,8 @@ import { Latest } from "./Latest";
 import { ScreenAwake } from "./ScreenAwake";
 import type { Fact } from "@/lib/facts-shared";
 import type { StartingGoalies as StartingGoaliesData } from "@/lib/goalies";
+import type { SeasonLens } from "@/lib/team-stats-shared";
+import type { Race } from "@/lib/team-stats";
 import { getFavourites } from "@/lib/favourites";
 import { latestItems } from "./latest-items";
 
@@ -55,6 +57,8 @@ export function LiveCompanion({
   initialSegment = "news",
   facts,
   goalies,
+  lens,
+  race,
 }: {
   gameId: number;
   initial: Payload | null;
@@ -63,6 +67,9 @@ export function LiveCompanion({
   initialSegment?: MediaSegment;
   facts?: Fact[];
   goalies?: StartingGoaliesData | null;
+  // Season numbers for both teams (tale of the tape, in-game context) and the race (after the final).
+  lens?: SeasonLens | null;
+  race?: Race | null;
 }) {
   const [tab, setTab] = useState<GameTab>(initialTab);
   const [media, setMedia] = useState<GameMedia | null>(null);
@@ -402,6 +409,8 @@ export function LiveCompanion({
           game={game}
           facts={facts}
           goalies={goalies}
+          lens={replay ? null : lens}
+          race={replay ? null : race}
           radio={showLiveBar}
           aside={
             <>

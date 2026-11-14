@@ -13,6 +13,11 @@ import { GameFacts } from "./GameFacts";
 import type { Fact } from "@/lib/facts-shared";
 import type { StartingGoalies as Goalies } from "@/lib/goalies";
 import { StartingGoalies } from "./StartingGoalies";
+import type { SeasonLens } from "@/lib/team-stats-shared";
+import type { Race } from "@/lib/team-stats";
+import { TaleOfTape } from "./TaleOfTape";
+import { SeasonContext } from "./SeasonContext";
+import { AfterFinal } from "./AfterFinal";
 
 // One set of sections, three arrangements:
 // - Phone: one column in the order below (`order-*`).
@@ -30,6 +35,8 @@ export function GameSections({
   aside,
   facts,
   goalies,
+  lens,
+  race,
   radio = false,
 }: {
   game: LiveGame;
@@ -38,6 +45,10 @@ export function GameSections({
   facts?: Fact[];
   // Starting goalies (NHL.com game preview): shown before puck drop.
   goalies?: Goalies | null;
+  // Season numbers for both teams: tale of the tape before the game, one-line context during
+  // it, and what tonight changed after the final.
+  lens?: SeasonLens | null;
+  race?: Race | null;
   // Whether the live radio bar is on the page (the intermission card links to it).
   radio?: boolean;
 }) {
@@ -53,6 +64,8 @@ export function GameSections({
         <section className="order-1 px-4 pt-4">
           {intermission ? <IntermissionCard game={game} radio={radio} /> : <RightNow ctx={contextFor(game)} />}
         </section>
+        {lens && game.isLive && <SeasonContext game={game} lens={lens} className="order-1" />}
+        {lens && game.isFinal && !game.replay && <AfterFinal game={game} lens={lens} race={race ?? null} className="order-1" />}
         <YourPlayers skaters={game.skaters} className="order-1" />
         {facts && facts.length > 0 && intermission && <GameFacts facts={facts} skaters={game.skaters} className="order-1" />}
         {started && (
@@ -71,6 +84,9 @@ export function GameSections({
             tablets and desktops don't show an empty column. */}
         {game.isPre && goalies !== undefined && !game.replay && (
           <StartingGoalies initial={goalies} gameId={game.id} oppAbbrev={game.opp.abbrev} className="order-2 md:pt-4" />
+        )}
+        {game.isPre && lens && !game.replay && (
+          <TaleOfTape lens={lens} goalies={goalies ? { ott: goalies.ott?.name, opp: goalies.opp?.name } : undefined} className="order-2" />
         )}
         {game.isPre && facts && facts.length > 0 && <GameFacts facts={facts} skaters={game.skaters} className="order-2" />}
         {started && (
