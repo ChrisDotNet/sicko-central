@@ -197,7 +197,7 @@ export function IntermissionCard({ game, radio }: { game: LiveGame; radio: boole
           </span>
           <span className="flex flex-col">
             <span className="text-sm font-bold">TSN 1200 intermission show</span>
-            <span className="text-xs text-muted">Live now, in the radio bar</span>
+            <span className="text-xs text-muted">Live now: tap play in the radio strip</span>
           </span>
         </button>
       )}

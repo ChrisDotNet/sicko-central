@@ -1,39 +1,32 @@
 "use client";
 
-// The TSN 1200 live bar's state, shared across the whole site: the bar itself lives in the
-// root layout, so the radio keeps playing while you move between pages.
-// - offer: set by the Game page while a game is on (with a label); the bar shows "Listen".
-// - mode: closed, open (full player), small (one slim row, still playing) or stopped (slim
-//   row with a play button, after Stop).
+// The TSN 1200 strip's state, shared across the whole site: the strip lives in the root
+// layout, so the radio keeps playing while you move between pages.
+// - offer: set by the Game page while a game is on (with a label); the strip shows there.
+// - started: someone has pressed play, so the strip follows them to every page until closed.
 import { useSyncExternalStore } from "react";
 
-// stopped: the slim strip stays on screen (on any page) with a play button, until dismissed.
-export type RadioMode = "closed" | "open" | "small" | "stopped";
-type State = { mode: RadioMode; offer: string | null };
+type State = { offer: string | null; started: boolean };
 
-let state: State = { mode: "closed", offer: null };
+let state: State = { offer: null, started: false };
 const subs = new Set<() => void>();
 const emit = () => subs.forEach((f) => f());
 
-export function setRadioMode(mode: RadioMode) {
-  if (state.mode === mode) return;
-  state = { ...state, mode };
+function set(next: Partial<State>) {
+  const merged = { ...state, ...next };
+  if (merged.offer === state.offer && merged.started === state.started) return;
+  state = merged;
   emit();
 }
 
-// The Game page offers the radio while a game is on, and withdraws the offer when you leave;
-// a full player then shrinks to its slim row and keeps playing.
-export function setRadioOffer(offer: string | null) {
-  if (state.offer === offer) return;
-  state = { mode: offer === null && state.mode === "open" ? "small" : state.mode, offer };
-  emit();
-}
+export const setRadioOffer = (offer: string | null) => set({ offer });
+export const setRadioStarted = (started: boolean) => set({ started });
 
 function subscribe(cb: () => void) {
   subs.add(cb);
   return () => subs.delete(cb);
 }
-const SERVER: State = { mode: "closed", offer: null };
+const SERVER: State = { offer: null, started: false };
 
 export function useRadio(): State {
   return useSyncExternalStore(subscribe, () => state, () => SERVER);
