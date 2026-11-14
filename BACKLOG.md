@@ -37,6 +37,9 @@ the next game better to watch?
 11. Podcasts tab
 12. Player contracts (parked: no legitimate data source yet)
 
+**Just for fun**
+13. "Leafs Suck": enjoying the Toronto Maple Leafs' misfortunes (shape to be decided)
+
 ## Items
 
 ### Animate the Game ("Live") tab during a game — **Done** (2026-11-13)
@@ -136,3 +139,19 @@ Needs Chris's list of shows.
 - **Fallback:** a hand-maintained contract table for the current roster (about 25 players,
   updated when signings happen). Cheap and honest, but it's manual upkeep.
 Revisit if PuckPedia's API pricing suits a hobby site.
+
+### "Leafs Suck" — Value: fun (low for the mission, high for morale) · Effort: S–M
+Chris's idea: a section that takes joy in the Leafs' failings; shape not decided. Everything
+below comes from NHL data we already read (schedule, scores, standings), so no new sources.
+Keep it about the team's results, never players' or fans' personal lives; no logos.
+Options, smallest first:
+- **Leafs Watch on game nights:** if the Leafs play the same night, pin their game at the top
+  of the out-of-town scoreboard, red when they're losing. Fits the mission best.
+- **"Leafs lose" notification:** an opt-in alert at the final of every Leafs loss (off by
+  default, under a "Just for fun" group). Cheap: the game watcher already checks scores.
+- **The Leafs Suck page:** their current losing streak, every loss this season (wins listed
+  in small grey type), points behind the Sens in the standings, the Battle of Ontario record
+  this season and all-time, and a "seasons since the Leafs last won the Cup" counter (1967).
+- **Schadenfreude facts:** a fourth "Did you know" on Sens game days when the Leafs lost the
+  night before ("The Leafs have lost 4 straight").
+- **Home page strip:** "Leafs: L, 2–5 vs BOS last night" in small type, only after a loss.
