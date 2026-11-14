@@ -6,8 +6,11 @@ import type { NextRequest } from "next/server";
 // and the app's files are left alone, so notification calls already booked against the old
 // address, and phones still subscribed through it, keep working. (A domain-wide redirect in
 // Vercel's settings would break those.)
+// Held off in code until sickocentral.ca resolves (the .ca registry hadn't published it yet).
+const READY = false;
+
 export function proxy(req: NextRequest) {
-  const canonical = process.env.CANONICAL_HOST;
+  const canonical = READY ? process.env.CANONICAL_HOST : undefined;
   const host = req.headers.get("host");
   if (!canonical || !host || host === canonical || host.startsWith("localhost")) return NextResponse.next();
   // Preview deployments keep their own address.

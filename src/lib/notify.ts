@@ -25,7 +25,8 @@ import { getJson, setJson } from "./store";
 import { OTT } from "./teams";
 import { formatTime, periodLabel } from "./format";
 
-const SITE = process.env.SITE_URL ?? "https://sicko-central.vercel.app";
+// Held on the vercel.app address until sickocentral.ca resolves; then back to SITE_URL.
+const SITE = "https://sicko-central.vercel.app"; // was: process.env.SITE_URL ?? this
 const TICK = `${SITE}/api/notify/tick`;
 const MAX_TICKS = 260; // about 3 h at one a minute plus 3 h at one every five
 const MAX_AFTER_START_MS = 8 * 3600_000;
