@@ -3,10 +3,12 @@
 // The TSN 1200 live bar's state, shared across the whole site: the bar itself lives in the
 // root layout, so the radio keeps playing while you move between pages.
 // - offer: set by the Game page while a game is on (with a label); the bar shows "Listen".
-// - mode: closed, open (full player) or small (one slim row, still playing).
+// - mode: closed, open (full player), small (one slim row, still playing) or stopped (slim
+//   row with a play button, after Stop).
 import { useSyncExternalStore } from "react";
 
-export type RadioMode = "closed" | "open" | "small";
+// stopped: the slim strip stays on screen (on any page) with a play button, until dismissed.
+export type RadioMode = "closed" | "open" | "small" | "stopped";
 type State = { mode: RadioMode; offer: string | null };
 
 let state: State = { mode: "closed", offer: null };

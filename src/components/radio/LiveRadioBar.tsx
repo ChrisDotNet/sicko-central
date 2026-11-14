@@ -15,9 +15,35 @@ import { setRadioMode, useRadio } from "@/lib/radio-store";
 const EMBED = "https://www.iheart.com/live/tsn-1200-7503/?embed=true&theme=dark";
 const APP = "https://www.iheart.com/live/tsn-1200-7503/";
 
+const PATHS = {
+  play: <path d="M8 5.5v13l11-6.5z" fill="currentColor" />,
+  stop: <rect x="6.5" y="6.5" width="11" height="11" rx="1.5" fill="currentColor" />,
+  down: <path d="M6 9l6 6 6-6" />,
+  up: <path d="M6 15l6-6 6 6" />,
+  close: <path d="M6 6l12 12M18 6L6 18" />,
+};
+
+// Round icon buttons: play is red; the rest are outlined.
+function IconButton({ label, title, onClick, icon, primary = false }: { label: string; title: string; onClick: () => void; icon: keyof typeof PATHS; primary?: boolean }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      title={title}
+      className={`flex size-10 shrink-0 items-center justify-center rounded-full ${primary ? "bg-sens text-white" : "border border-line-strong text-ink-2 hover:text-ink"}`}
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        {PATHS[icon]}
+      </svg>
+    </button>
+  );
+}
+
 export function LiveRadioBar() {
-  // closed: just the bar. open: the full player. small: still playing, player tucked away
-  // (the frame stays loaded so the audio keeps going), one slim row.
+  // closed: just the bar (Game page only). open: the full player. small: still playing,
+  // player tucked away (the frame stays loaded so the audio keeps going), one slim row.
+  // stopped: the slim row with play and close, on any page.
   const { mode: state, offer } = useRadio();
   const setState = setRadioMode;
   useEffect(() => onOpenLiveRadio(() => setRadioMode("open")), []);
@@ -31,17 +57,21 @@ export function LiveRadioBar() {
     ro.observe(nav);
     return () => ro.disconnect();
   }, []);
-  const playing = state !== "closed";
-  const small = state === "small";
-  if (!playing && offer === null) return null;
+  const playing = state === "open" || state === "small";
+  const strip = state === "small" || state === "stopped"; // slim row joined to the menu
+  if (state === "closed" && offer === null) return null;
   const label = offer ?? "Playing";
+  const small = strip;
+
+  const stop = <IconButton label="Stop the radio" title="Stop" onClick={() => setState("stopped")} icon="stop" />;
 
   return (
     <>
     {/* Room at the bottom of every page so the bar never covers the last of it (phones). */}
     <div aria-hidden="true" className={`lg:hidden ${small ? "h-12" : "h-20"}`} />
-    {/* Phones and tablets: open, a card floating just above the bottom menu; shrunk, a strip
-        joined to the top of the menu with no gap. Desktop: a card at the bottom right. */}
+    {/* Phones and tablets: open, a card floating just above the bottom menu; shrunk or
+        stopped, a strip joined to the top of the menu with no gap. Desktop: a card at the
+        bottom right. */}
     <div
       style={{ ["--nav-h" as string]: `${navH}px` }}
       className={`fixed inset-x-0 z-10 mx-auto max-w-xl md:max-w-4xl lg:inset-x-auto lg:bottom-6 lg:right-[max(2.5rem,calc((100vw-1360px)/2+2.5rem))] lg:mx-0 lg:w-[320px] lg:max-w-none lg:px-0 ${
@@ -53,35 +83,30 @@ export function LiveRadioBar() {
           small ? "border-t bg-[#151518]" : "rounded-2xl border shadow-[0_-8px_24px_rgba(0,0,0,0.5)]"
         }`}
       >
-        <div className={`flex items-center gap-3 px-3.5 ${state === "small" ? "py-1.5" : "py-2"}`}>
-          <span className={`flex size-2 shrink-0 rounded-full bg-sens-bright ${playing ? "live-ring" : ""}`} aria-hidden="true" />
+        <div className={`flex items-center gap-2 px-3.5 ${small ? "py-1.5" : "py-2"}`}>
+          <span className={`mr-1 flex size-2 shrink-0 rounded-full ${playing ? "live-ring bg-sens-bright" : "bg-line-strong"}`} aria-hidden="true" />
           <div className="min-w-0 flex-1">
             <div className="text-sm font-bold">TSN 1200 live</div>
-            {state !== "small" && <div className="truncate text-xs text-muted">{label}</div>}
+            {!small && <div className="truncate text-xs text-muted">{label}</div>}
+            {state === "stopped" && <div className="truncate text-xs text-muted">Stopped</div>}
           </div>
-          {state === "closed" && (
-            <button type="button" onClick={() => setState("open")} className="min-h-11 rounded-xl bg-sens px-3.5 text-sm font-bold text-white">
-              Listen
-            </button>
-          )}
+          {state === "closed" && <IconButton label="Listen to TSN 1200 live" title="Listen" onClick={() => setState("open")} icon="play" primary />}
           {state === "open" && (
             <>
-              <button type="button" onClick={() => setState("small")} aria-label="Shrink the radio player, keep listening" className="min-h-11 rounded-xl border border-line-strong px-3 text-sm font-semibold">
-                Shrink
-              </button>
-              <button type="button" onClick={() => setState("closed")} className="min-h-11 rounded-xl border border-line-strong px-3 text-sm font-semibold">
-                Stop
-              </button>
+              <IconButton label="Shrink the player (keeps playing)" title="Shrink" onClick={() => setState("small")} icon="down" />
+              {stop}
             </>
           )}
           {state === "small" && (
             <>
-              <button type="button" onClick={() => setState("open")} aria-label="Show the radio player" className="min-h-10 rounded-xl border border-line-strong px-3 text-sm font-semibold">
-                Player
-              </button>
-              <button type="button" onClick={() => setState("closed")} className="min-h-10 rounded-xl border border-line-strong px-3 text-sm font-semibold">
-                Stop
-              </button>
+              <IconButton label="Show the radio player" title="Open the player" onClick={() => setState("open")} icon="up" />
+              {stop}
+            </>
+          )}
+          {state === "stopped" && (
+            <>
+              <IconButton label="Play TSN 1200 again" title="Play" onClick={() => setState("open")} icon="play" primary />
+              <IconButton label="Close the radio bar" title="Close" onClick={() => setState("closed")} icon="close" />
             </>
           )}
         </div>
