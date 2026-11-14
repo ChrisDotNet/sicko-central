@@ -127,8 +127,8 @@ Standings page, and "Stats" in the desktop header.
 4. **Playoff race:** points pace over 82, gap to third in the Atlantic and to the last wild
    card, games in hand, and the points pace the current eighth-place team is on. A small line
    for the Leafs' points too, for morale.
-5. **Sens leaders, in league context:** each leader with their NHL rank ("Stützle, 24 points,
-   18th in the NHL"), rookies against the rookie class, and milestones coming up (some of this
+5. **Sens leaders, in league context:** each leader with their NHL rank (e.g. "Stützle, 24 points,
+   Nth in the NHL"), rookies against the rookie class, and milestones coming up (some of this
    already feeds "Did you know"). (`skater-stats-leaders`, `club-stats`)
 6. **NHL EDGE tracking:** puck- and player-tracking numbers with league ranks: top skating
    speed, hardest shot, offensive-zone time (the Sens rank 3rd today), and where their shots
