@@ -62,7 +62,8 @@ export async function publish(p: Publish): Promise<boolean> {
 const b64url = (b: Buffer) => b.toString("base64url");
 
 // Check QStash's signature (a JWT signed with either signing key) on a call to us.
-export function verifySignature(signature: string | null, body: string, url: string): boolean {
+export function verifySignature(signature: string | null, body: string, url: string | string[]): boolean {
+  const urls = (Array.isArray(url) ? url : [url]).map((u) => u.replace(/\/$/, ""));
   if (!signature) return false;
   const keys = [process.env.QSTASH_CURRENT_SIGNING_KEY, process.env.QSTASH_NEXT_SIGNING_KEY].filter((k): k is string => !!k);
   const [h, p, s] = signature.split(".");
@@ -79,7 +80,7 @@ export function verifySignature(signature: string | null, body: string, url: str
     if (claims.iss !== "Upstash") return false;
     if (claims.exp && now > claims.exp + 5) return false;
     if (claims.nbf && now < claims.nbf - 5) return false;
-    if (claims.sub && claims.sub.replace(/\/$/, "") !== url.replace(/\/$/, "")) return false;
+    if (claims.sub && !urls.includes(claims.sub.replace(/\/$/, ""))) return false;
     const hash = b64url(createHash("sha256").update(body).digest()).replace(/=+$/, "");
     return (claims.body ?? "").replace(/=+$/, "") === hash;
   } catch {
