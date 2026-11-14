@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { Card, Chevron, ErrorNote, Kicker, Page, ResultBadge, Section } from "@/components/ui";
-import { StandingsTable } from "@/components/StandingsTable";
 import { GameSummaryButton } from "@/components/GameSummaryButton";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { formatDay, formatTime, savePct } from "@/lib/format";
@@ -32,7 +31,7 @@ export default async function HomePage() {
     getClubStats().catch(() => null),
     getScoresNow().catch(() => null),
   ]);
-  const news = (await getSensNews().catch(() => [])).slice(0, 6);
+  const news = (await getSensNews().catch(() => [])).slice(0, 12);
 
   if (!schedule) return <ErrorNote>NHL data isn&apos;t available right now. Try again in a minute.</ErrorNote>;
 
@@ -63,9 +62,6 @@ export default async function HomePage() {
   const oppTeam = rawNext ? (rawNext.homeTeam.abbrev === OTT ? rawNext.awayTeam : rawNext.homeTeam) : undefined;
   const oppName = oppTeam?.commonName?.default ?? next?.opp ?? "";
   const ottRow = standings.find((r) => name(r.teamAbbrev) === OTT);
-  const division = ottRow
-    ? standings.filter((r) => r.divisionAbbrev === ottRow.divisionAbbrev).sort((a, b) => a.divisionSequence - b.divisionSequence)
-    : [];
 
   const skaters = stats?.skaters ?? [];
   const top = (key: "points" | "goals" | "assists") => [...skaters].sort((a, b) => b[key] - a[key])[0];
@@ -81,8 +77,6 @@ export default async function HomePage() {
     who: { playerId: number; firstName: { default: string }; lastName: { default: string } };
   }>;
 
-  // Phone: one column in source order. Tablet and desktop: two grids, the game cards on
-  // the left and the record and last result on the right; then standings beside leaders.
   return (
     <Page width="wide">
       <InstallPrompt />
@@ -106,92 +100,81 @@ export default async function HomePage() {
 
       <BirthdayBanner players={birthdays} />
 
-      <div className="flex flex-col md:grid md:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-        {ottRow && (
-          <section className="px-4 pt-4 md:col-start-2 md:row-start-1">
-            <Card className="grid grid-cols-3">
-              <div className="flex flex-col items-center gap-0.5 border-r border-line px-3 py-3.5">
-                <span className="font-display text-3xl font-extrabold leading-none">
-                  {ottRow.wins}-{ottRow.losses}-{ottRow.otLosses}
-                </span>
-                <span className="text-xs text-muted">Record</span>
-              </div>
-              <div className="flex flex-col items-center gap-0.5 border-r border-line px-3 py-3.5">
-                <span className="font-display text-3xl font-extrabold leading-none">{ottRow.points}</span>
-                <span className="text-xs text-muted">Points</span>
-              </div>
-              <div className="flex flex-col items-center gap-0.5 px-3 py-3.5">
-                <span className="font-display text-3xl font-extrabold leading-none text-gold-text">{ordinal(ottRow.divisionSequence)}</span>
-                <span className="text-xs text-muted">{ottRow.divisionName}</span>
-              </div>
-            </Card>
+      {/* Phone: one column, in the order set by order-*. Tablet and desktop: two independent
+          columns, so neither stretches to match the other (no gaps). The column wrappers use
+          display: contents on phones so their sections join one flow. */}
+      <div className="flex flex-col md:grid md:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] md:items-start">
+        <div className="contents md:flex md:min-w-0 md:flex-col">
+          <section className="order-2 flex flex-col gap-2.5 px-4 pt-4">
+            {next && (
+              <NextGameCard
+                next={{ ...next, streams: streamLinks(next.startTimeUTC, next.broadcasts, streamEvents) }}
+                tonight={tonight}
+                oppName={oppName}
+                row={oppRow}
+                series={seriesFor(next, all)}
+                fact={fact}
+                goalies={goalies}
+                tickets={ticketLinks(next.startTimeUTC, next.ticketsLink, gametime)}
+                tape={tape3}
+              />
+            )}
           </section>
-        )}
-
-        <section className="flex flex-col gap-2.5 px-4 pt-4 md:col-start-1 md:row-span-2 md:row-start-1 md:[&>*]:flex-1">
-          {next && (
-            <NextGameCard
-              next={{ ...next, streams: streamLinks(next.startTimeUTC, next.broadcasts, streamEvents) }}
-              tonight={tonight}
-              oppName={oppName}
-              row={oppRow}
-              series={seriesFor(next, all)}
-              fact={fact}
-              goalies={goalies}
-              tickets={ticketLinks(next.startTimeUTC, next.ticketsLink, gametime)}
-              tape={tape3}
-            />
+          {news.length > 0 && (
+            <Section
+              className="order-5"
+              title="Sens news"
+              aside={
+                <Link href="/news" className="text-sm font-semibold text-ink">
+                  All news
+                </Link>
+              }
+            >
+              <SensNewsList items={news} games={all} compact />
+            </Section>
           )}
-        </section>
-        {last && last.result && (
-          <section className="px-4 pt-2.5 md:col-start-2 md:row-start-2 md:pt-4">
-            <div className="flex h-full items-center justify-between gap-3 rounded-2xl border border-line bg-surface p-4">
-              <div className="flex flex-col gap-1">
-                <Kicker tone="muted">Last result</Kicker>
-                <span className="mt-1 flex items-center gap-2">
-                  <ResultBadge result={last.result} />
-                  <span className="font-display text-2xl font-extrabold leading-none tracking-wide">
-                    {scoreLine(last)} {last.home ? "vs" : "at"} {last.opp}
+        </div>
+        {/* Tablet and desktop: the right column stays in view while the news scrolls. */}
+        <div className="contents md:sticky md:top-0 md:flex md:min-w-0 md:flex-col">
+          {ottRow && (
+            <section className="order-1 px-4 pt-4">
+              <Card className="grid grid-cols-3">
+                <div className="flex flex-col items-center gap-0.5 border-r border-line px-3 py-3.5">
+                  <span className="font-display text-3xl font-extrabold leading-none">
+                    {ottRow.wins}-{ottRow.losses}-{ottRow.otLosses}
                   </span>
-                </span>
-                <span className="text-sm text-muted">{formatDay(last.startTimeUTC).long} · Final</span>
+                  <span className="text-xs text-muted">Record</span>
+                </div>
+                <div className="flex flex-col items-center gap-0.5 border-r border-line px-3 py-3.5">
+                  <span className="font-display text-3xl font-extrabold leading-none">{ottRow.points}</span>
+                  <span className="text-xs text-muted">Points</span>
+                </div>
+                <div className="flex flex-col items-center gap-0.5 px-3 py-3.5">
+                  <span className="font-display text-3xl font-extrabold leading-none text-gold-text">{ordinal(ottRow.divisionSequence)}</span>
+                  <span className="text-xs text-muted">{ottRow.divisionName}</span>
+                </div>
+              </Card>
+            </section>
+          )}
+          {last && last.result && (
+            <section className="order-3 px-4 pt-2.5 md:pt-4">
+              <div className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-surface p-4">
+                <div className="flex flex-col gap-1">
+                  <Kicker tone="muted">Last result</Kicker>
+                  <span className="mt-1 flex items-center gap-2">
+                    <ResultBadge result={last.result} />
+                    <span className="font-display text-2xl font-extrabold leading-none tracking-wide">
+                      {scoreLine(last)} {last.home ? "vs" : "at"} {last.opp}
+                    </span>
+                  </span>
+                  <span className="text-sm text-muted">{formatDay(last.startTimeUTC).long} · Final</span>
+                </div>
+                <GameSummaryButton href={`/game/${last.id}`} label={`Game summary, ${last.home ? "vs" : "at"} ${last.opp}`} />
               </div>
-              <GameSummaryButton href={`/game/${last.id}`} label={`Game summary, ${last.home ? "vs" : "at"} ${last.opp}`} />
-            </div>
-          </section>
-        )}
-      </div>
-
-      <div className="md:grid md:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] md:items-start">
-        {division.length > 0 && (
-          <Section
-            className="md:col-start-1"
-            title={ottRow?.divisionName ?? "Division"}
-            aside={
-              <Link href="/standings" className="text-sm font-semibold text-ink">
-                Full standings
-              </Link>
-            }
-          >
-            <StandingsTable rows={division} extraFrom="lg" />
-          </Section>
-        )}
-        {news.length > 0 && (
-          <Section
-            className="md:col-start-1"
-            title="Sens news"
-            aside={
-              <Link href="/news" className="text-sm font-semibold text-ink">
-                All news
-              </Link>
-            }
-          >
-            <SensNewsList items={news} games={all} compact />
-          </Section>
-        )}
-        <div className="md:col-start-2 md:row-span-2 md:row-start-1">
+            </section>
+          )}
           {leaders.length > 0 && (
-            <Section title="Team leaders">
+            <Section className="order-6" title="Team leaders">
               <div className="grid grid-cols-2 gap-2.5">
                 {leaders.map((l) => (
                   <Link
@@ -211,7 +194,7 @@ export default async function HomePage() {
           )}
           {comingUp.length > 0 && (
             <Section
-              className="hidden md:block"
+              className="order-7 hidden md:block"
               title="Coming up"
               aside={
                 <Link href="/schedule" className="text-sm font-semibold text-ink">
