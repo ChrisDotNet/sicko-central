@@ -7,7 +7,7 @@
 import { cacheLife } from "next/cache";
 
 export type GoalieStatus = "Confirmed" | "Likely" | "Projected";
-export type GoalieCall = { name: string; status: GoalieStatus; backup: string | null };
+export type GoalieCall = { name: string; status: GoalieStatus; backup: string | null; id?: number; backupId?: number };
 export type StartingGoalies = {
   ott: GoalieCall | null;
   opp: GoalieCall | null;
@@ -95,6 +95,18 @@ export async function getStartingGoalies(gameId: string, oppAbbrev: string): Pro
   const ott = call(text, report, "Senators");
   const opp = oppWord ? call(text, report, oppWord.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")) : null;
   if (!ott && !opp) return null;
+  // Player ids from each team's roster (by last name), so the names can link to player pages.
+  type Roster = { goalies?: { id: number; lastName?: { default?: string } }[] };
+  const [ottRoster, oppRoster] = await Promise.all([
+    getJson<Roster>("https://api-web.nhle.com/v1/roster/OTT/current"),
+    /^[A-Z]{3}$/.test(oppAbbrev) ? getJson<Roster>(`https://api-web.nhle.com/v1/roster/${oppAbbrev}/current`) : null,
+  ]);
+  const idOf = (r: Roster | null, full: string | null | undefined) => {
+    const last = full?.trim().split(" ").slice(-1)[0]?.toLowerCase();
+    return last ? r?.goalies?.find((g) => g.lastName?.default?.toLowerCase() === last)?.id : undefined;
+  };
+  if (ott) Object.assign(ott, { id: idOf(ottRoster, ott.name), backupId: idOf(ottRoster, ott.backup) });
+  if (opp) Object.assign(opp, { id: idOf(oppRoster, opp.name), backupId: idOf(oppRoster, opp.backup) });
   return {
     ott,
     opp,

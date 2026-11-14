@@ -6,6 +6,7 @@ import { periodLabel } from "@/lib/format";
 import { unlockSfx } from "@/lib/sfx";
 import { openLiveRadio } from "@/lib/media-bus";
 import { useFavourites } from "@/lib/favourites";
+import { PlayerLink, PlayerList } from "../PlayerLink";
 import { goalToReelItem, strengthTag } from "./GoalReplays";
 import { preloadClipPlayer } from "./ClipPlayer";
 import { ClipDialog, nextReelSession } from "../video/ClipDialog";
@@ -123,12 +124,12 @@ export function IntermissionCard({ game, radio }: { game: LiveGame; radio: boole
                 <span className="flex min-w-0 flex-1 flex-col">
                   <span className="truncate text-sm font-bold">
                     {g.scorerId != null && favs.has(g.scorerId) && <span className="text-gold-text">★ </span>}
-                    {g.scorer}
+                    <PlayerLink id={g.scorerId}>{g.scorer}</PlayerLink>
                     {g.scorerTotal ? ` (${g.scorerTotal})` : ""}
                     {strengthTag(g)}
                   </span>
                   <span className="truncate text-xs text-muted">
-                    {g.time} · {g.assists.length ? g.assists.join(", ") : "Unassisted"} · {g.scoreAfter}
+                    {g.time} · {g.assists.length ? <PlayerList names={g.assists} ids={g.assistIds} /> : "Unassisted"} · {g.scoreAfter}
                   </span>
                 </span>
                 {g.clipId ? (
@@ -169,14 +170,14 @@ export function IntermissionCard({ game, radio }: { game: LiveGame; radio: boole
               <div key={s.id} className="flex items-baseline justify-between gap-3">
                 <span className="font-bold">
                   {favs.has(s.id) && <span className="text-gold-text">★ </span>}
-                  {s.name}
+                  <PlayerLink id={s.id}>{s.name}</PlayerLink>
                 </span>
                 <span className="text-right text-[13px] text-ink-2">{s.detail}</span>
               </div>
             ))}
             {goalie && goalie.shots > 0 && (
               <div className="flex items-baseline justify-between gap-3">
-                <span className="font-bold">{goalie.name}</span>
+                <span className="font-bold"><PlayerLink id={goalie.id}>{goalie.name}</PlayerLink></span>
                 <span className="text-[13px] text-ink-2">
                   {goalie.saves} {goalie.saves === 1 ? "save" : "saves"} on {goalie.shots}
                 </span>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { StartingGoalies } from "@/lib/goalies";
 import type { TapeRow } from "@/lib/team-stats-shared";
+import { PlayerLink } from "./PlayerLink";
 import type { StandingRow } from "@/lib/nhl";
 import type { GameSummary } from "@/lib/schedule";
 import type { TicketLinks } from "@/lib/tickets";
@@ -144,7 +145,9 @@ function Goalies({ goalies, opp }: { goalies: StartingGoalies; opp: string }) {
       {rows.map(({ abbrev, g }) => (
         <div key={abbrev} className="flex items-center gap-2 text-sm">
           <TeamBar abbrev={abbrev} className="h-4 w-1.5" />
-          <span className="flex-1 font-bold">{g!.name}</span>
+          <span className="flex-1 font-bold">
+            <PlayerLink id={g!.id}>{g!.name}</PlayerLink>
+          </span>
           <span className={`rounded-full border px-2 py-0.5 text-[11px] font-bold ${CHIP[g!.status]}`}>{g!.status}</span>
         </div>
       ))}

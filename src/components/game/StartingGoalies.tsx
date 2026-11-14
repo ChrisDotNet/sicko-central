@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { GoalieCall, GoalieStatus, StartingGoalies as Goalies } from "@/lib/goalies";
 import { OTT } from "@/lib/teams";
 import { TeamBar } from "../ui";
+import { PlayerLink } from "../PlayerLink";
 
 const REFRESH_MS = 5 * 60_000;
 
@@ -19,8 +20,12 @@ function Row({ abbrev, goalie }: { abbrev: string; goalie: GoalieCall | null }) 
       <TeamBar abbrev={abbrev} className="h-8 w-2" />
       <div className="min-w-0 flex-1">
         <div className="text-[11px] font-bold uppercase tracking-widest text-muted">{abbrev}</div>
-        <div className="truncate font-display text-lg font-bold leading-tight tracking-wide">{goalie?.name ?? "Not reported yet"}</div>
-        {goalie?.backup && <div className="truncate text-xs text-muted">Backup: {goalie.backup}</div>}
+        <div className="truncate font-display text-lg font-bold leading-tight tracking-wide">{goalie ? <PlayerLink id={goalie.id}>{goalie.name}</PlayerLink> : "Not reported yet"}</div>
+        {goalie?.backup && (
+          <div className="truncate text-xs text-muted">
+            Backup: <PlayerLink id={goalie.backupId}>{goalie.backup}</PlayerLink>
+          </div>
+        )}
       </div>
       {goalie && <span className={`shrink-0 rounded-full border px-2.5 py-0.5 text-xs font-bold ${CHIP[goalie.status]}`}>{goalie.status}</span>}
     </li>

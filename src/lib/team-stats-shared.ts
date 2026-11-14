@@ -48,8 +48,8 @@ export type GoalieLine = {
 
 export type SeasonLens = { ott: TeamLens; opp: TeamLens; goalies: GoalieLine[] };
 
-export type LeaderLine = { label: string; names: string[]; value: string; rank: number; tied: boolean; pool: string };
-export type EdgePlayer = { label: string; name: string; value: string; percentile: number };
+export type LeaderLine = { label: string; names: string[]; ids: number[]; value: string; rank: number; tied: boolean; pool: string };
+export type EdgePlayer = { label: string; name: string; id?: number; value: string; percentile: number };
 export type ShotArea = { area: string; shots: number; rank: number };
 export type StatsPage = {
   leaders: LeaderLine[];

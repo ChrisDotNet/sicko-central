@@ -6,6 +6,7 @@ import { periodLabel } from "@/lib/format";
 import { unlockSfx } from "@/lib/sfx";
 import { preloadClipPlayer } from "./ClipPlayer";
 import { ClipDialog, nextReelSession } from "../video/ClipDialog";
+import { PlayerLink, PlayerList } from "../PlayerLink";
 import { Thumb } from "../media/Thumb";
 import { useFavourites } from "@/lib/favourites";
 import type { Reel, ReelItem } from "../video/ClipDialog";
@@ -74,14 +75,22 @@ export function GoalReplays({ goals, thumbs }: { goals: Goal[]; thumbs?: Record<
                   </span>
                   <span className="truncate text-sm font-semibold">
                     {favScorer && <span className="text-gold-text">★ </span>}
-                    {g.scorer}
+                    <PlayerLink id={g.scorerId}>{g.scorer}</PlayerLink>
                     {g.scorerTotal ? ` (${g.scorerTotal})` : ""}
                     {strengthTag(g)}
                   </span>
                 </span>
                 <span className="truncate text-xs text-muted">
                   {periodLabel(g.period, g.periodType)} {g.time}
-                  {g.assists.length ? ` · ${g.assists.map((n, i) => (favs.has(g.assistIds[i]) ? `★ ${n}` : n)).join(", ")}` : " · Unassisted"} · {g.scoreAfter}
+                  {g.assists.length ? (
+                    <>
+                      {" · "}
+                      <PlayerList names={g.assists} ids={g.assistIds} mark={(id) => favs.has(id)} />
+                    </>
+                  ) : (
+                    " · Unassisted"
+                  )}{" "}
+                  · {g.scoreAfter}
                 </span>
               </div>
               {g.clipId ? (

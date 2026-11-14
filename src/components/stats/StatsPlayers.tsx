@@ -2,6 +2,7 @@ import type { SensForm } from "@/lib/team-stats";
 import { dec2, dec3, ordinal, pct1, recStr } from "@/lib/team-stats-shared";
 import type { ShotArea, StatsPage } from "@/lib/team-stats-shared";
 import { RankChip, StatsSection } from "./StatsBits";
+import { PlayerLink, PlayerList } from "../PlayerLink";
 
 // Stats tab › Players: leaders in league context, goalies, NHL EDGE tracking, where the shots
 // come from, and the last 10 games.
@@ -63,7 +64,7 @@ export function StatsPlayers({ page, form }: { page: StatsPage; form: SensForm |
                 <li key={l.label} className="flex min-h-11 items-center gap-3 border-b border-line px-3.5 py-2 text-sm last:border-b-0">
                   <span className="w-20 shrink-0 text-[11px] font-bold uppercase tracking-wider text-muted">{l.label}</span>
                   <span className="min-w-0 flex-1">
-                    <b>{l.names.join(", ")}</b> <span className="text-muted">{l.value}</span>
+                    <b><PlayerList names={l.names} ids={l.ids} /></b> <span className="text-muted">{l.value}</span>
                   </span>
                   <RankChip rank={l.rank} of={l.pool === "D" ? 120 : 400} tied={l.tied} suffix={l.pool === "D" ? " D" : ""} />
                 </li>
@@ -78,7 +79,7 @@ export function StatsPlayers({ page, form }: { page: StatsPage; form: SensForm |
             <div className="grid grid-cols-2 gap-2">
               {page.goalies.slice(0, 2).map((g) => (
                 <div key={g.id} className="rounded-2xl border border-line bg-surface p-3">
-                  <div className="font-bold">{g.lastName}</div>
+                  <div className="font-bold"><PlayerLink id={g.id}>{g.lastName}</PlayerLink></div>
                   <div className="text-xs text-muted">
                     {g.starts} starts · {recStr(g.rec)}
                   </div>
@@ -103,7 +104,7 @@ export function StatsPlayers({ page, form }: { page: StatsPage; form: SensForm |
                     <span className="text-[11px]">{Math.min(99, Math.floor(p.percentile))}th percentile</span>
                   </div>
                   <div className="mt-0.5 flex justify-between gap-3">
-                    <b>{p.name}</b>
+                    <b><PlayerLink id={p.id}>{p.name}</PlayerLink></b>
                     <b className="tabular-nums">{p.value}</b>
                   </div>
                   <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-line" aria-hidden="true">

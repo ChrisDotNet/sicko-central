@@ -183,6 +183,7 @@ function leaderLines(rows: SkaterRow[]): LeaderLine[] {
     return {
       label,
       names: who.slice(0, 2).map((r) => r.skaterFullName.split(" ").slice(1).join(" ") || r.skaterFullName),
+      ids: who.slice(0, 2).map((r) => r.playerId),
       value: key === "plusMinus" && best > 0 ? `+${best}` : String(best),
       rank,
       tied,
@@ -207,7 +208,7 @@ type EdgeTeam = {
   sogDetails?: { area: string; shots: number; shotsRank: number }[];
 };
 type EdgeSkater = {
-  player?: { firstName?: { default: string }; lastName?: { default: string }; gamesPlayed?: number };
+  player?: { id?: number; firstName?: { default: string }; lastName?: { default: string }; gamesPlayed?: number };
   skatingSpeed?: { speedMax?: { metric: number; percentile: number } };
   topShotSpeed?: { metric: number; percentile: number };
   totalDistanceSkated?: { metric: number; percentile: number };
@@ -236,7 +237,7 @@ export async function getStatsPage(): Promise<StatsPage | null> {
       .filter((x) => x.m)
       .sort((a, b) => b.m!.metric - a.m!.metric)[0];
     if (!best?.m) return null;
-    return { label, name: best.p.player?.lastName?.default ?? "", value: `${best.m.metric.toFixed(1)} ${unit}`, percentile: Math.round(best.m.percentile * 1000) / 10 };
+    return { label, name: best.p.player?.lastName?.default ?? "", id: best.p.player?.id, value: `${best.m.metric.toFixed(1)} ${unit}`, percentile: Math.round(best.m.percentile * 1000) / 10 };
   };
   const high = edge?.sogSummary?.find((s) => s.locationCode === "high");
   const area = (name: string): ShotArea | null => {
