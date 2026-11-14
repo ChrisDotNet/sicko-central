@@ -16,10 +16,18 @@ const Note = ({ children }: { children: React.ReactNode }) => (
   <p className="rounded-2xl border border-line bg-surface p-4 text-sm text-muted">{children}</p>
 );
 
+// Stories posted this soon after puck drop count as in-game (the same rule as the Video tab);
+// recaps are always postgame.
+const IN_GAME_MS = 2.5 * 3600_000;
+
 function NewsList({ news, startTimeUTC, isPre }: { news: NewsItem[]; startTimeUTC: string; isPre: boolean }) {
   const start = Date.parse(startTimeUTC);
-  const post = news.filter((n) => Date.parse(n.published) >= start);
-  const pre = news.filter((n) => Date.parse(n.published) < start);
+  // Oldest first in each part, so the page reads in the order things happened.
+  const sorted = [...news].sort((a, b) => a.published.localeCompare(b.published));
+  const at = (n: NewsItem) => Date.parse(n.published);
+  const pre = sorted.filter((n) => at(n) < start);
+  const during = sorted.filter((n) => at(n) >= start && at(n) < start + IN_GAME_MS && n.kind !== "Recap");
+  const post = sorted.filter((n) => at(n) >= start && !during.includes(n));
   if (news.length === 0) {
     return (
       <Section>
@@ -43,8 +51,9 @@ function NewsList({ news, startTimeUTC, isPre }: { news: NewsItem[]; startTimeUT
     );
   return (
     <>
-      {group("Postgame", post)}
       {group("Pregame", pre)}
+      {group("In game", during)}
+      {group("Postgame", post)}
       <p className="px-4 pt-3 text-xs text-muted">Headlines and short summaries from each outlet&apos;s feed. Full articles open on their site.</p>
     </>
   );
