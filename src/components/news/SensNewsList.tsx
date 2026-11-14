@@ -12,7 +12,8 @@ export function SensNewsList({ items, games, compact = false }: { items: NewsIte
         const game = g
           ? {
               label: `${g.home ? "vs" : "at"} ${g.opp}`,
-              href: g.state === "live" ? "/live?tab=media&show=news" : `/game/${g.id}?tab=media&show=news`,
+              // Sens TV videos live in the game's Video tab; stories in its News tab.
+              href: `${g.state === "live" ? "/live" : `/game/${g.id}`}?tab=media&show=${n.outlet === "Sens TV" ? "video" : "news"}`,
             }
           : null;
         return <NewsCard key={n.url} n={n} game={game} compact={compact} />;
