@@ -3,7 +3,7 @@
 export const CATEGORIES = [
   // Game night
   { key: "pre", group: "game", title: "Pre-game reminder", sub: "Time, channel and who starts in goal", on: true },
-  { key: "goalie", group: "game", title: "Starting goalie", sub: "When NHL.com's preview names the Sens starter", on: true },
+  { key: "goalie", group: "game", title: "Preview and starting goalie", sub: "When NHL.com's game-day preview posts (projected lines and goalies), and when the Sens starter is confirmed", on: true },
   { key: "sens", group: "game", title: "Sens goals", sub: "Scorer, time and score, within a minute or so", on: true },
   { key: "against", group: "game", title: "Goals against", sub: "", on: false },
   { key: "fav", group: "game", title: "Your players", sub: "Goals and points by players you follow (★)", on: true },

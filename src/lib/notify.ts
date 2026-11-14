@@ -52,6 +52,7 @@ type GameState = {
   news: number; // stories seen at the last news alert
   newsAlerts: number;
   goalie: boolean;
+  preview?: boolean; // "Preview is up" sent
   reminded: number[]; // reminder minutes sent
 };
 
@@ -154,7 +155,22 @@ async function goalieCheck(gameId: number): Promise<string> {
   const s = (await loadState(gameId)) ?? empty(`${gameId}-g`);
   if (s.goalie) return "already";
   const goalies = await getStartingGoalies(String(gameId), oppOf(g).abbrev);
-  if (!goalies?.ott || goalies.ott.status !== "Confirmed") return "not confirmed";
+  const confirmed = goalies?.ott?.status === "Confirmed";
+  // The game-day preview, once: projected lines and goalies (unless the starter's already
+  // confirmed, in which case the goalie alert below says it all).
+  if (goalies && !s.preview && !confirmed) {
+    s.preview = true;
+    const word = (st: string) => (st === "Likely" ? "likely" : "projected");
+    const bits = [
+      goalies.ott ? `${goalies.ott.name} ${word(goalies.ott.status)} in goal` : null,
+      goalies.opp ? `${goalies.opp.name} ${word(goalies.opp.status)} for ${oppOf(g).abbrev}` : null,
+    ].filter(Boolean);
+    const sent = await notify("goalie", { title: "Game-day preview is up", body: `${goalies.headline}${bits.length ? ` · ${bits.join(" · ")}` : ""}`, url: "/live", tag: `preview-${gameId}` });
+    await saveState(gameId, s);
+    return `preview ${sent}`;
+  }
+  if (!goalies?.ott || !confirmed) return "not confirmed";
+  s.preview = true;
   const opp = goalies.opp ? ` ${goalies.opp.name} ${goalies.opp.status === "Confirmed" ? "starts" : "projected"} for ${oppOf(g).abbrev}.` : "";
   const sent = await notify("goalie", { title: `${goalies.ott.name} starts tonight`, body: `Per NHL.com's game preview.${opp}`, url: "/live", tag: `goalie-${gameId}` });
   s.goalie = true;

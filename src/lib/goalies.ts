@@ -14,6 +14,7 @@ export type StartingGoalies = {
   oppAbbrev: string;
   url: string; // the preview on NHL.com
   posted: string; // ISO
+  headline: string; // the preview's headline ("Senators at Penguins projected lineups")
 };
 
 const STORIES = "https://forge-dapi.d3.nhle.com/v2/content/en-us/stories";
@@ -28,7 +29,7 @@ async function getJson<T>(url: string): Promise<T | null> {
   }
 }
 
-type Story = { slug?: string; title?: string; contentDate?: string; parts?: { content?: unknown }[] };
+type Story = { slug?: string; title?: string; headline?: string; contentDate?: string; parts?: { content?: unknown }[] };
 
 function storyText(s: Story): string {
   const html = (s.parts ?? []).map((p) => (typeof p.content === "string" ? p.content : "")).join("\n");
@@ -100,5 +101,6 @@ export async function getStartingGoalies(gameId: string, oppAbbrev: string): Pro
     oppAbbrev,
     url: `https://www.nhl.com/news/${preview.slug}`,
     posted: preview.contentDate ?? story.contentDate ?? "",
+    headline: (story.headline ?? preview.headline ?? story.title ?? preview.title ?? "Game preview").trim(),
   };
 }

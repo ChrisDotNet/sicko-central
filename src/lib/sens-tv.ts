@@ -54,7 +54,19 @@ type PlaylistItems = {
     contentDetails?: { videoId?: string; videoPublishedAt?: string };
   }>;
 };
-type Videos = { items?: Array<{ id?: string; contentDetails?: { duration?: string }; status?: { embeddable?: boolean } }> };
+type Videos = {
+  items?: Array<{
+    id?: string;
+    contentDetails?: { duration?: string };
+    status?: { embeddable?: boolean };
+    snippet?: { defaultAudioLanguage?: string; defaultLanguage?: string };
+  }>;
+};
+
+// The club's French-language series posts to the same channel; those stay out. YouTube's
+// language tags first, then a few French words for videos posted without tags.
+const FRENCH = /\b(les|des|du|une|pour|avec|dans|sur|victoires?|défaites?|Sénateurs|semaine|séquence|entraîneur|à)\b|[éèêàçù]/i;
+export const isFrench = (title: string, lang?: string) => (lang ? lang.toLowerCase().startsWith("fr") : false) || FRENCH.test(title);
 
 // The channel's 50 newest long-form videos, newest first. Re-read every 15 minutes.
 export async function getSensTv(): Promise<SensTvVideo[]> {
@@ -66,10 +78,12 @@ export async function getSensTv(): Promise<SensTvVideo[]> {
   const items = (list?.items ?? []).filter((i) => i.contentDetails?.videoId && i.contentDetails.videoPublishedAt && i.snippet?.title && i.snippet.title !== "Private video");
   if (!items.length) return [];
   const ids = items.map((i) => i.contentDetails!.videoId!).join(",");
-  const details = await getJson<Videos>(`${API}/videos?part=contentDetails,status&id=${ids}&key=${key}`);
+  const details = await getJson<Videos>(`${API}/videos?part=contentDetails,status,snippet&id=${ids}&key=${key}`);
   const seconds = new Map((details?.items ?? []).map((v) => [v.id, isoSeconds(v.contentDetails?.duration)]));
   const embeddable = new Map((details?.items ?? []).map((v) => [v.id, v.status?.embeddable !== false]));
+  const lang = new Map((details?.items ?? []).map((v) => [v.id, v.snippet?.defaultAudioLanguage ?? v.snippet?.defaultLanguage]));
   return items
+    .filter((i) => !isFrench(i.snippet!.title!, lang.get(i.contentDetails!.videoId!)))
     .map((i) => {
       const id = i.contentDetails!.videoId!;
       const t = i.snippet?.thumbnails ?? {};

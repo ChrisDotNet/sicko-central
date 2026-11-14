@@ -11,7 +11,7 @@ import { assignGame, getNhlTeamStories, getOutletNews, sortNews } from "./news";
 import type { NewsItem } from "./news";
 import { getSchedule } from "./nhl";
 import { getJson, setJson } from "./store";
-import { asNews, gameForVideo, getSensTv } from "./sens-tv";
+import { asNews, gameForVideo, getSensTv, isFrench } from "./sens-tv";
 
 const KEY = "news:sens";
 const KEEP = 150;
@@ -51,7 +51,9 @@ export async function collectSensNews(): Promise<NewsItem[]> {
     const id = gameForVideo(v, games);
     return id ? { ...asNews(v), gameId: id } : asNews(v);
   });
-  const merged = sortNews(dedupe([...nhl, ...tagged, ...tv, ...(saved ?? [])])).slice(0, KEEP);
+  // Saved copies of French Sens TV videos (from before they were left out) are dropped too.
+  const kept = (saved ?? []).filter((n) => !(n.outlet === "Sens TV" && isFrench(n.title)));
+  const merged = sortNews(dedupe([...nhl, ...tagged, ...tv, ...kept])).slice(0, KEEP);
   if (merged.length && JSON.stringify(merged) !== JSON.stringify(saved)) await setJson(KEY, merged);
   return merged;
 }
