@@ -21,7 +21,8 @@ const SN_FEED = "https://www.sportsnet.ca/hockey/nhl/feed/";
 // An outside story counts toward a game if published from 24 h before puck drop to 20 h after.
 const BEFORE_MS = 24 * 3600_000;
 const AFTER_MS = 20 * 3600_000;
-const SUMMARY_MAX = 220;
+// Long enough for the outlet's two or three sentences on a featured story; list rows cut it shorter.
+const SUMMARY_MAX = 450;
 
 export type Outlet = "NHL.com" | "TSN" | "Sportsnet" | "Sens TV";
 

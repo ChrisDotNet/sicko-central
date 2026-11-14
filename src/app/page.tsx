@@ -130,7 +130,7 @@ export default async function HomePage() {
                 </Link>
               }
             >
-              <SensNewsList items={news} games={all} compact />
+              <SensNewsList items={news} games={all} compact feature />
             </Section>
           )}
         </div>

@@ -64,9 +64,10 @@ async function NewsContent({ searchParams }: { searchParams: Promise<Record<stri
         </div>
       </div>
       {days.length === 0 && <p className="px-4 pt-6 text-sm text-muted">No stories right now. Try again in a few minutes.</p>}
-      {days.map((d) => (
+      {days.map((d, i) => (
         <Section key={d.key} title={d.title} aside={`${d.items.length} ${d.items.length === 1 ? "story" : "stories"}`}>
-          <SensNewsList items={d.items} games={games} wide />
+          {/* The newest day leads with a featured story and two medium cards. */}
+          <SensNewsList items={d.items} games={games} wide feature={i === 0} />
         </Section>
       ))}
     </>
