@@ -42,7 +42,7 @@ export function SkaterSeason({ d, centre }: { d: SkaterDetail; centre: boolean }
   return (
     <>
       {d.toi != null && (
-        <PSection title="Role" aside="Ice time a game">
+        <PSection title="Role" aside="Ice time a game" className="lg:col-span-5">
           <div className="rounded-2xl border border-line bg-surface p-3.5">
             <div className="flex items-baseline justify-between gap-3">
               <span className="font-display text-3xl font-extrabold">{mmss(d.toi)}</span>
@@ -80,7 +80,7 @@ export function SkaterSeason({ d, centre }: { d: SkaterDetail; centre: boolean }
       )}
 
       {last10.length > 0 && (
-        <PSection title="Form" aside={`Last ${last10.length} games`}>
+        <PSection title="Form" aside={`Last ${last10.length} games`} className="lg:col-span-7">
           <div className="rounded-2xl border border-line bg-surface p-3.5">
             <div className="flex gap-1" aria-hidden="true">
               {[...last10].reverse().map((g) => (
@@ -105,12 +105,17 @@ export function SkaterSeason({ d, centre }: { d: SkaterDetail; centre: boolean }
               Points in {withPts} of the last {last10.length}, {tenPts} in all. {(tenS / last10.length).toFixed(1)} shots a game{d.gp ? `, against ${(d.shots / d.gp).toFixed(1)} on the season` : ""}.
             </p>
           </div>
+        </PSection>
+      )}
+
+      {last10.length > 0 && (
+        <PSection title="Game by game" aside="Last 5, or 10" className="lg:col-span-7">
           <FormRows log={d.log} goalie={false} max={10} />
         </PSection>
       )}
 
       {ranks.length > 0 && (
-        <PSection title="Where he ranks" aside={`NHL ${d.ranks.poolLabel}`}>
+        <PSection title="Where he ranks" aside={`NHL ${d.ranks.poolLabel}`} className="lg:col-span-5">
           <ul className="overflow-hidden rounded-2xl border border-line bg-surface">
             {ranks.map(({ label, r }) => (
               <li key={label} className="flex min-h-11 items-center justify-between gap-3 border-b border-line px-3.5 py-2 text-sm last:border-b-0">
@@ -127,7 +132,7 @@ export function SkaterSeason({ d, centre }: { d: SkaterDetail; centre: boolean }
       )}
 
       {e && (e.distance || e.speed || e.shot) && (
-        <PSection title="Tracking" aside="NHL EDGE">
+        <PSection title="Tracking" aside="NHL EDGE" className="lg:col-span-6">
           <ul className="overflow-hidden rounded-2xl border border-line bg-surface">
             {e.distance && <Pctl label="Distance skated" value={`${e.distance.metric.toFixed(1)} km`} pct={e.distance.percentile} />}
             {e.bursts && <Pctl label="Bursts over 32 km/h" value={String(e.bursts.value)} pct={e.bursts.percentile} />}
@@ -139,9 +144,9 @@ export function SkaterSeason({ d, centre }: { d: SkaterDetail; centre: boolean }
       )}
 
       {areas.some((a) => a.shots > 0) && (
-        <PSection title="Where he shoots from" aside="Shots on goal">
+        <PSection title="Where he shoots from" aside="Shots on goal" className="lg:col-span-6">
           <div className="rounded-2xl border border-line bg-surface p-3">
-            <svg viewBox="0 0 340 236" className="h-auto w-full" role="img" aria-label="Where he shoots from, against the league">
+            <svg viewBox="0 0 340 236" className="mx-auto h-auto w-full max-w-[440px]" role="img" aria-label="Where he shoots from, against the league">
               <rect x="2" y="2" width="336" height="232" rx="40" fill="var(--sunk)" stroke="var(--line-strong)" />
               <line x1="2" y1="30" x2="338" y2="30" stroke="var(--sens)" strokeWidth="2" />
               <rect x="152" y="32" width="36" height="10" rx="2" fill="none" stroke="var(--muted)" />
@@ -155,7 +160,7 @@ export function SkaterSeason({ d, centre }: { d: SkaterDetail; centre: boolean }
                       {b.label}
                     </text>
                     <text x={b.x + b.w / 2} y={b.y + b.h / 2 + 12} textAnchor="middle" fill={top ? "var(--good-text)" : "var(--ink-2)"} fontSize="10">
-                      {a.shots} shots
+                      {a.shots} {a.shots === 1 ? "shot" : "shots"}
                     </text>
                   </g>
                 );

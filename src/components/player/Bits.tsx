@@ -11,9 +11,11 @@ const TONE: Record<ReadLine["tone"], string> = {
   role: "bg-muted",
 };
 
-export function PSection({ title, aside, children }: { title: string; aside?: ReactNode; children: ReactNode }) {
+// Phones: one column. Desktop: the tab is a 12-column grid (see the player page) and each
+// section says how many columns it takes.
+export function PSection({ title, aside, children, className = "" }: { title: string; aside?: ReactNode; children: ReactNode; className?: string }) {
   return (
-    <section className="px-4 pt-6">
+    <section className={`px-4 pt-6 lg:px-0 ${className}`}>
       <div className="mb-2.5 flex items-baseline justify-between gap-3">
         <h2 className="font-display text-xl font-bold uppercase tracking-wider">{title}</h2>
         {aside && <span className="text-xs text-muted">{aside}</span>}
@@ -23,10 +25,10 @@ export function PSection({ title, aside, children }: { title: string; aside?: Re
   );
 }
 
-export function ReadCard({ lines, aside }: { lines: ReadLine[]; aside: string }) {
+export function ReadCard({ lines, aside, className = "" }: { lines: ReadLine[]; aside: string; className?: string }) {
   if (lines.length === 0) return null;
   return (
-    <PSection title="The read" aside={aside}>
+    <PSection title="The read" aside={aside} className={className}>
       <ul className="overflow-hidden rounded-2xl border border-line bg-surface">
         {lines.map((l, i) => (
           <li key={i} className="flex gap-2.5 border-b border-line px-3.5 py-2.5 text-sm leading-snug text-ink-2 last:border-b-0">
@@ -39,7 +41,7 @@ export function ReadCard({ lines, aside }: { lines: ReadLine[]; aside: string })
   );
 }
 
-export function GaugeCard({ g }: { g: GaugeData }) {
+export function GaugeCard({ g, className = "" }: { g: GaugeData; className?: string }) {
   const cell = (c: GaugeData["left"]) => (
     <div className="rounded-xl bg-ground px-3 py-2.5">
       <div className="text-[11px] text-muted">{c.label}</div>
@@ -50,7 +52,7 @@ export function GaugeCard({ g }: { g: GaugeData }) {
     </div>
   );
   return (
-    <PSection title="Is it sustainable?">
+    <PSection title="Is it sustainable?" className={className}>
       <div className="rounded-2xl border border-line bg-surface p-3.5">
         <div
           className="relative h-3 rounded-full bg-[linear-gradient(90deg,#3B7FC4_0%,var(--line-strong)_50%,#E07A2E_100%)]"

@@ -18,7 +18,7 @@ export function GoalieSeason({ d }: { d: GoalieDetail }) {
   return (
     <>
       {starts.length > 0 && (
-        <PSection title="Every start" aside="Save % · shots faced">
+        <PSection title="Every start" aside="Save % · shots faced" className="lg:col-span-7">
           <div className="rounded-2xl border border-line bg-surface p-3.5">
             <div className="relative">
               <div className="flex gap-1" aria-hidden="true">
@@ -42,12 +42,11 @@ export function GoalieSeason({ d }: { d: GoalieDetail }) {
               Dashed line: .900.
             </p>
           </div>
-          <FormRows log={starts} goalie max={starts.length} />
         </PSection>
       )}
 
       {d.byType.length > 0 && (
-        <PSection title="By shot type" aside="Save % vs league">
+        <PSection title="By shot type" aside="Save % vs league" className="lg:col-span-5">
           <ul className="overflow-hidden rounded-2xl border border-line bg-surface">
             {d.byType.map((t) => (
               <Pctl key={t.label} label={`${t.label} · league ${dec3(t.league)}`} value={dec3(t.sv)} pct={t.percentile} />
@@ -56,8 +55,14 @@ export function GoalieSeason({ d }: { d: GoalieDetail }) {
         </PSection>
       )}
 
+      {starts.length > 0 && (
+        <PSection title="Start by start" aside="Last 5, or all" className="lg:col-span-7">
+          <FormRows log={starts} goalie max={starts.length} />
+        </PSection>
+      )}
+
       {(d.svRank || d.gaaRank) && (
-        <PSection title="Where he ranks" aside={`${d.svRank?.of ?? d.gaaRank?.of} goalies with 6+ starts`}>
+        <PSection title="Where he ranks" aside={`${d.svRank?.of ?? d.gaaRank?.of} goalies with 6+ starts`} className="lg:col-span-5">
           <ul className="overflow-hidden rounded-2xl border border-line bg-surface">
             {d.svRank && d.svPct != null && (
               <li className="flex min-h-11 items-center justify-between gap-3 border-b border-line px-3.5 py-2 text-sm last:border-b-0">

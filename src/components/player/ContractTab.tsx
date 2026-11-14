@@ -25,7 +25,7 @@ export function puckpediaSlug(first: string, last: string) {
 export function ContractTab({ first, last, full }: { first: string; last: string; full: string }) {
   const slug = puckpediaSlug(first, last);
   return (
-    <PSection title="Contract" aside="Official figures, US$">
+    <PSection title="Contract" aside="Official figures, US$" className="lg:col-span-8">
       <div className="overflow-hidden rounded-2xl border border-line bg-white">
         <iframe
           src={`https://puckpedia.com/e/player/${slug}/`}
@@ -40,6 +40,17 @@ export function ContractTab({ first, last, full }: { first: string; last: string
           Full contract on PuckPedia ↗
         </a>
       </p>
+    </PSection>
+  );
+}
+
+// Desktop: what's coming once PuckPedia approves contract data.
+export function ContractNext() {
+  return (
+    <PSection title="Coming" className="lg:col-span-4">
+      <div className="rounded-2xl border border-line bg-surface p-3.5 text-[13px] leading-snug text-ink-2">
+        Our own contract view is waiting on PuckPedia: the deal year by year, salary and bonuses, trade protection, a contract read (value for his production) and every figure in Canadian dollars too.
+      </div>
     </PSection>
   );
 }

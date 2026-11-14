@@ -11,7 +11,7 @@ export function FormRows({ log, goalie, max }: { log: GameLogLine[]; goalie: boo
   const rows = log.slice(0, open ? max : 5);
   const cols = goalie ? "grid-cols-[minmax(0,1fr)_40px_44px_48px]" : "grid-cols-[minmax(0,1fr)_22px_22px_30px_32px_46px]";
   return (
-    <div className="mt-2.5 overflow-hidden rounded-2xl border border-line bg-surface">
+    <div className="overflow-hidden rounded-2xl border border-line bg-surface">
       <div className={`grid ${cols} gap-1.5 px-3.5 py-2 text-[11px] font-semibold text-muted`}>
         <span>{goalie ? "Start" : "Game"}</span>
         {goalie ? (

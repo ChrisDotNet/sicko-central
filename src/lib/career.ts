@@ -37,7 +37,7 @@ function ageIn(season: number, birthDate?: string): number | null {
   return Math.floor(season / 10000) - y;
 }
 
-export type CareerRow = { season: number; label: string; team: string; league: string; level: Level; gp: number; g: number | null; a: number | null; p: number | null; w: number | null; sv: number | null; best: boolean };
+export type CareerRow = { season: number; label: string; team: string; league: string; level: Level; gp: number; g: number | null; a: number | null; p: number | null; pm: number | null; pim: number | null; sh: number | null; w: number | null; sv: number | null; gaa: number | null; best: boolean };
 export type PathStop = { ages: string; team: string; detail: string; stat: string; kind: "stop" | "draft" | "now" };
 export type Career = {
   goalie: boolean;
@@ -60,8 +60,12 @@ const row = (s: SeasonLine, goalie: boolean): CareerRow => ({
   g: goalie ? null : (s.goals ?? null),
   a: goalie ? null : (s.assists ?? null),
   p: goalie ? null : (s.points ?? null),
+  pm: goalie ? null : (s.plusMinus ?? null),
+  pim: s.pim ?? null,
+  sh: goalie || !s.shots ? null : (s.shootingPctg ?? null),
   w: goalie ? (s.wins ?? null) : null,
   sv: goalie ? (s.savePctg ?? null) : null,
+  gaa: goalie ? (s.goalsAgainstAvg ?? null) : null,
   best: false,
 });
 

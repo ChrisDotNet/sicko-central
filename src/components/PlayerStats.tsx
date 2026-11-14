@@ -4,7 +4,7 @@ import { useState } from "react";
 
 type Range = { label: string; tiles: Array<{ label: string; value: string; highlight: boolean }> };
 
-export function PlayerStats({ ranges, notes }: { ranges: Range[]; notes: string[] }) {
+export function PlayerStats({ ranges, notes, wide = false }: { ranges: Range[]; notes: string[]; wide?: boolean }) {
   const [idx, setIdx] = useState(0);
   const range = ranges[idx];
   return (
@@ -26,7 +26,7 @@ export function PlayerStats({ ranges, notes }: { ranges: Range[]; notes: string[
         ))}
       </div>
       )}
-      <div className="grid grid-cols-3 gap-2">
+      <div className={`grid grid-cols-3 gap-2 ${wide ? "lg:grid-cols-6" : ""}`}>
         {range.tiles.map((t) => (
           <div key={t.label} className="flex flex-col gap-0.5 rounded-xl border border-line bg-surface p-3">
             <span className="text-xs text-muted">{t.label}</span>

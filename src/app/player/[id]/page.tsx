@@ -15,7 +15,7 @@ import { GaugeCard, ReadCard } from "@/components/player/Bits";
 import { SkaterSeason } from "@/components/player/SkaterSeason";
 import { GoalieSeason } from "@/components/player/GoalieSeason";
 import { CareerTab } from "@/components/player/CareerTab";
-import { ContractTab } from "@/components/player/ContractTab";
+import { ContractNext, ContractTab } from "@/components/player/ContractTab";
 
 
 const POSITIONS: Record<string, string> = { C: "Centre", L: "Left wing", R: "Right wing", D: "Defence", G: "Goalie" };
@@ -149,17 +149,16 @@ async function PlayerDetail({ params, searchParams }: { params: Promise<{ id: st
           Roster
         </Link>
       </div>
-      {/* Desktop: profile, tabs and the read on the left; the rest of the tab on the right. */}
-      <div className="lg:grid lg:grid-cols-[440px_minmax(0,1fr)] lg:items-start">
-        <div>
-          <section className="px-4 pt-1">
-            <Card className="relative overflow-hidden px-4 py-5">
+      {/* Phones: one column. Desktop: the profile as a band across the top, the tabs under it,
+          and the tab as a 12-column grid of sections grouped in rows (each section sets its span). */}
+      <section className="px-4 pt-1">
+            <Card className="relative overflow-hidden px-4 py-5 lg:flex lg:items-center lg:gap-10 lg:px-7 lg:py-6">
               {p.sweaterNumber != null && (
-                <span aria-hidden="true" className="absolute -top-5 -right-1.5 font-display text-[150px] font-extrabold leading-none text-sens opacity-20">
+                <span aria-hidden="true" className="absolute -top-5 -right-1.5 font-display text-[150px] font-extrabold leading-none text-sens opacity-20 lg:-top-10 lg:right-6 lg:text-[220px] lg:opacity-15">
                   {p.sweaterNumber}
                 </span>
               )}
-              <div className="relative flex items-center gap-3.5">
+              <div className="relative flex shrink-0 items-center gap-3.5 lg:gap-5">
                 <div className="flex size-[76px] shrink-0 items-center justify-center rounded-full border-2 border-sens bg-line font-display text-3xl font-extrabold text-ink-2">
                   {initials}
                 </div>
@@ -170,14 +169,14 @@ async function PlayerDetail({ params, searchParams }: { params: Promise<{ id: st
                     {p.currentTeamAbbrev && p.currentTeamAbbrev !== "OTT" ? ` · ${p.currentTeamAbbrev}` : ""}
                   </span>
                   <PageTitle title={`${full} · ${tab === "career" ? "Career" : tab === "contract" ? "Contract" : "This season"}`} />
-                  <h1 className="font-display text-[34px] font-extrabold leading-none tracking-wide">{full}</h1>
+                  <h1 className="font-display text-[34px] font-extrabold leading-none tracking-wide lg:text-[44px]">{full}</h1>
                   <div className="mt-1 flex flex-wrap items-center gap-2">
                     <StarButton id={p.playerId} name={full} size="lg" />
                     <BirthdayBadge birthDate={p.birthDate} />
                   </div>
                 </div>
               </div>
-              <dl className="relative mt-[18px] grid grid-cols-3 gap-x-2 gap-y-3">
+              <dl className="relative mt-[18px] grid grid-cols-3 gap-x-2 gap-y-3 lg:mt-0 lg:flex-1 lg:grid-cols-5 lg:gap-x-6">
                 <div className="flex flex-col gap-0.5">
                   <dt className="text-[11px] text-muted">Born</dt>
                   <dd className="text-sm font-semibold">
@@ -194,7 +193,7 @@ async function PlayerDetail({ params, searchParams }: { params: Promise<{ id: st
                   <dt className="text-[11px] text-muted">{goalie ? "Catches" : "Shoots"}</dt>
                   <dd className="text-sm font-semibold">{p.shootsCatches === "L" ? "Left" : p.shootsCatches === "R" ? "Right" : "–"}</dd>
                 </div>
-                <div className="col-span-2 flex flex-col gap-0.5">
+                <div className="col-span-2 flex flex-col gap-0.5 lg:col-span-1">
                   <dt className="text-[11px] text-muted">Birthplace</dt>
                   <dd className="text-sm font-semibold">{born || "–"}</dd>
                 </div>
@@ -204,48 +203,50 @@ async function PlayerDetail({ params, searchParams }: { params: Promise<{ id: st
                 </div>
               </dl>
             </Card>
-          </section>
-          <nav aria-label="Player sections" className="flex border-b border-line px-4 pt-3">
-            {TABS.map((t) => (
-              <Link
-                key={t.key}
-                href={t.key === "season" ? `/player/${id}` : `/player/${id}?tab=${t.key}`}
-                aria-current={tab === t.key ? "page" : undefined}
-                className={`flex min-h-11 flex-1 items-center justify-center text-sm font-semibold ${tab === t.key ? "text-ink shadow-[inset_0_-2px_0_var(--sens-bright)]" : "text-muted hover:text-ink"}`}
-              >
-                {t.label}
-              </Link>
-            ))}
-          </nav>
-          {tab === "season" ? (
-            <>
-              <ReadCard lines={read.lines} aside="From the numbers, updated after each game" />
-              {read.gauge && <GaugeCard g={read.gauge} />}
-              <Section>
-                <PlayerStats ranges={ranges.filter((r) => r.label === "This season")} notes={notes.filter((_, i) => ranges[i].label === "This season")} />
-              </Section>
-            </>
-          ) : tab === "contract" ? null : (
-            <Section>
-              <PlayerStats ranges={ranges.filter((r) => r.label !== "This season")} notes={notes.filter((_, i) => ranges[i].label !== "This season")} />
+      </section>
+      <nav aria-label="Player sections" className="flex border-b border-line px-4 pt-3 lg:px-10">
+        {TABS.map((t) => (
+          <Link
+            key={t.key}
+            href={t.key === "season" ? `/player/${id}` : `/player/${id}?tab=${t.key}`}
+            aria-current={tab === t.key ? "page" : undefined}
+            className={`flex min-h-11 flex-1 items-center justify-center text-sm font-semibold lg:flex-none lg:px-5 lg:text-[15px] ${tab === t.key ? "text-ink shadow-[inset_0_-2px_0_var(--sens-bright)]" : "text-muted hover:text-ink"}`}
+          >
+            {t.label}
+          </Link>
+        ))}
+      </nav>
+      <div className="flex flex-col lg:grid lg:grid-cols-12 lg:items-start lg:gap-x-6 lg:px-10">
+        {tab === "season" ? (
+          <>
+            <ReadCard lines={read.lines} aside="From the numbers, updated after each game" className={read.gauge ? "lg:col-span-7" : "lg:col-span-12"} />
+            {read.gauge && <GaugeCard g={read.gauge} className="lg:col-span-5" />}
+            <Section className="lg:col-span-12 lg:px-0">
+              <PlayerStats wide ranges={ranges.filter((r) => r.label === "This season")} notes={notes.filter((_, i) => ranges[i].label === "This season")} />
             </Section>
-          )}
-        </div>
-        <div className="lg:pt-1">
-          {tab === "season" ? (
-            skater ? (
+            {skater ? (
               <SkaterSeason d={skater} centre={p.position === "C"} />
             ) : goalieD ? (
               <GoalieSeason d={goalieD} />
             ) : (
-              <p className="px-4 pt-6 text-sm text-muted">No NHL games this season yet. See Career for his path so far.</p>
-            )
-          ) : tab === "career" ? (
-            <CareerTab c={buildCareer(p)} />
-          ) : (
+              <p className="px-4 pt-6 text-sm text-muted lg:col-span-12 lg:px-0">No NHL games this season yet. See Career for his path so far.</p>
+            )}
+          </>
+        ) : tab === "career" ? (
+          <CareerTab
+            c={buildCareer(p)}
+            totals={
+              <Section className="lg:px-0">
+                <PlayerStats ranges={ranges.filter((r) => r.label !== "This season")} notes={notes.filter((_, i) => ranges[i].label !== "This season")} />
+              </Section>
+            }
+          />
+        ) : (
+          <>
             <ContractTab first={name(p.firstName)} last={name(p.lastName)} full={full} />
-          )}
-        </div>
+            <ContractNext />
+          </>
+        )}
       </div>
     </>
   );
