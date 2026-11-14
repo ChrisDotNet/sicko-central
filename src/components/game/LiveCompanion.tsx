@@ -9,7 +9,8 @@ import { LiveRadioBar } from "../radio/LiveRadioBar";
 import { periodLabel } from "@/lib/format";
 import { Section } from "../ui";
 import { GameSections } from "./GameSections";
-import { BroadcastLinks } from "../BroadcastLinks";
+import { StreamingMenu, TicketsMenu } from "../GameLinks";
+import type { TicketLinks } from "@/lib/tickets";
 import { GameTabButtons } from "./GameTabs";
 import type { GameTab } from "./GameTabs";
 import { MediaTab } from "../media/MediaTab";
@@ -46,6 +47,7 @@ export function LiveCompanion({
   facts,
   goalies,
   streams,
+  tickets,
 }: {
   gameId: number;
   initial: Payload | null;
@@ -56,6 +58,8 @@ export function LiveCompanion({
   goalies?: StartingGoaliesData | null;
   // Network -> this game's own streaming page (TSN+, Sportsnet+).
   streams?: Record<string, string>;
+  // Gametime and Ticketmaster pages for this game (shown until the final).
+  tickets?: TicketLinks;
 }) {
   const [tab, setTab] = useState<GameTab>(initialTab);
   const [media, setMedia] = useState<GameMedia | null>(null);
@@ -364,9 +368,10 @@ export function LiveCompanion({
             Runs about 20 s behind TV · check it during stoppages
           </p>
         )}
-        {(game.isPre || game.isLive) && (game.broadcasts.length > 0 || game.isLive) && (
+        {(game.isPre || game.isLive) && (game.broadcasts.length > 0 || tickets || game.isLive) && (
           <div className="mt-2 flex flex-wrap items-center justify-center gap-2 lg:justify-start">
-            {game.broadcasts.length > 0 && <BroadcastLinks networks={game.broadcasts} links={streams} />}
+            {game.broadcasts.length > 0 && <StreamingMenu networks={game.broadcasts} streams={streams} />}
+            {tickets && <TicketsMenu tickets={tickets} align="left" />}
             <ScreenAwake active={game.isLive} />
           </div>
         )}

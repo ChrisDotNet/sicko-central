@@ -4,7 +4,6 @@ import { Suspense } from "react";
 import { LiveCompanion } from "@/components/game/LiveCompanion";
 import { parseSegment, parseTab } from "@/components/game/GameTabs";
 import { Card, Chevron, Kicker } from "@/components/ui";
-import { BroadcastLinks } from "@/components/BroadcastLinks";
 import { buildGame } from "@/lib/game";
 import { formatDay, formatTime } from "@/lib/format";
 import { getBoxScore, getPlayByPlay, getSchedule, getScoresNowLive } from "@/lib/nhl";
@@ -13,6 +12,8 @@ import { getRadioForGame } from "@/lib/radio";
 import { getGameFacts } from "@/lib/facts";
 import { getStartingGoalies } from "@/lib/goalies";
 import { getStreamEvents, streamLinks } from "@/lib/streams";
+import { getGametimeEvents, ticketLinks } from "@/lib/tickets";
+import { StreamingMenu, TicketsMenu } from "@/components/GameLinks";
 import { scoreLine, splitSchedule } from "@/lib/schedule";
 import { OTT } from "@/lib/teams";
 
@@ -37,21 +38,25 @@ async function LiveContent({ searchParams }: { searchParams: Promise<Record<stri
     const id = String(today.id);
     const [pbp, box] = await Promise.all([getPlayByPlay(id).catch(() => null), getBoxScore(id)]);
     const game = pbp ? buildGame(pbp, box) : null;
-    const [radio, facts, goalies, streamEvents] = game
+    const [radio, facts, goalies, streamEvents, gametime] = game
       ? await Promise.all([
           getRadioForGame(game.startTimeUTC),
           getGameFacts(game.gameDate, game.opp.abbrev),
           game.isPre ? getStartingGoalies(id, game.opp.abbrev) : null,
           getStreamEvents(),
+          getGametimeEvents(),
         ])
-      : [[], [], null, null];
+      : [[], [], null, null, {}];
+    const scheduled = schedule?.games.find((g) => g.id === today.id);
+    const tickets = game && !game.isFinal ? ticketLinks(game.startTimeUTC, scheduled?.ticketsLink, gametime) : undefined;
     const streams = game && streamEvents ? streamLinks(game.startTimeUTC, game.broadcasts, streamEvents) : undefined;
     const initial = game ? { game, rivals: scores ? atlanticGames(scores, today.id) : [], radio } : null;
-    return <LiveCompanion key={id} gameId={today.id} initial={initial} replay={false} initialTab={tab} initialSegment={segment} facts={facts} goalies={goalies} streams={streams} />;
+    return <LiveCompanion key={id} gameId={today.id} initial={initial} replay={false} initialTab={tab} initialSegment={segment} facts={facts} goalies={goalies} streams={streams} tickets={tickets} />;
   }
 
   const { next, last } = schedule ? splitSchedule(schedule.games) : { next: null, last: null };
-  const nextStreams = next ? streamLinks(next.startTimeUTC, next.broadcasts, await getStreamEvents()) : undefined;
+  const [streamEvents, gametime] = await Promise.all([getStreamEvents(), getGametimeEvents()]);
+  const nextStreams = next ? streamLinks(next.startTimeUTC, next.broadcasts, streamEvents) : undefined;
   return (
     <div className="flex flex-col gap-2.5 px-4 pt-5">
       <h1 className="font-display text-3xl font-extrabold uppercase tracking-wider">No game today</h1>
@@ -65,7 +70,10 @@ async function LiveContent({ searchParams }: { searchParams: Promise<Record<stri
           <div className="text-sm text-ink-2">
             {formatDay(next.startTimeUTC).long} · {formatTime(next.startTimeUTC)}
           </div>
-          <BroadcastLinks networks={next.broadcasts} links={nextStreams} className="mt-3" />
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {next.broadcasts.length > 0 && <StreamingMenu networks={next.broadcasts} streams={nextStreams} />}
+            <TicketsMenu tickets={ticketLinks(next.startTimeUTC, next.ticketsLink, gametime)} align="left" />
+          </div>
         </Card>
       )}
       {last && (
