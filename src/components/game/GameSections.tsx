@@ -20,6 +20,7 @@ import { StartingGoalies } from "./StartingGoalies";
 //   skaters on the right, then the side content full width below.
 // - Desktop: three columns. Left: "Right now" and goals. Middle: shot map, shot attempts,
 //   skaters. Right: whatever the page passes as `aside` (scoreboard, latest media).
+//   Before puck drop: "Right now" left, goalies and game-day facts in the middle (equal widths).
 // On phones the column wrappers use `display: contents`, so their sections join one flow
 // and `order` decides where each lands.
 const column = "contents md:flex md:min-w-0 md:flex-col";
@@ -43,16 +44,17 @@ export function GameSections({
   const started = !game.isPre;
   const intermission = game.intermission && !game.isFinal;
   return (
-    <div className="flex flex-col md:grid md:grid-cols-2 lg:grid-cols-[340px_minmax(0,1fr)_320px] lg:items-start">
+    <div
+      className={`flex flex-col md:grid md:grid-cols-2 lg:items-start ${
+        game.isPre ? "lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_320px]" : "lg:grid-cols-[340px_minmax(0,1fr)_320px]"
+      }`}
+    >
       <div className={column}>
         <section className="order-1 px-4 pt-4">
           {intermission ? <IntermissionCard game={game} radio={radio} /> : <RightNow ctx={contextFor(game)} />}
         </section>
-        {game.isPre && goalies !== undefined && !game.replay && (
-          <StartingGoalies initial={goalies} gameId={game.id} oppAbbrev={game.opp.abbrev} className="order-1" />
-        )}
         <YourPlayers skaters={game.skaters} className="order-1" />
-        {facts && facts.length > 0 && (game.isPre || intermission) && <GameFacts facts={facts} skaters={game.skaters} className="order-1" />}
+        {facts && facts.length > 0 && intermission && <GameFacts facts={facts} skaters={game.skaters} className="order-1" />}
         {started && (
           <Section
             className="order-4"
@@ -65,6 +67,12 @@ export function GameSections({
       </div>
 
       <div className={column}>
+        {/* Before puck drop the middle column holds the goalies and facts (no shot map yet), so
+            tablets and desktops don't show an empty column. */}
+        {game.isPre && goalies !== undefined && !game.replay && (
+          <StartingGoalies initial={goalies} gameId={game.id} oppAbbrev={game.opp.abbrev} className="order-2 md:pt-4" />
+        )}
+        {game.isPre && facts && facts.length > 0 && <GameFacts facts={facts} skaters={game.skaters} className="order-2" />}
         {started && (
           <>
             <Section className="order-2 md:pt-4" title="Shot Map" aside="Ottawa attacks right">
