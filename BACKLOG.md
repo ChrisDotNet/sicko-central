@@ -109,6 +109,12 @@ number answers "how are the Sens doing, and compared to whom?": Ottawa's figure,
 own free APIs, checked 2026-11-14 with this season's data; no new keys or accounts. Cache
 hourly, more often on game nights.
 
+**The split:** the Game page only shows numbers about tonight: the tale of the tape before
+the game; one-line context during it, shown only when it applies ("leading after two: 6-0-1
+this season", the power play's season rate during a power play, the starting goalie's tonight
+vs season); and what tonight changed after the final (record, standings place, PP%, the Leafs
+gap). Everything about the season goes on the Stats tab. Mockups on the design canvas.
+
 **Where it lives:** the bottom menu is full at five, so a Standings | Stats switch on the
 Standings page, and "Stats" in the desktop header.
 
