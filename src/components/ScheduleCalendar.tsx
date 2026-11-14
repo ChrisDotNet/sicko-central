@@ -3,7 +3,7 @@ import { formatTime } from "@/lib/format";
 import type { GameSummary } from "@/lib/schedule";
 import { scoreLine } from "@/lib/schedule";
 import { ResultBadge, TeamBar } from "./ui";
-import { BroadcastLinks } from "./BroadcastLinks";
+import { StreamingMenu, TicketsMenu } from "./GameLinks";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -57,7 +57,12 @@ export function ScheduleCalendar({ games, visible }: { games: GameSummary[]; vis
                     {g.result && <ResultBadge result={g.result} />}
                     <span className="text-sm font-bold tabular">{g.state === "upcoming" ? formatTime(g.startTimeUTC) : scoreLine(g)}</span>
                   </span>
-                  {g.state === "upcoming" && g.broadcasts.length > 0 && <BroadcastLinks networks={g.broadcasts} links={g.streams} size="sm" />}
+                  {g.state === "upcoming" && (
+                    <span className="flex flex-col items-start gap-1">
+                      {g.broadcasts.length > 0 && <StreamingMenu networks={g.broadcasts} streams={g.streams} size="sm" />}
+                      {g.tickets && <TicketsMenu tickets={g.tickets} size="sm" align="left" />}
+                    </span>
+                  )}
                 </>
               );
               const base = `flex min-h-[112px] flex-col gap-1.5 border-r border-line p-2.5 last:border-r-0 ${

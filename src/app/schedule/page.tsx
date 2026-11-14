@@ -6,11 +6,17 @@ import { seasonLabel } from "@/lib/format";
 import { splitSchedule } from "@/lib/schedule";
 import { OTT } from "@/lib/teams";
 import { getStreamEvents, withStreams } from "@/lib/streams";
+import { getGametimeEvents, ticketLinks } from "@/lib/tickets";
 
 export const metadata: Metadata = { title: "Schedule" };
 
 export default async function SchedulePage() {
-  const [schedule, standings, streams] = await Promise.all([getSchedule().catch(() => null), getStandings().catch(() => []), getStreamEvents()]);
+  const [schedule, standings, streams, gametime] = await Promise.all([
+    getSchedule().catch(() => null),
+    getStandings().catch(() => []),
+    getStreamEvents(),
+    getGametimeEvents(),
+  ]);
   if (!schedule) return <ErrorNote>The schedule isn&apos;t available right now. Try again in a minute.</ErrorNote>;
 
   const { all, live, next, last } = splitSchedule(schedule.games);
@@ -26,7 +32,9 @@ export default async function SchedulePage() {
           {ott ? ` · ${ott.wins}-${ott.losses}-${ott.otLosses}` : ""}
         </p>
       </div>
-      <ScheduleList games={withStreams(all, streams)} focusDate={focus?.startTimeUTC ?? null} />
+      <ScheduleList
+        games={withStreams(all, streams).map((g) => (g.state === "upcoming" ? { ...g, tickets: ticketLinks(g.startTimeUTC, g.ticketsLink, gametime) } : g))}
+        focusDate={focus?.startTimeUTC ?? null} />
     </>
   );
 }

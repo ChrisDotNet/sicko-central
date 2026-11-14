@@ -5,7 +5,7 @@ import { formatDay, formatTime } from "@/lib/format";
 import type { GameSummary } from "@/lib/schedule";
 import { scoreLine } from "@/lib/schedule";
 import { ResultBadge, TeamBar } from "./ui";
-import { BroadcastLinks } from "./BroadcastLinks";
+import { StreamingMenu, TicketsMenu } from "./GameLinks";
 import { GameSummaryButton } from "./GameSummaryButton";
 import { ScheduleCalendar } from "./ScheduleCalendar";
 
@@ -87,7 +87,8 @@ export function ScheduleList({ games, focusDate }: { games: GameSummary[]; focus
                 : g.home
                   ? g.venue
                   : "Away";
-          // One compact row per game: date | opponent + status (or networks) | score or time + button.
+          // One compact row per game: date | opponent + status | score or time + button, with
+          // upcoming games' Streaming and Tickets menus on a line below.
           return (
             <div
               key={g.id}
@@ -106,11 +107,7 @@ export function ScheduleList({ games, focusDate }: { games: GameSummary[]; focus
                     {g.home ? "vs" : "at"} {g.opp}
                   </span>
                 </span>
-                {g.state === "upcoming" && g.broadcasts.length > 0 ? (
-                  <BroadcastLinks networks={g.broadcasts} links={g.streams} size="sm" />
-                ) : (
-                  <span className="truncate text-xs leading-none text-muted">{sub}</span>
-                )}
+                <span className="truncate text-xs leading-none text-muted">{sub}</span>
               </div>
               <div className="flex items-center gap-2">
                 {g.state === "live" && <ResultBadge result="LIVE" />}
@@ -120,6 +117,13 @@ export function ScheduleList({ games, focusDate }: { games: GameSummary[]; focus
                 </span>
                 {href && <GameSummaryButton href={href} label={`Game summary, ${g.home ? "vs" : "at"} ${g.opp}`} />}
               </div>
+              {/* Upcoming games: the Streaming and Tickets menus on their own line under the matchup. */}
+              {g.state === "upcoming" && (g.broadcasts.length > 0 || g.tickets) && (
+                <div className="col-span-2 col-start-2 -mt-0.5 flex items-center gap-1.5 pb-0.5">
+                  {g.broadcasts.length > 0 && <StreamingMenu networks={g.broadcasts} streams={g.streams} size="sm" />}
+                  {g.tickets && <TicketsMenu tickets={g.tickets} size="sm" />}
+                </div>
+              )}
             </div>
           );
         })}

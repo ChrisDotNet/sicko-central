@@ -19,6 +19,8 @@ export type GameSummary = {
   ticketsLink?: string;
   // Network -> the game's own streaming page, where we found one (src/lib/streams.ts).
   streams?: Record<string, string>;
+  // Gametime and Ticketmaster event pages (src/lib/tickets.ts).
+  tickets?: { gametime: string; ticketmaster: string | null };
 };
 
 export function summarize(g: ScheduleGame): GameSummary {

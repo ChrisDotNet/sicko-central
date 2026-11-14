@@ -13,14 +13,18 @@ export function LinkMenu({
   items,
   align = "left",
   tone = "plain",
+  size = "md",
 }: {
   label: string;
   icon: ReactNode;
   items: MenuLink[];
   align?: "left" | "right";
   tone?: "plain" | "gold";
+  size?: "md" | "sm";
 }) {
   const [open, setOpen] = useState(false);
+  // Opens upward when there isn't room below (near the bottom bar on phones).
+  const [up, setUp] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!open) return;
@@ -54,8 +58,15 @@ export function LinkMenu({
         type="button"
         aria-expanded={open}
         aria-haspopup="menu"
-        onClick={() => setOpen((o) => !o)}
-        className={`inline-flex min-h-9 items-center gap-1.5 rounded-lg border px-3 text-sm font-bold ${colours}`}
+        onClick={() => {
+          if (!open && box.current) {
+            const r = box.current.getBoundingClientRect();
+            const room = window.innerHeight - r.bottom - 96; // keep clear of the bottom bar
+            setUp(room < items.length * 46 + 16 && r.top > room);
+          }
+          setOpen((o) => !o);
+        }}
+        className={`inline-flex items-center gap-1.5 rounded-lg border font-bold ${size === "sm" ? "min-h-8 px-2.5 text-xs" : "min-h-9 px-3 text-sm"} ${colours}`}
       >
         {icon}
         {label}
@@ -66,7 +77,7 @@ export function LinkMenu({
       {open && (
         <div
           role="menu"
-          className={`absolute top-full z-30 mt-1.5 min-w-52 overflow-hidden rounded-xl border border-line-strong bg-surface shadow-[0_12px_32px_rgba(0,0,0,0.6)] ${align === "right" ? "right-0" : "left-0"}`}
+          className={`absolute z-30 min-w-52 ${up ? "bottom-full mb-1.5" : "top-full mt-1.5"} overflow-hidden rounded-xl border border-line-strong bg-surface shadow-[0_12px_32px_rgba(0,0,0,0.6)] ${align === "right" ? "right-0" : "left-0"}`}
         >
           {items.map((it) =>
             it.href ? (
