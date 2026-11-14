@@ -4,7 +4,7 @@
 import { neon } from "@neondatabase/serverless";
 import webpush from "web-push";
 import type { Category, Prefs } from "./push-prefs";
-import { QUIET_CATEGORIES, cleanPrefs } from "./push-prefs";
+import { GOAL_CATEGORIES, QUIET_CATEGORIES, SILENT_CATEGORIES, cleanPrefs } from "./push-prefs";
 
 const URL_ = process.env.DATABASE_URL ?? process.env.POSTGRES_URL;
 const sql = URL_ ? neon(URL_) : null;
@@ -108,7 +108,7 @@ export async function notify(category: Category, msg: Message, opts: { who?: num
     if (opts.extra && !opts.extra(p)) return false;
     return true;
   });
-  const payload = JSON.stringify(msg);
+  const payload = JSON.stringify({ ...msg, silent: SILENT_CATEGORIES.has(category), goal: GOAL_CATEGORIES.has(category) });
   let sent = 0;
   await Promise.all(
     targets.map(async (r) => {

@@ -51,5 +51,11 @@ export function cleanPrefs(p: unknown): Prefs {
   };
 }
 
+// These arrive without a sound (they still show on the lock screen). Goals, the final, the
+// pre-game reminder and the starting goalie make a sound.
+export const SILENT_CATEGORIES = new Set<Category>(["period", "replay", "recap", "pressers", "radio", "news", "bday", "digest", "leafs"]);
+// Goal alerts get their own buzz on Android (iPhone ignores vibration patterns).
+export const GOAL_CATEGORIES = new Set<Category>(["sens", "against", "fav"]);
+
 // Content and off-day alerts wait out quiet hours; game alerts never do.
 export const QUIET_CATEGORIES = new Set<Category>(["replay", "recap", "pressers", "radio", "news", "bday", "digest", "leafs"]);
