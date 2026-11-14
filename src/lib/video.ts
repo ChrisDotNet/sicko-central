@@ -4,6 +4,7 @@
 import { cacheLife } from "next/cache";
 import { nhlImage } from "./news";
 import type { TsnVideo } from "./tsn-video";
+import type { SensTvVideo } from "./sens-tv";
 
 const FORGE = "https://forge-dapi.d3.nhle.com/v2/content/en-us/videos";
 const WEB = "https://api-web.nhle.com/v1";
@@ -18,6 +19,7 @@ export type GameVideo = {
   goalThumbs?: Record<string, string>;
   tsn?: TsnVideo[];
   sportsnet?: TsnVideo[];
+  senstv?: SensTvVideo[]; // the club's YouTube: pressers and interviews (src/lib/sens-tv.ts)
 };
 
 type ForgeItem = {

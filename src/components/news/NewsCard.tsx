@@ -7,6 +7,7 @@ const OUTLET_STYLE: Record<Outlet, string> = {
   "NHL.com": "bg-ink text-ground",
   TSN: "bg-sens text-white",
   Sportsnet: "bg-[#1f4e99] text-white",
+  "Sens TV": "bg-gold text-ground",
 };
 
 export function OutletBadge({ outlet }: { outlet: Outlet }) {
@@ -51,9 +52,9 @@ export function NewsCard({
           {n.title}
         </a>
         {n.summary && <span className={`${compact ? "line-clamp-2" : "line-clamp-3"} text-sm leading-snug text-ink-2`}>{n.summary}</span>}
-        {!compact && <span className="text-xs font-semibold text-sens-text">Read on {n.outlet} ↗</span>}
+        {!compact && <span className="text-xs font-semibold text-sens-text">{n.outlet === "Sens TV" ? "Watch on YouTube" : `Read on ${n.outlet}`} ↗</span>}
       </span>
-      {n.image && <Thumb src={n.image} className="mt-0.5 aspect-video w-28 md:w-40" />}
+      {n.image && <Thumb src={n.image} play={n.outlet === "Sens TV"} className="mt-0.5 aspect-video w-28 md:w-40" />}
     </div>
   );
 }

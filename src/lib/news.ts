@@ -23,7 +23,7 @@ const BEFORE_MS = 24 * 3600_000;
 const AFTER_MS = 20 * 3600_000;
 const SUMMARY_MAX = 220;
 
-export type Outlet = "NHL.com" | "TSN" | "Sportsnet";
+export type Outlet = "NHL.com" | "TSN" | "Sportsnet" | "Sens TV";
 
 export type NewsItem = {
   url: string;

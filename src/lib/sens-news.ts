@@ -1,5 +1,5 @@
-// All Sens news, not just game days: every Senators story on NHL.com (league and club) plus
-// TSN's and Sportsnet's stories about the Sens. Same rule as game news: headline, the
+// All Sens news, not just game days: every Senators story on NHL.com (league and club),
+// TSN's and Sportsnet's stories about the Sens, and the club's YouTube videos (Sens TV). Same rule as game news: headline, the
 // outlet's short summary and its thumbnail, linking to the full article on its site.
 // No paywalled outlets.
 //
@@ -11,6 +11,7 @@ import { assignGame, getNhlTeamStories, getOutletNews, sortNews } from "./news";
 import type { NewsItem } from "./news";
 import { getSchedule } from "./nhl";
 import { getJson, setJson } from "./store";
+import { asNews, gameForVideo, getSensTv } from "./sens-tv";
 
 const KEY = "news:sens";
 const KEEP = 150;
@@ -33,11 +34,12 @@ function dedupe(items: NewsItem[]): NewsItem[] {
 // Read the sources, merge with what's saved, save if anything is new. Not cached: the
 // daily collection job calls this directly.
 export async function collectSensNews(): Promise<NewsItem[]> {
-  const [nhl, outlets, schedule, saved] = await Promise.all([
+  const [nhl, outlets, schedule, saved, videos] = await Promise.all([
     getNhlTeamStories(),
     getOutletNews(),
     getSchedule(),
     getJson<NewsItem[]>(KEY),
+    getSensTv(),
   ]);
   const games = (schedule?.games ?? []).filter((g) => g.gameType >= 2);
   const tagged = outlets.map((n) => {
@@ -45,7 +47,11 @@ export async function collectSensNews(): Promise<NewsItem[]> {
     return id ? { ...n, gameId: id } : n;
   });
   // Live versions first, so a story's newest details win over the saved copy.
-  const merged = sortNews(dedupe([...nhl, ...tagged, ...(saved ?? [])])).slice(0, KEEP);
+  const tv = videos.map((v) => {
+    const id = gameForVideo(v, games);
+    return id ? { ...asNews(v), gameId: id } : asNews(v);
+  });
+  const merged = sortNews(dedupe([...nhl, ...tagged, ...tv, ...(saved ?? [])])).slice(0, KEEP);
   if (merged.length && JSON.stringify(merged) !== JSON.stringify(saved)) await setJson(KEY, merged);
   return merged;
 }

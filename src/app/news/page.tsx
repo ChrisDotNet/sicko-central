@@ -11,7 +11,7 @@ import { getSensNews } from "@/lib/sens-news";
 
 export const metadata: Metadata = { title: "News" };
 
-const OUTLETS: Outlet[] = ["NHL.com", "TSN", "Sportsnet"];
+const OUTLETS: Outlet[] = ["NHL.com", "TSN", "Sportsnet", "Sens TV"];
 const TZ = "America/Toronto";
 
 // "2026-11-13" in Ottawa time, for grouping by day.
@@ -57,7 +57,7 @@ async function NewsContent({ searchParams }: { searchParams: Promise<Record<stri
     <>
       <div className="px-4 pt-5">
         <h1 className="font-display text-3xl font-extrabold uppercase tracking-wider">Sens news</h1>
-        <p className="mt-1 text-sm text-muted">Headlines and short summaries from NHL.com, TSN and Sportsnet. Full articles open on their site.</p>
+        <p className="mt-1 text-sm text-muted">Headlines and short summaries from NHL.com, TSN and Sportsnet, plus the club&apos;s YouTube videos (Sens TV). Full articles and videos open on their site.</p>
         <div className="mt-3 flex flex-wrap gap-2">
           {chip("All", "/news", !outlet)}
           {OUTLETS.map((o) => chip(o, `/news?outlet=${encodeURIComponent(o)}`, outlet === o))}

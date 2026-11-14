@@ -14,6 +14,7 @@ import type { RadioEpisode } from "./radio";
 import { getJson, setJson } from "./store";
 import { getGameVideo } from "./video";
 import { getTsnVideos } from "./tsn-video";
+import { gameForVideo, getSensTv } from "./sens-tv";
 import type { GameVideo, VideoItem } from "./video";
 
 export type GameMedia = { news: NewsItem[]; video: GameVideo; radio: RadioEpisode[] };
@@ -38,6 +39,7 @@ function merge(live: GameMedia, saved: GameMedia | null): GameMedia {
       goalThumbs: { ...(saved.video?.goalThumbs ?? {}), ...(live.video.goalThumbs ?? {}) },
       tsn: unionBy(live.video.tsn ?? [], saved.video?.tsn, (v) => v.id).sort((a, b) => b.published.localeCompare(a.published)),
       sportsnet: unionBy(live.video.sportsnet ?? [], saved.video?.sportsnet, (v) => v.id).sort((a, b) => b.published.localeCompare(a.published)),
+      senstv: unionBy(live.video.senstv ?? [], saved.video?.senstv, (v) => v.id).sort((a, b) => a.published.localeCompare(b.published)),
     },
     // The radio call is a set: if the feed has it, use the feed's version (fresh labels);
     // otherwise what we saved.
@@ -59,8 +61,8 @@ export async function collectGameMedia(gameId: string, startTimeUTC: string): Pr
   ]);
   // TSN video comes from the TSN stories found for this game (saved ones included).
   const tsnStories = mergeNews([...news, ...(saved?.news ?? [])]).filter((n) => n.outlet === "TSN").map((n) => n.url);
-  const [tsn, sportsnet] = await Promise.all([getTsnVideos(tsnStories), getSportsnetVideosForGame(gameId)]);
-  const merged = merge({ news, video: { ...video, tsn, sportsnet }, radio }, saved);
+  const [tsn, sportsnet, senstv] = await Promise.all([getTsnVideos(tsnStories), getSportsnetVideosForGame(gameId), getSensTvForGame(gameId)]);
+  const merged = merge({ news, video: { ...video, tsn, sportsnet, senstv }, radio }, saved);
   if (!isEmpty(merged) && JSON.stringify(merged) !== JSON.stringify(saved)) {
     await setJson(key(gameId), merged);
   }
@@ -68,6 +70,13 @@ export async function collectGameMedia(gameId: string, startTimeUTC: string): Pr
   const now = Date.now();
   const live = (merged.video.tsn ?? []).filter((v) => !v.expires || Date.parse(v.expires) > now);
   return { ...merged, video: { ...merged.video, tsn: live } };
+}
+
+// The club's YouTube videos about this game (pressers, morning skate), oldest first.
+async function getSensTvForGame(gameId: string) {
+  const [videos, schedule] = await Promise.all([getSensTv(), getSchedule()]);
+  const games = (schedule?.games ?? []).filter((g) => g.gameType >= 2);
+  return videos.filter((v) => gameForVideo(v, games) === Number(gameId)).sort((a, b) => a.published.localeCompare(b.published));
 }
 
 // Puck drop for a game id: from the season schedule, or the game's own feed for games
