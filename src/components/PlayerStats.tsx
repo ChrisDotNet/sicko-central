@@ -9,6 +9,7 @@ export function PlayerStats({ ranges, notes }: { ranges: Range[]; notes: string[
   const range = ranges[idx];
   return (
     <>
+      {ranges.length > 1 && (
       <div role="group" aria-label="Stat range" className="mb-3 flex gap-1.5">
         {ranges.map((r, i) => (
           <button
@@ -24,6 +25,7 @@ export function PlayerStats({ ranges, notes }: { ranges: Range[]; notes: string[
           </button>
         ))}
       </div>
+      )}
       <div className="grid grid-cols-3 gap-2">
         {range.tiles.map((t) => (
           <div key={t.label} className="flex flex-col gap-0.5 rounded-xl border border-line bg-surface p-3">

@@ -5,14 +5,18 @@ import { StarButton } from "@/components/StarButton";
 import { PageTitle } from "@/components/PageTitle";
 import { BirthdayBadge, PlayerBirthday } from "@/components/Birthdays";
 import { Card, ErrorNote, Section } from "@/components/ui";
-import { formatGameDate, heightLabel, pct, savePct, seasonLabel } from "@/lib/format";
+import { heightLabel, savePct, seasonLabel } from "@/lib/format";
 import type { SeasonLine } from "@/lib/nhl";
 import { getPlayer, name } from "@/lib/nhl";
+import { getGoalieDetail, getSkaterDetail } from "@/lib/player-stats";
+import { goalieRead, skaterRead } from "@/lib/player-read";
+import { buildCareer } from "@/lib/career";
+import { GaugeCard, ReadCard } from "@/components/player/Bits";
+import { SkaterSeason } from "@/components/player/SkaterSeason";
+import { GoalieSeason } from "@/components/player/GoalieSeason";
+import { CareerTab } from "@/components/player/CareerTab";
+import { ContractTab } from "@/components/player/ContractTab";
 
-// By-season table: phones get the basics; wider screens add the rest.
-const SKATER_SEASON_COLS = "grid-cols-[minmax(0,1fr)_40px_36px_36px_40px] md:grid-cols-[minmax(0,1fr)_repeat(4,48px)_repeat(6,56px)]";
-const GOALIE_SEASON_COLS = "grid-cols-[minmax(0,1fr)_40px_36px_36px_52px] md:grid-cols-[minmax(0,1fr)_repeat(3,48px)_60px_repeat(4,56px)]";
-const wide = "hidden text-right md:block";
 
 const POSITIONS: Record<string, string> = { C: "Centre", L: "Left wing", R: "Right wing", D: "Defence", G: "Goalie" };
 
@@ -22,13 +26,23 @@ function birthLabel(date?: string) {
   return new Intl.DateTimeFormat("en-CA", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(new Date(Date.UTC(y, m - 1, d)));
 }
 
-async function PlayerDetail({ params }: { params: Promise<{ id: string }> }) {
+const TABS = [
+  { key: "season", label: "This season" },
+  { key: "career", label: "Career" },
+  { key: "contract", label: "Contract" },
+] as const;
+
+async function PlayerDetail({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { id } = await params;
+  const sp = await searchParams;
+  const tab: "season" | "career" | "contract" = sp.tab === "career" ? "career" : sp.tab === "contract" ? "contract" : "season";
   if (!/^\d{7}$/.test(id)) return <ErrorNote>That player couldn&apos;t be found.</ErrorNote>;
   const p = await getPlayer(id);
   if (!p) return <ErrorNote>That player couldn&apos;t be found, or NHL data isn&apos;t available right now.</ErrorNote>;
 
   const goalie = p.position === "G";
+  const [skater, goalieD] = await Promise.all([goalie ? null : getSkaterDetail(p.playerId), goalie ? getGoalieDetail(p.playerId) : null]);
+  const read = skater ? skaterRead(p, skater) : goalieD ? goalieRead(p, goalieD) : { lines: [], gauge: null };
   const full = `${name(p.firstName)} ${name(p.lastName)}`;
   const nhlSeasons: SeasonLine[] = (p.seasonTotals ?? []).filter((s) => s.leagueAbbrev === "NHL" && s.gameTypeId === 2);
   const sensSeasons = nhlSeasons.filter((s) => s.teamCommonName?.default === "Senators");
@@ -135,7 +149,7 @@ async function PlayerDetail({ params }: { params: Promise<{ id: string }> }) {
           Roster
         </Link>
       </div>
-      {/* Desktop: profile, season tiles and last five games on the left; every season on the right. */}
+      {/* Desktop: profile, tabs and the read on the left; the rest of the tab on the right. */}
       <div className="lg:grid lg:grid-cols-[440px_minmax(0,1fr)] lg:items-start">
         <div>
           <section className="px-4 pt-1">
@@ -155,7 +169,7 @@ async function PlayerDetail({ params }: { params: Promise<{ id: string }> }) {
                     {POSITIONS[p.position] ?? p.position}
                     {p.currentTeamAbbrev && p.currentTeamAbbrev !== "OTT" ? ` · ${p.currentTeamAbbrev}` : ""}
                   </span>
-                  <PageTitle title={`${full} · ${goalie ? "Goalie" : POSITIONS[p.position] ?? "Player"}`} />
+                  <PageTitle title={`${full} · ${tab === "career" ? "Career" : tab === "contract" ? "Contract" : "This season"}`} />
                   <h1 className="font-display text-[34px] font-extrabold leading-none tracking-wide">{full}</h1>
                   <div className="mt-1 flex flex-wrap items-center gap-2">
                     <StarButton id={p.playerId} name={full} size="lg" />
@@ -191,145 +205,47 @@ async function PlayerDetail({ params }: { params: Promise<{ id: string }> }) {
               </dl>
             </Card>
           </section>
-
-          <Section>
-            <PlayerStats ranges={ranges} notes={notes} />
-          </Section>
-
-          {(p.last5Games?.length ?? 0) > 0 && (
-            <Section title="Last 5 games">
-              <div className="overflow-hidden rounded-2xl border border-line bg-surface">
-                {goalie ? (
-                  <>
-                    <div className="grid grid-cols-[minmax(0,1fr)_36px_44px_52px] border-b border-line px-3.5 py-2.5 text-[11px] font-semibold text-muted">
-                      <span>Game</span>
-                      <span className="text-right">Dec</span>
-                      <span className="text-right">SA</span>
-                      <span className="text-right">SV%</span>
-                    </div>
-                    {p.last5Games!.map((g) => (
-                      <Link
-                        key={g.gameId}
-                        href={`/game/${g.gameId}`}
-                        className="grid min-h-11 grid-cols-[minmax(0,1fr)_36px_44px_52px] items-center border-b border-line px-3.5 py-2.5 text-sm tabular last:border-0"
-                      >
-                        <span className="flex flex-col">
-                          <span className="font-semibold">
-                            {g.homeRoadFlag === "H" ? "vs" : "at"} {g.opponentAbbrev}
-                          </span>
-                          <span className="text-xs text-muted">{formatGameDate(g.gameDate)}</span>
-                        </span>
-                        <span className="text-right">{g.decision ?? "–"}</span>
-                        <span className="text-right">{g.shotsAgainst ?? "–"}</span>
-                        <span className="text-right font-bold">{savePct(g.savePctg)}</span>
-                      </Link>
-                    ))}
-                  </>
-                ) : (
-                  <>
-                    <div className="grid grid-cols-[minmax(0,1fr)_28px_28px_28px_40px_52px] border-b border-line px-3.5 py-2.5 text-[11px] font-semibold text-muted">
-                      <span>Game</span>
-                      <span className="text-right">G</span>
-                      <span className="text-right">A</span>
-                      <span className="text-right">P</span>
-                      <span className="text-right">SOG</span>
-                      <span className="text-right">TOI</span>
-                    </div>
-                    {p.last5Games!.map((g) => (
-                      <Link
-                        key={g.gameId}
-                        href={`/game/${g.gameId}`}
-                        className="grid min-h-11 grid-cols-[minmax(0,1fr)_28px_28px_28px_40px_52px] items-center border-b border-line px-3.5 py-2.5 text-sm tabular last:border-0"
-                      >
-                        <span className="flex flex-col">
-                          <span className="font-semibold">
-                            {g.homeRoadFlag === "H" ? "vs" : "at"} {g.opponentAbbrev}
-                          </span>
-                          <span className="text-xs text-muted">{formatGameDate(g.gameDate)}</span>
-                        </span>
-                        <span className="text-right">{g.goals ?? 0}</span>
-                        <span className="text-right">{g.assists ?? 0}</span>
-                        <span className="text-right font-bold">{g.points ?? 0}</span>
-                        <span className="text-right">{g.shots ?? 0}</span>
-                        <span className="text-right">{g.toi ?? "–"}</span>
-                      </Link>
-                    ))}
-                  </>
-                )}
-              </div>
+          <nav aria-label="Player sections" className="flex border-b border-line px-4 pt-3">
+            {TABS.map((t) => (
+              <Link
+                key={t.key}
+                href={t.key === "season" ? `/player/${id}` : `/player/${id}?tab=${t.key}`}
+                aria-current={tab === t.key ? "page" : undefined}
+                className={`flex min-h-11 flex-1 items-center justify-center text-sm font-semibold ${tab === t.key ? "text-ink shadow-[inset_0_-2px_0_var(--sens-bright)]" : "text-muted hover:text-ink"}`}
+              >
+                {t.label}
+              </Link>
+            ))}
+          </nav>
+          {tab === "season" ? (
+            <>
+              <ReadCard lines={read.lines} aside="From the numbers, updated after each game" />
+              {read.gauge && <GaugeCard g={read.gauge} />}
+              <Section>
+                <PlayerStats ranges={ranges.filter((r) => r.label === "This season")} notes={notes.filter((_, i) => ranges[i].label === "This season")} />
+              </Section>
+            </>
+          ) : tab === "contract" ? null : (
+            <Section>
+              <PlayerStats ranges={ranges.filter((r) => r.label !== "This season")} notes={notes.filter((_, i) => ranges[i].label !== "This season")} />
             </Section>
           )}
         </div>
-        {nhlSeasons.length > 0 && (
-          <Section title="By season" className="lg:pt-1">
-            <div className="overflow-hidden rounded-2xl border border-line bg-surface">
-              <div
-                className={`grid ${goalie ? GOALIE_SEASON_COLS : SKATER_SEASON_COLS} border-b border-line px-3.5 py-2.5 text-[11px] font-semibold text-muted`}
-              >
-                <span>Season</span>
-                <span className="text-right">GP</span>
-                {goalie ? (
-                  <>
-                    <span className="text-right">W</span>
-                    <span className="text-right">L</span>
-                    <span className="text-right">SV%</span>
-                    <span className={wide}>OTL</span>
-                    <span className={wide}>GAA</span>
-                    <span className={wide}>SO</span>
-                    <span className={wide}>GS</span>
-                  </>
-                ) : (
-                  <>
-                    <span className="text-right">G</span>
-                    <span className="text-right">A</span>
-                    <span className="text-right">P</span>
-                    <span className={wide}>+/-</span>
-                    <span className={wide}>PIM</span>
-                    <span className={wide}>PPG</span>
-                    <span className={wide}>SOG</span>
-                    <span className={wide}>S%</span>
-                    <span className={wide}>TOI</span>
-                  </>
-                )}
-              </div>
-              {[...nhlSeasons].reverse().map((s) => (
-                <div
-                  key={`${s.season}-${s.sequence ?? 0}`}
-                  className={`grid ${goalie ? GOALIE_SEASON_COLS : SKATER_SEASON_COLS} items-center border-b border-line px-3.5 py-2.5 text-sm tabular last:border-0`}
-                >
-                  <span className="flex flex-col">
-                    <span className="font-semibold">{seasonLabel(s.season)}</span>
-                    {s.teamCommonName?.default !== "Senators" && <span className="text-xs text-muted">{s.teamCommonName?.default}</span>}
-                  </span>
-                  <span className="text-right">{s.gamesPlayed ?? 0}</span>
-                  {goalie ? (
-                    <>
-                      <span className="text-right">{s.wins ?? 0}</span>
-                      <span className="text-right">{s.losses ?? 0}</span>
-                      <span className="text-right font-bold">{savePct(s.savePctg)}</span>
-                      <span className={wide}>{s.otLosses ?? "–"}</span>
-                      <span className={wide}>{s.goalsAgainstAvg != null ? s.goalsAgainstAvg.toFixed(2) : "–"}</span>
-                      <span className={wide}>{s.shutouts ?? "–"}</span>
-                      <span className={wide}>{s.gamesStarted ?? "–"}</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="text-right">{s.goals ?? 0}</span>
-                      <span className="text-right">{s.assists ?? 0}</span>
-                      <span className="text-right font-bold">{s.points ?? 0}</span>
-                      <span className={wide}>{s.plusMinus == null ? "–" : s.plusMinus > 0 ? `+${s.plusMinus}` : s.plusMinus}</span>
-                      <span className={wide}>{s.pim ?? "–"}</span>
-                      <span className={wide}>{s.powerPlayGoals ?? "–"}</span>
-                      <span className={wide}>{s.shots ?? "–"}</span>
-                      <span className={wide}>{s.shots ? pct(s.shootingPctg) : "–"}</span>
-                      <span className={wide}>{s.avgToi ?? "–"}</span>
-                    </>
-                  )}
-                </div>
-              ))}
-            </div>
-          </Section>
-        )}
+        <div className="lg:pt-1">
+          {tab === "season" ? (
+            skater ? (
+              <SkaterSeason d={skater} centre={p.position === "C"} />
+            ) : goalieD ? (
+              <GoalieSeason d={goalieD} />
+            ) : (
+              <p className="px-4 pt-6 text-sm text-muted">No NHL games this season yet. See Career for his path so far.</p>
+            )
+          ) : tab === "career" ? (
+            <CareerTab c={buildCareer(p)} />
+          ) : (
+            <ContractTab first={name(p.firstName)} last={name(p.lastName)} full={full} />
+          )}
+        </div>
       </div>
     </>
   );
@@ -338,7 +254,7 @@ async function PlayerDetail({ params }: { params: Promise<{ id: string }> }) {
 export default function PlayerPage(props: PageProps<"/player/[id]">) {
   return (
     <Suspense fallback={<div className="px-4 pt-6 text-sm text-muted">Loading player…</div>}>
-      <PlayerDetail params={props.params} />
+      <PlayerDetail params={props.params} searchParams={props.searchParams} />
     </Suspense>
   );
 }
