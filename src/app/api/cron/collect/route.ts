@@ -2,6 +2,7 @@ import { connection } from "next/server";
 import { collectGameMedia } from "@/lib/media";
 import { getSchedule } from "@/lib/nhl";
 import { collectSensNews } from "@/lib/sens-news";
+import { morning, planToday } from "@/lib/notify";
 
 // Daily job (vercel.json): save the all-Sens news list, and news, video and radio for recent
 // and upcoming games, before TSN's and Sportsnet's feeds roll past them. Their feeds hold
@@ -34,5 +35,7 @@ export async function GET(request: Request) {
     });
   }
   const news = await collectSensNews();
-  return Response.json({ collected: results, news: news.length }, { headers: { "Cache-Control": "no-store" } });
+  // Notifications: book today's game alerts with QStash, and send the morning ones.
+  const [plan, sent] = await Promise.all([planToday().catch(() => null), morning().catch(() => "failed")]);
+  return Response.json({ collected: results, news: news.length, notifications: { plan, morning: sent } }, { headers: { "Cache-Control": "no-store" } });
 }

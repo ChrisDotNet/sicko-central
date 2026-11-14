@@ -22,7 +22,7 @@ the next game better to watch?
 2. ~~Favourite players, with live alerts~~ Done 2026-11-13
 3. ~~Game-day facts ("Did you know")~~ Done 2026-11-13
 4. ~~Intermission card~~ Done 2026-11-13
-5. ~~Install to home screen~~ Done 2026-11-13. Next: push notifications (pre-game reminder, then goal alerts) via Upstash QStash
+5. ~~Install to home screen~~ Done 2026-11-13. ~~Push notifications~~ Built 2026-11-13 (Upstash QStash + web push); live once the keys are in Vercel
 
 6a. ~~Starting goalies on game day~~ Done 2026-11-13 (NHL.com game preview)
 

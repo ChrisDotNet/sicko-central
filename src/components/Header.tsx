@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { HeaderNav, LiveStrip } from "./HeaderNav";
 import { Logo } from "./Logo";
-import { AlertSoundToggle } from "./notify/AlertSoundToggle";
+import { BellLink } from "./notify/BellLink";
+import { PushSync } from "./notify/PushSync";
 
 export function Header() {
   return (
@@ -12,7 +13,8 @@ export function Header() {
         </Link>
         <HeaderNav />
         <div className="lg:ml-auto">
-          <AlertSoundToggle />
+          <BellLink />
+          <PushSync />
         </div>
       </div>
       <LiveStrip />
