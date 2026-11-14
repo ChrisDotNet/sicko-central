@@ -21,9 +21,9 @@ const APP = "https://www.iheart.com/live/tsn-1200-7503/";
 // so the frame is always exactly this size). If iHeart moves it, these two numbers change.
 const FRAME_W = 318;
 const FRAME_H = 200;
-const BTN_X = 35; // button centre, from the player's left edge
-const BTN_Y = 169; // button centre, from the player's top edge
-const WINDOW = 44; // the round window's size
+const BTN_X = 32.5; // button centre, from the player's left edge (measured: a 50px disc)
+const BTN_Y = 165; // button centre, from the player's top edge
+const WINDOW = 48; // the round window: just inside the disc, so its edge stays clean
 
 export function LiveRadioBar() {
   const { offer, started } = useRadio();
